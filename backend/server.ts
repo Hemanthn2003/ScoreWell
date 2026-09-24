@@ -5,8 +5,12 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import connectDB from "./src/config/db";
+
 import authRoutes from "./src/routes/authRoutes";
+
 import questionSetRoutes from "./src/routes/questionSetRoutes";
+
+import examRoutes from "./src/routes/examRoutes";
 
 const app = express();
 
@@ -19,7 +23,9 @@ const PORT =
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin:
+      "http://localhost:5173",
+
     credentials: true,
   })
 );
@@ -28,7 +34,9 @@ app.use(
    BODY PARSERS
 ========================================================= */
 
-app.use(express.json());
+app.use(
+  express.json()
+);
 
 app.use(
   express.urlencoded({
@@ -40,22 +48,27 @@ app.use(
    COOKIE PARSER
 ========================================================= */
 
-app.use(cookieParser());
+app.use(
+  cookieParser()
+);
 
 /* =========================================================
-   ROOT ROUTE
+   ROOT
 ========================================================= */
 
-app.get("/", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message:
-      "ScoreWell backend is running.",
-  });
-});
+app.get(
+  "/",
+  (_req, res) => {
+    res.status(200).json({
+      success: true,
+      message:
+        "ScoreWell backend is running.",
+    });
+  }
+);
 
 /* =========================================================
-   AUTH ROUTES
+   AUTH
 ========================================================= */
 
 app.use(
@@ -64,12 +77,21 @@ app.use(
 );
 
 /* =========================================================
-   QUESTION SET ROUTES
+   QUESTION SETS
 ========================================================= */
 
 app.use(
   "/api/question-sets",
   questionSetRoutes
+);
+
+/* =========================================================
+   EXAMS
+========================================================= */
+
+app.use(
+  "/api/exams",
+  examRoutes
 );
 
 /* =========================================================

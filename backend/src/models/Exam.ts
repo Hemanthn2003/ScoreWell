@@ -5,9 +5,13 @@ import mongoose, {
 } from "mongoose";
 
 export type ExamStatus =
-  | "DRAFT"
+  | "UNPUBLISHED"
   | "PUBLISHED"
   | "CLOSED";
+
+export type ExamMode =
+  | "COMMON"
+  | "SPECIAL";
 
 export interface INegativeMarking {
   enabled: boolean;
@@ -27,6 +31,7 @@ const negativeMarkingSchema =
         type: Number,
         required: true,
         default: 0,
+        min: 0,
       },
     },
     {
@@ -34,87 +39,130 @@ const negativeMarkingSchema =
     }
   );
 
-export interface IExam extends Document {
+export interface IExam
+  extends Document {
   title: string;
   description: string;
-  questionSetId: string;
+
+  questionSetIds: string[];
+
+  /*
+   * Randomly selected question IDs from
+   * all selected question sets.
+   */
+  questionIds: string[];
+
   department: string;
   instructorId: string;
+
   durationMinutes: number;
   questionCount: number;
+
   marksPerQuestion: number;
+
   negativeMarking: INegativeMarking;
+
+  mode: ExamMode;
+
+  maxAttempts: number;
+
   status: ExamStatus;
 }
 
-const examSchema = new Schema<IExam>(
-  {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+const examSchema =
+  new Schema<IExam>(
+    {
+      title: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    description: {
-      type: String,
-      default: "",
-    },
+      description: {
+        type: String,
+        default: "",
+      },
 
-    questionSetId: {
-      type: String,
-      required: true,
-    },
+      questionSetIds: {
+        type: [String],
+        required: true,
+        default: [],
+      },
 
-    department: {
-      type: String,
-      required: true,
-    },
+      questionIds: {
+        type: [String],
+        required: true,
+        default: [],
+      },
 
-    instructorId: {
-      type: String,
-      required: true,
-    },
+      department: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    durationMinutes: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
+      instructorId: {
+        type: String,
+        required: true,
+      },
 
-    questionCount: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
+      durationMinutes: {
+        type: Number,
+        required: true,
+        min: 1,
+      },
 
-    marksPerQuestion: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+      questionCount: {
+        type: Number,
+        required: true,
+        min: 1,
+      },
 
-    negativeMarking: {
-      type: negativeMarkingSchema,
-      required: true,
-    },
+      marksPerQuestion: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
 
-    status: {
-      type: String,
-      enum: [
-        "DRAFT",
-        "PUBLISHED",
-        "CLOSED",
-      ],
-      required: true,
-      default: "DRAFT",
+      negativeMarking: {
+        type: negativeMarkingSchema,
+        required: true,
+      },
+
+      mode: {
+        type: String,
+        enum: [
+          "COMMON",
+          "SPECIAL",
+        ],
+        required: true,
+        default: "COMMON",
+      },
+
+      maxAttempts: {
+        type: Number,
+        required: true,
+        min: 1,
+        default: 1,
+      },
+
+      status: {
+        type: String,
+        enum: [
+          "UNPUBLISHED",
+          "PUBLISHED",
+          "CLOSED",
+        ],
+        required: true,
+        default: "UNPUBLISHED",
+      },
     },
-  },
-  {
-    collection: "exams",
-    timestamps: false,
-    versionKey: false,
-  }
-);
+    {
+      collection: "exams",
+      timestamps: false,
+      versionKey: false,
+    }
+  );
 
 const Exam: Model<IExam> =
   mongoose.models.Exam ||

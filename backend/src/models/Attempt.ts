@@ -14,6 +14,10 @@ export type AttemptQuestionType =
   | "SINGLE"
   | "MULTI";
 
+export type AttemptMode =
+  | "COMMON"
+  | "SPECIAL";
+
 export interface IAttemptQuestion {
   questionId: string;
   question: string;
@@ -83,18 +87,27 @@ const attemptQuestionSchema =
 export interface IAttempt
   extends Document {
   studentId: Types.ObjectId;
+
   studentEmail: string;
+
   studentDepartment: string;
 
   examId: Types.ObjectId;
+
   examName: string;
+
   questionSetId: string;
+
   examDepartment: string;
+
   instructorId: string;
+
+  mode: AttemptMode;
 
   attemptNo: number;
 
   startTime: Date;
+
   submittedAt?: Date | null;
 
   status: AttemptStatus;
@@ -102,10 +115,13 @@ export interface IAttempt
   questions: IAttemptQuestion[];
 
   score: number;
+
   totalMarks: number;
 
   correctAnswers: number;
+
   wrongAnswers: number;
+
   unanswered: number;
 
   timeTakenSeconds: number;
@@ -156,6 +172,16 @@ const attemptSchema =
       instructorId: {
         type: String,
         required: true,
+      },
+
+      mode: {
+        type: String,
+        enum: [
+          "COMMON",
+          "SPECIAL",
+        ],
+        required: true,
+        default: "COMMON",
       },
 
       attemptNo: {
