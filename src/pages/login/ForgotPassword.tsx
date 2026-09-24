@@ -16,28 +16,22 @@ import Footer from "../../components/Footer";
 
 import Modal from "../../components/Modal";
 
-
 const API_URL =
   import.meta.env.VITE_API_URL;
-
 
 type ForgotPasswordStep =
   | "EMAIL"
   | "OTP"
   | "PASSWORD";
 
-
 type ModalType =
   | "success"
   | "error"
   | "info";
 
-
 const ForgotPassword = () => {
-
   const navigate =
     useNavigate();
-
 
   /* =========================
      STEP
@@ -47,7 +41,6 @@ const ForgotPassword = () => {
     useState<ForgotPasswordStep>(
       "EMAIL"
     );
-
 
   /* =========================
      FORM
@@ -68,7 +61,6 @@ const ForgotPassword = () => {
   const [resetToken, setResetToken] =
     useState("");
 
-
   /* =========================
      UI
   ========================== */
@@ -88,7 +80,6 @@ const ForgotPassword = () => {
   const [message, setMessage] =
     useState("");
 
-
   /* =========================
      MODAL
   ========================== */
@@ -106,14 +97,12 @@ const ForgotPassword = () => {
       type: "info",
     });
 
-
   const closeModal = () => {
     setModal((previous) => ({
       ...previous,
       isOpen: false,
     }));
   };
-
 
   const showModal = (
     title: string,
@@ -128,7 +117,6 @@ const ForgotPassword = () => {
     });
   };
 
-
   /* =========================
      SEND OTP
   ========================== */
@@ -139,11 +127,11 @@ const ForgotPassword = () => {
     event.preventDefault();
 
     setError("");
+
     setMessage("");
 
     const normalizedEmail =
       email.trim().toLowerCase();
-
 
     if (!normalizedEmail) {
       setError(
@@ -152,7 +140,6 @@ const ForgotPassword = () => {
 
       return;
     }
-
 
     try {
       setLoading(true);
@@ -175,10 +162,8 @@ const ForgotPassword = () => {
           }
         );
 
-
       const data =
         await response.json();
-
 
       if (!response.ok) {
         throw new Error(
@@ -186,7 +171,6 @@ const ForgotPassword = () => {
             "Unable to send OTP."
         );
       }
-
 
       setEmail(
         normalizedEmail
@@ -197,8 +181,6 @@ const ForgotPassword = () => {
       );
 
       setStep("OTP");
-
-
     } catch (error) {
       console.error(
         "Send OTP error:",
@@ -210,12 +192,10 @@ const ForgotPassword = () => {
           ? error.message
           : "Unable to send OTP."
       );
-
     } finally {
       setLoading(false);
     }
   };
-
 
   /* =========================
      VERIFY OTP
@@ -227,12 +207,11 @@ const ForgotPassword = () => {
     event.preventDefault();
 
     setError("");
-    setMessage("");
 
+    setMessage("");
 
     const normalizedOtp =
       otp.trim();
-
 
     if (
       !/^\d{6}$/.test(
@@ -245,7 +224,6 @@ const ForgotPassword = () => {
 
       return;
     }
-
 
     try {
       setLoading(true);
@@ -271,10 +249,8 @@ const ForgotPassword = () => {
           }
         );
 
-
       const data =
         await response.json();
-
 
       if (!response.ok) {
         throw new Error(
@@ -283,13 +259,11 @@ const ForgotPassword = () => {
         );
       }
 
-
       if (!data.resetToken) {
         throw new Error(
           "Password reset token was not received."
         );
       }
-
 
       setResetToken(
         data.resetToken
@@ -300,8 +274,6 @@ const ForgotPassword = () => {
       );
 
       setStep("PASSWORD");
-
-
     } catch (error) {
       console.error(
         "OTP verification error:",
@@ -313,12 +285,10 @@ const ForgotPassword = () => {
           ? error.message
           : "Unable to verify OTP."
       );
-
     } finally {
       setLoading(false);
     }
   };
-
 
   /* =========================
      RESET PASSWORD
@@ -328,12 +298,11 @@ const ForgotPassword = () => {
     async (
       event: FormEvent<HTMLFormElement>
     ) => {
-
       event.preventDefault();
 
       setError("");
-      setMessage("");
 
+      setMessage("");
 
       if (newPassword.length < 6) {
         setError(
@@ -342,7 +311,6 @@ const ForgotPassword = () => {
 
         return;
       }
-
 
       if (
         newPassword !==
@@ -355,7 +323,6 @@ const ForgotPassword = () => {
         return;
       }
 
-
       if (!resetToken) {
         setError(
           "Password reset session is invalid. Please start again."
@@ -363,7 +330,6 @@ const ForgotPassword = () => {
 
         return;
       }
-
 
       try {
         setLoading(true);
@@ -394,10 +360,8 @@ const ForgotPassword = () => {
             }
           );
 
-
         const data =
           await response.json();
-
 
         if (!response.ok) {
           throw new Error(
@@ -406,14 +370,11 @@ const ForgotPassword = () => {
           );
         }
 
-
         showModal(
           "Password Changed",
           "Your password has been changed successfully. You can now login with your new password.",
           "success"
         );
-
-
       } catch (error) {
         console.error(
           "Password reset error:",
@@ -425,12 +386,10 @@ const ForgotPassword = () => {
             ? error.message
             : "Unable to change password."
         );
-
       } finally {
         setLoading(false);
       }
     };
-
 
   /* =========================
      BACK
@@ -441,20 +400,18 @@ const ForgotPassword = () => {
       navigate("/");
     };
 
-
   /* =========================
      RESEND OTP
   ========================== */
 
   const handleResendOtp =
     async () => {
-
       setError("");
+
       setMessage("");
 
       const normalizedEmail =
         email.trim().toLowerCase();
-
 
       if (!normalizedEmail) {
         setError(
@@ -465,7 +422,6 @@ const ForgotPassword = () => {
 
         return;
       }
-
 
       try {
         setLoading(true);
@@ -488,10 +444,8 @@ const ForgotPassword = () => {
             }
           );
 
-
         const data =
           await response.json();
-
 
         if (!response.ok) {
           throw new Error(
@@ -500,210 +454,240 @@ const ForgotPassword = () => {
           );
         }
 
-
         setOtp("");
 
         setMessage(
           "A new OTP has been sent to your email."
         );
-
-
       } catch (error) {
         setError(
           error instanceof Error
             ? error.message
             : "Unable to resend OTP."
         );
-
       } finally {
         setLoading(false);
       }
     };
 
-
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-purple-50 via-white to-purple-100">
 
-      {/* =========================
+      {/* =========================================================
           MAIN
-      ========================== */}
+      ========================================================== */}
 
-      <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-white px-4 py-10 sm:px-6 lg:px-10">
+      <main className="flex flex-1 items-center justify-center px-3 py-8 sm:px-5 sm:py-10 md:px-8 lg:px-10">
 
-        <div className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-purple-100 blur-3xl" />
+        {/* Decorative Background */}
 
-        <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-orange-100 blur-3xl" />
+        <div className="pointer-events-none fixed left-0 top-0 h-48 w-48 rounded-full bg-purple-100/70 blur-3xl" />
 
-        <div className="pointer-events-none absolute right-[20%] top-10 h-32 w-32 rounded-full bg-purple-50 blur-2xl" />
+        <div className="pointer-events-none fixed bottom-0 right-0 h-64 w-64 rounded-full bg-orange-200/40 blur-3xl" />
 
+        {/* =======================================================
+            MAIN CARD
+        ======================================================== */}
 
-        {/* CONTAINER */}
+        <div className="relative z-10 flex w-full max-w-5xl flex-row overflow-hidden rounded-3xl border border-purple-100 bg-white shadow-2xl shadow-purple-200/40">
 
-        <div className="relative z-10 grid w-full max-w-6xl overflow-hidden rounded-[28px] border border-purple-100 bg-white shadow-[0_25px_80px_rgba(91,33,182,0.15)] lg:grid-cols-2">
+          {/* =====================================================
+              LEFT BRANDING SECTION
+          ====================================================== */}
 
+          <section className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-white via-purple-50 to-purple-100 px-7 py-10 md:flex md:flex-col md:justify-center md:px-9 lg:px-12 xl:px-16">
 
-          {/* =========================
-              LEFT
-          ========================== */}
+            {/* Decorative circles */}
 
-          <section className="relative hidden min-h-[650px] overflow-hidden bg-gradient-to-br from-purple-700 via-purple-800 to-purple-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
+            <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-purple-100/80 lg:h-52 lg:w-52" />
 
-            <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full border border-white/10" />
+            <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-orange-100/50 lg:h-52 lg:w-52" />
 
-            <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full border border-white/10" />
+            <div className="absolute right-10 top-20 h-3 w-3 rounded-full bg-orange-400" />
+
+            <div className="absolute bottom-24 right-24 h-2 w-2 rounded-full bg-purple-500" />
+
+            {/* Accent */}
+
+            <div className="absolute left-0 top-1/2 h-20 w-1 -translate-y-1/2 rounded-r-full bg-purple-600" />
 
             <div className="relative z-10">
 
-              <div className="mb-16 w-fit rounded-2xl bg-white p-4 shadow-xl">
+              {/* Logo */}
 
-                <img
-                  src={scoreWellLogo}
-                  alt="ScoreWell"
-                  className="h-12 w-auto object-contain"
-                />
+              <div className="mb-8 flex justify-start">
 
-              </div>
+                <div className="rounded-2xl bg-white p-3 shadow-lg ring-1 ring-purple-100">
 
-
-              <div className="max-w-lg">
-
-                <div className="mb-5 flex items-center gap-3">
-
-                  <span className="h-px w-10 bg-orange-400" />
-
-                  <span className="text-xs font-semibold uppercase tracking-[0.25em] text-orange-300">
-                    ScoreWell
-                  </span>
+                  <img
+                    src={scoreWellLogo}
+                    alt="ScoreWell"
+                    className="h-16 w-auto object-contain lg:h-20 xl:h-24"
+                  />
 
                 </div>
 
+              </div>
 
-                <h1 className="text-4xl font-bold leading-tight xl:text-5xl">
+              {/* Accent */}
 
-                  Secure.
+              <div className="mb-5 h-1 w-14 rounded-full bg-purple-600" />
 
-                  <br />
+              {/* Heading */}
 
-                  Recover.
+              <h2 className="text-3xl font-bold leading-tight text-purple-950 lg:text-4xl xl:text-5xl">
 
-                  <br />
+                Learn.
 
-                  <span className="text-orange-400">
-                    Continue Learning.
-                  </span>
+                <br />
 
-                </h1>
+                Recover.
 
+                <br />
 
-                <p className="mt-7 max-w-md text-base leading-7 text-purple-100">
-                  Securely recover your ScoreWell
-                  account using an email verification
-                  code and create a new password.
+                <span className="text-purple-600">
+                  Keep Growing.
+                </span>
+
+              </h2>
+
+              {/* Description */}
+
+              <p className="mt-6 max-w-md text-sm leading-6 text-gray-600 lg:text-base lg:leading-7 xl:text-lg">
+
+                Forgot your password?
+                Recover your account
+                securely and continue
+                your learning journey
+                without losing your progress.
+
+              </p>
+
+              {/* Platform */}
+
+              <div className="mt-7">
+
+                <p className="text-xs font-bold tracking-widest text-purple-700 lg:text-sm">
+
+                  EXAMINATION & ASSESSMENT
+                  PLATFORM
+
+                </p>
+
+                <p className="mt-2 max-w-sm text-xs leading-5 text-gray-500 lg:text-sm lg:leading-6">
+
+                  Secure access to your
+                  academic assessments
+                  and performance.
+
                 </p>
 
               </div>
 
             </div>
 
+            {/* Education Quote */}
 
-            <div className="relative z-10 max-w-lg">
+            <div className="relative z-10 mt-10 max-w-md">
 
-              <div className="mb-5 h-px w-full bg-white/10" />
+              <div className="mb-4 h-px w-full bg-purple-200" />
 
-              <div className="text-5xl font-serif leading-none text-orange-400">
+              <div className="text-5xl font-serif leading-none text-orange-500">
                 “
               </div>
 
-              <blockquote className="-mt-2 text-xl font-medium leading-8 text-white">
-                Keep learning. Keep improving.
+              <blockquote className="-mt-2 text-lg font-medium leading-7 text-purple-950 lg:text-xl lg:leading-8">
+
+                Learning never stops;
+                sometimes all we need
+                is a chance to begin again.
+
               </blockquote>
+
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-purple-600">
+
+                Learn • Practice • Progress
+
+              </p>
 
             </div>
 
           </section>
 
+          {/* =====================================================
+              RIGHT FORGOT PASSWORD SECTION
+          ====================================================== */}
 
-          {/* =========================
-              RIGHT
-          ========================== */}
-
-          <section className="flex min-h-[650px] items-center justify-center bg-white px-6 py-10 sm:px-10 lg:px-12 xl:px-16">
+          <section className="flex w-full items-center justify-center bg-white px-5 py-8 sm:px-8 sm:py-10 md:w-1/2 md:px-7 lg:px-10 xl:px-14">
 
             <div className="w-full max-w-md">
 
+              {/* Mobile Logo */}
 
-              {/* MOBILE LOGO */}
-
-              <div className="mb-8 flex justify-center lg:hidden">
+              <div className="mb-5 flex justify-center md:hidden">
 
                 <img
                   src={scoreWellLogo}
                   alt="ScoreWell"
-                  className="h-16 w-auto object-contain"
+                  className="h-16 w-auto object-contain sm:h-20"
                 />
 
               </div>
 
+              {/* Heading */}
 
-              {/* HEADING */}
+              <div className="mb-6 text-center md:text-left">
 
-              <div className="mb-8">
-
-                <div className="mb-3 flex items-center gap-2">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-1.5 text-[10px] font-bold tracking-wide text-purple-700 sm:text-xs">
 
                   <span className="h-2 w-2 rounded-full bg-orange-500" />
 
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-purple-600">
+                  {step === "EMAIL" &&
+                    "PASSWORD RECOVERY"}
 
-                    {step === "EMAIL" &&
-                      "Password Recovery"}
+                  {step === "OTP" &&
+                    "VERIFY IDENTITY"}
 
-                    {step === "OTP" &&
-                      "Verify Identity"}
-
-                    {step === "PASSWORD" &&
-                      "Create New Password"}
-
-                  </span>
+                  {step === "PASSWORD" &&
+                    "CREATE NEW PASSWORD"}
 
                 </div>
 
-
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                <h1 className="text-2xl font-bold text-purple-950 sm:text-3xl">
 
                   {step === "EMAIL" && (
                     <>
-                      Forgot your
-                      <span className="text-purple-700">
-                        {" "}password?
+                      Forgot your{" "}
+
+                      <span className="text-purple-600">
+                        password?
                       </span>
                     </>
                   )}
-
 
                   {step === "OTP" && (
                     <>
-                      Verify your
-                      <span className="text-purple-700">
-                        {" "}email
+                      Verify your{" "}
+
+                      <span className="text-purple-600">
+                        email
                       </span>
                     </>
                   )}
-
 
                   {step === "PASSWORD" && (
                     <>
-                      Reset your
-                      <span className="text-purple-700">
-                        {" "}password
+                      Reset your{" "}
+
+                      <span className="text-purple-600">
+                        password
                       </span>
                     </>
                   )}
 
-                </h2>
+                </h1>
 
-
-                <p className="mt-3 text-sm leading-6 text-slate-500">
+                <p className="mt-2 text-xs leading-5 text-gray-500 sm:text-sm sm:leading-6">
 
                   {step === "EMAIL" &&
                     "Enter your registered email address and we'll send you a verification OTP."}
@@ -718,15 +702,13 @@ const ForgotPassword = () => {
 
               </div>
 
-
               {/* ERROR */}
 
               {error && (
-                <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+                <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                   {error}
                 </div>
               )}
-
 
               {/* MESSAGE */}
 
@@ -736,289 +718,355 @@ const ForgotPassword = () => {
                 </div>
               )}
 
+              {/* =================================================
+                  FORM CARD
+              ================================================== */}
 
-              {/* =========================
-                  EMAIL
-              ========================== */}
+              <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-[0_15px_45px_rgba(91,33,182,0.14),0_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-purple-100/60 sm:rounded-3xl sm:p-7">
 
-              {step === "EMAIL" && (
+                {/* EMAIL */}
 
-                <form
-                  onSubmit={handleSendOtp}
-                  className="rounded-2xl border border-purple-100 bg-white p-6 shadow-[0_15px_45px_rgba(109,40,217,0.08)] sm:p-7"
-                >
+                {step === "EMAIL" && (
 
-                  <label
-                    htmlFor="forgot-email"
-                    className="mb-2 block text-sm font-semibold text-slate-700"
-                  >
-                    Email Address
-                  </label>
-
-
-                  <input
-                    id="forgot-email"
-                    type="email"
-                    value={email}
-                    onChange={(event) =>
-                      setEmail(
-                        event.target.value
-                      )
+                  <form
+                    onSubmit={
+                      handleSendOtp
                     }
-                    placeholder="Enter your registered email"
-                    autoComplete="email"
-                    required
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
-                  />
-
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="mt-5 h-12 w-full rounded-xl bg-purple-700 px-5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="space-y-4 sm:space-y-5"
                   >
-                    {loading
-                      ? "Sending OTP..."
-                      : "Send OTP"}
-                  </button>
 
+                    <div>
+
+                      <label
+                        htmlFor="forgot-email"
+                        className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
+                      >
+                        Email Address
+                      </label>
+
+                      <input
+                        id="forgot-email"
+                        type="email"
+                        value={email}
+                        onChange={(event) =>
+                          setEmail(
+                            event.target.value
+                          )
+                        }
+                        placeholder="Enter your registered email"
+                        autoComplete="email"
+                        required
+                        disabled={loading}
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex w-full items-center justify-center rounded-xl bg-purple-700 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+
+                          Sending OTP...
+
+                        </span>
+                      ) : (
+                        "Send OTP"
+                      )}
+
+                    </button>
+
+                  </form>
+
+                )}
+
+                {/* OTP */}
+
+                {step === "OTP" && (
+
+                  <form
+                    onSubmit={
+                      handleVerifyOtp
+                    }
+                    className="space-y-4 sm:space-y-5"
+                  >
+
+                    <div>
+
+                      <label
+                        htmlFor="forgot-otp"
+                        className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
+                      >
+                        Verification OTP
+                      </label>
+
+                      <input
+                        id="forgot-otp"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={otp}
+                        onChange={(event) =>
+                          setOtp(
+                            event.target.value.replace(
+                              /\D/g,
+                              ""
+                            )
+                          )
+                        }
+                        placeholder="Enter 6-digit OTP"
+                        autoComplete="one-time-code"
+                        required
+                        disabled={loading}
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center text-xl font-bold tracking-[0.4em] text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={
+                        loading ||
+                        otp.length !== 6
+                      }
+                      className="flex w-full items-center justify-center rounded-xl bg-purple-700 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+
+                          Verifying...
+
+                        </span>
+                      ) : (
+                        "Verify OTP"
+                      )}
+
+                    </button>
+
+                    <div className="flex items-center justify-between pt-1">
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStep("EMAIL")
+                        }
+                        disabled={loading}
+                        className="text-xs font-semibold text-gray-500 transition hover:text-purple-700 sm:text-sm"
+                      >
+                        Change Email
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={
+                          handleResendOtp
+                        }
+                        disabled={loading}
+                        className="text-xs font-bold text-purple-700 transition hover:text-purple-900 disabled:opacity-50 sm:text-sm"
+                      >
+                        Resend OTP
+                      </button>
+
+                    </div>
+
+                  </form>
+
+                )}
+
+                {/* PASSWORD */}
+
+                {step === "PASSWORD" && (
+
+                  <form
+                    onSubmit={
+                      handleChangePassword
+                    }
+                    className="space-y-4 sm:space-y-5"
+                  >
+
+                    {/* NEW PASSWORD */}
+
+                    <div>
+
+                      <label
+                        htmlFor="new-password"
+                        className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
+                      >
+                        New Password
+                      </label>
+
+                      <div className="relative">
+
+                        <input
+                          id="new-password"
+                          type={
+                            showNewPassword
+                              ? "text"
+                              : "password"
+                          }
+                          value={newPassword}
+                          onChange={(event) =>
+                            setNewPassword(
+                              event.target.value
+                            )
+                          }
+                          placeholder="Create new password"
+                          autoComplete="new-password"
+                          required
+                          disabled={loading}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-16 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowNewPassword(
+                              (previous) =>
+                                !previous
+                            )
+                          }
+                          disabled={loading}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 px-2 text-xs font-semibold text-purple-700 hover:text-purple-900 disabled:opacity-50"
+                        >
+                          {showNewPassword
+                            ? "Hide"
+                            : "Show"}
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                    {/* CONFIRM PASSWORD */}
+
+                    <div>
+
+                      <label
+                        htmlFor="confirm-new-password"
+                        className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
+                      >
+                        Confirm New Password
+                      </label>
+
+                      <div className="relative">
+
+                        <input
+                          id="confirm-new-password"
+                          type={
+                            showConfirmPassword
+                              ? "text"
+                              : "password"
+                          }
+                          value={
+                            confirmPassword
+                          }
+                          onChange={(event) =>
+                            setConfirmPassword(
+                              event.target.value
+                            )
+                          }
+                          placeholder="Confirm new password"
+                          autoComplete="new-password"
+                          required
+                          disabled={loading}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-16 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(
+                              (previous) =>
+                                !previous
+                            )
+                          }
+                          disabled={loading}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 px-2 text-xs font-semibold text-purple-700 hover:text-purple-900 disabled:opacity-50"
+                        >
+                          {showConfirmPassword
+                            ? "Hide"
+                            : "Show"}
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex w-full items-center justify-center rounded-xl bg-purple-700 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+
+                          Changing Password...
+
+                        </span>
+                      ) : (
+                        "Change Password"
+                      )}
+
+                    </button>
+
+                  </form>
+
+                )}
+
+                {/* DIVIDER */}
+
+                <div className="my-6 flex items-center gap-3">
+
+                  <div className="h-px flex-1 bg-gray-200" />
+
+                  <span className="text-xs text-gray-400">
+                    OR
+                  </span>
+
+                  <div className="h-px flex-1 bg-gray-200" />
+
+                </div>
+
+                {/* BACK TO LOGIN */}
+
+                <div className="text-center">
 
                   <button
                     type="button"
-                    onClick={handleBackToLogin}
-                    className="mt-4 w-full text-sm font-semibold text-slate-500 hover:text-purple-700"
-                  >
-                    Back to Login
-                  </button>
-
-                </form>
-              )}
-
-
-              {/* =========================
-                  OTP
-              ========================== */}
-
-              {step === "OTP" && (
-
-                <form
-                  onSubmit={handleVerifyOtp}
-                  className="rounded-2xl border border-purple-100 bg-white p-6 shadow-[0_15px_45px_rgba(109,40,217,0.08)] sm:p-7"
-                >
-
-                  <label
-                    htmlFor="forgot-otp"
-                    className="mb-2 block text-sm font-semibold text-slate-700"
-                  >
-                    Verification OTP
-                  </label>
-
-
-                  <input
-                    id="forgot-otp"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(event) =>
-                      setOtp(
-                        event.target.value.replace(
-                          /\D/g,
-                          ""
-                        )
-                      )
+                    onClick={
+                      handleBackToLogin
                     }
-                    placeholder="Enter 6-digit OTP"
-                    autoComplete="one-time-code"
-                    required
-                    className="h-14 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-center text-xl font-bold tracking-[0.4em] text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
-                  />
-
-
-                  <button
-                    type="submit"
-                    disabled={
-                      loading ||
-                      otp.length !== 6
-                    }
-                    className="mt-5 h-12 w-full rounded-xl bg-purple-700 px-5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="font-bold text-purple-700 transition hover:text-purple-900"
                   >
-                    {loading
-                      ? "Verifying..."
-                      : "Verify OTP"}
+                    ← Back to Login
                   </button>
 
+                </div>
 
-                  <div className="mt-4 flex items-center justify-between">
+              </div>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setStep("EMAIL")
-                      }
-                      className="text-sm font-semibold text-slate-500 hover:text-purple-700"
-                    >
-                      Change Email
-                    </button>
+              {/* Security Text */}
 
+              <div className="mt-5 text-center">
 
-                    <button
-                      type="button"
-                      onClick={
-                        handleResendOtp
-                      }
-                      disabled={loading}
-                      className="text-sm font-bold text-purple-700 hover:text-purple-900 disabled:opacity-50"
-                    >
-                      Resend OTP
-                    </button>
+                <p className="text-xs leading-5 text-gray-400">
 
-                  </div>
+                  Your account recovery is
+                  protected by email verification.
 
-                </form>
-              )}
-
-
-              {/* =========================
-                  PASSWORD
-              ========================== */}
-
-              {step === "PASSWORD" && (
-
-                <form
-                  onSubmit={
-                    handleChangePassword
-                  }
-                  className="rounded-2xl border border-purple-100 bg-white p-6 shadow-[0_15px_45px_rgba(109,40,217,0.08)] sm:p-7"
-                >
-
-                  {/* NEW PASSWORD */}
-
-                  <label
-                    htmlFor="new-password"
-                    className="mb-2 block text-sm font-semibold text-slate-700"
-                  >
-                    New Password
-                  </label>
-
-
-                  <div className="relative">
-
-                    <input
-                      id="new-password"
-                      type={
-                        showNewPassword
-                          ? "text"
-                          : "password"
-                      }
-                      value={newPassword}
-                      onChange={(event) =>
-                        setNewPassword(
-                          event.target.value
-                        )
-                      }
-                      placeholder="Create new password"
-                      autoComplete="new-password"
-                      required
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-20 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
-                    />
-
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowNewPassword(
-                          (previous) =>
-                            !previous
-                        )
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-purple-50 hover:text-purple-700"
-                    >
-                      {showNewPassword
-                        ? "Hide"
-                        : "Show"}
-                    </button>
-
-                  </div>
-
-
-                  {/* CONFIRM */}
-
-                  <label
-                    htmlFor="confirm-new-password"
-                    className="mb-2 mt-5 block text-sm font-semibold text-slate-700"
-                  >
-                    Confirm New Password
-                  </label>
-
-
-                  <div className="relative">
-
-                    <input
-                      id="confirm-new-password"
-                      type={
-                        showConfirmPassword
-                          ? "text"
-                          : "password"
-                      }
-                      value={confirmPassword}
-                      onChange={(event) =>
-                        setConfirmPassword(
-                          event.target.value
-                        )
-                      }
-                      placeholder="Confirm new password"
-                      autoComplete="new-password"
-                      required
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-20 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
-                    />
-
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(
-                          (previous) =>
-                            !previous
-                        )
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-purple-50 hover:text-purple-700"
-                    >
-                      {showConfirmPassword
-                        ? "Hide"
-                        : "Show"}
-                    </button>
-
-                  </div>
-
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="mt-5 h-12 w-full rounded-xl bg-purple-700 px-5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loading
-                      ? "Changing Password..."
-                      : "Change Password"}
-                  </button>
-
-                </form>
-              )}
-
-
-              {/* LOGIN */}
-
-              <div className="mt-6 text-center">
-
-                <button
-                  type="button"
-                  onClick={
-                    handleBackToLogin
-                  }
-                  className="text-sm font-bold text-purple-700 hover:text-purple-900"
-                >
-                  ← Back to Login
-                </button>
+                </p>
 
               </div>
 
@@ -1030,9 +1078,9 @@ const ForgotPassword = () => {
 
       </main>
 
+      {/* FOOTER */}
 
       <Footer />
-
 
       {/* MODAL */}
 
@@ -1057,6 +1105,5 @@ const ForgotPassword = () => {
     </div>
   );
 };
-
 
 export default ForgotPassword;

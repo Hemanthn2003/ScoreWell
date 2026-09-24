@@ -17,9 +17,6 @@ import Footer from "../../components/Footer";
 
 import Modal from "../../components/Modal";
 
-const API_URL =
-  import.meta.env.VITE_API_URL;
-
 type Role =
   | "STUDENT"
   | "INSTRUCTOR";
@@ -28,6 +25,9 @@ type ModalType =
   | "success"
   | "error"
   | "info";
+
+const API_URL =
+  import.meta.env.VITE_API_URL;
 
 const Register = () => {
   const navigate =
@@ -271,10 +271,6 @@ const Register = () => {
 
     setError("");
 
-    /* =========================
-       VALIDATION
-    ========================== */
-
     const trimmedName =
       name.trim();
 
@@ -283,6 +279,10 @@ const Register = () => {
 
     let finalDepartment =
       department.trim();
+
+    /* =========================
+       VALIDATION
+    ========================== */
 
     if (!trimmedName) {
       setError(
@@ -307,10 +307,6 @@ const Register = () => {
 
       return;
     }
-
-    /*
-     * Instructor using Add New Department.
-     */
 
     if (
       role === "INSTRUCTOR" &&
@@ -398,18 +394,13 @@ const Register = () => {
          REGISTRATION SUCCESS
       ========================== */
 
-      // Clear the entire form immediately
-      // after successful registration.
       resetForm();
 
-      // Keep the success modal open.
-      // User must click Continue manually.
       showModal(
         "Registration Successful",
         "Your ScoreWell account has been created successfully. You can now login.",
         "success"
       );
-
     } catch (error) {
       console.error(
         "Registration error:",
@@ -427,178 +418,219 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-purple-50 via-white to-purple-100">
 
-      {/* =========================
+      {/* =========================================================
           MAIN
-      ========================== */}
+      ========================================================== */}
 
-      <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-white px-4 py-10 sm:px-6 lg:px-10">
+      <main className="flex flex-1 items-center justify-center px-3 py-8 sm:px-5 sm:py-10 md:px-8 lg:px-10">
 
-        {/* Background */}
+        {/* Decorative Background */}
 
-        <div className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-purple-100 blur-3xl" />
+        <div className="pointer-events-none fixed left-0 top-0 h-48 w-48 rounded-full bg-purple-100/70 blur-3xl" />
 
-        <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-orange-100 blur-3xl" />
+        <div className="pointer-events-none fixed bottom-0 right-0 h-64 w-64 rounded-full bg-orange-200/40 blur-3xl" />
 
-        <div className="pointer-events-none absolute right-[20%] top-10 h-32 w-32 rounded-full bg-purple-50 blur-2xl" />
+        {/* =======================================================
+            MAIN CARD
+        ======================================================== */}
 
-        {/* =========================
-            CONTAINER
-        ========================== */}
+        <div className="relative z-10 flex w-full max-w-5xl flex-row overflow-hidden rounded-3xl border border-purple-100 bg-white shadow-2xl shadow-purple-200/40">
 
-        <div className="relative z-10 grid w-full max-w-6xl overflow-hidden rounded-[28px] border border-purple-100 bg-white shadow-[0_25px_80px_rgba(91,33,182,0.15)] lg:grid-cols-2">
+          {/* =====================================================
+              LEFT BRANDING SECTION
+          ====================================================== */}
 
-          {/* =========================
-              LEFT
-          ========================== */}
+          <section className="relative hidden w-1/2 overflow-hidden bg-gradient-to-br from-white via-purple-50 to-purple-100 px-7 py-10 md:flex md:flex-col md:justify-center md:px-9 lg:px-12 xl:px-16">
 
-          <section className="relative hidden min-h-[760px] overflow-hidden bg-gradient-to-br from-purple-700 via-purple-800 to-purple-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
+            {/* Decorative circles */}
 
-            <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full border border-white/10" />
+            <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-purple-100/80 lg:h-52 lg:w-52" />
 
-            <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full border border-white/10" />
+            <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-orange-100/50 lg:h-52 lg:w-52" />
 
-            <div className="absolute right-20 top-28 h-3 w-3 rounded-full bg-orange-400" />
+            <div className="absolute right-10 top-20 h-3 w-3 rounded-full bg-orange-400" />
+
+            <div className="absolute bottom-24 right-24 h-2 w-2 rounded-full bg-purple-500" />
+
+            {/* Accent */}
+
+            <div className="absolute left-0 top-1/2 h-20 w-1 -translate-y-1/2 rounded-r-full bg-purple-600" />
 
             <div className="relative z-10">
 
-              <div className="mb-16 w-fit rounded-2xl bg-white p-4 shadow-xl">
+              {/* Logo */}
 
-                <img
-                  src={scoreWellLogo}
-                  alt="ScoreWell"
-                  className="h-12 w-auto object-contain"
-                />
+              <div className="mb-8 flex justify-start">
 
-              </div>
+                <div className="rounded-2xl bg-white p-3 shadow-lg ring-1 ring-purple-100">
 
-              <div className="max-w-lg">
-
-                <div className="mb-5 flex items-center gap-3">
-
-                  <span className="h-px w-10 bg-orange-400" />
-
-                  <span className="text-xs font-semibold uppercase tracking-[0.25em] text-orange-300">
-                    ScoreWell
-                  </span>
+                  <img
+                    src={scoreWellLogo}
+                    alt="ScoreWell"
+                    className="h-16 w-auto object-contain lg:h-20 xl:h-24"
+                  />
 
                 </div>
 
-                <h1 className="text-4xl font-bold leading-tight xl:text-5xl">
+              </div>
 
-                  Create.
+              {/* Accent Line */}
 
-                  <br />
+              <div className="mb-5 h-1 w-14 rounded-full bg-purple-600" />
 
-                  Learn.
+              {/* Main Heading */}
 
-                  <br />
+              <h2 className="text-3xl font-bold leading-tight text-purple-950 lg:text-4xl xl:text-5xl">
 
-                  <span className="text-orange-400">
-                    Score Better.
-                  </span>
+                Create.
 
-                </h1>
+                <br />
 
-                <p className="mt-7 max-w-md text-base leading-7 text-purple-100">
-                  Create your ScoreWell account and
-                  access examinations, assessments
-                  and academic performance tools.
+                Learn.
+
+                <br />
+
+                <span className="text-purple-600">
+                  Score Better.
+                </span>
+
+              </h2>
+
+              {/* Description */}
+
+              <p className="mt-6 max-w-md text-sm leading-6 text-gray-600 lg:text-base lg:leading-7 xl:text-lg">
+
+                Begin your academic journey
+                with ScoreWell and create
+                an account designed to help
+                you learn, practice and
+                perform with confidence.
+
+              </p>
+
+              {/* Platform */}
+
+              <div className="mt-7">
+
+                <p className="text-xs font-bold tracking-widest text-purple-700 lg:text-sm">
+
+                  EXAMINATION & ASSESSMENT
+                  PLATFORM
+
+                </p>
+
+                <p className="mt-2 max-w-sm text-xs leading-5 text-gray-500 lg:text-sm lg:leading-6">
+
+                  A smarter way to conduct,
+                  manage and experience
+                  examinations.
+
                 </p>
 
               </div>
 
             </div>
 
-            <div className="relative z-10 max-w-lg">
+            {/* Education Quote */}
 
-              <div className="mb-5 h-px w-full bg-white/10" />
+            <div className="relative z-10 mt-10 max-w-md">
 
-              <div className="text-5xl font-serif leading-none text-orange-400">
+              <div className="mb-4 h-px w-full bg-purple-200" />
+
+              <div className="text-5xl font-serif leading-none text-orange-500">
                 “
               </div>
 
-              <blockquote className="-mt-2 text-xl font-medium leading-8 text-white">
-                Every great achievement begins
-                with the decision to try.
+              <blockquote className="-mt-2 text-lg font-medium leading-7 text-purple-950 lg:text-xl lg:leading-8">
+
+                Education is the first step
+                toward turning curiosity
+                into achievement.
+
               </blockquote>
 
-              <p className="mt-4 text-sm font-medium text-purple-200">
-                — Start today. Grow every day.
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-purple-600">
+
+                Start Learning • Build Your Future
+
               </p>
 
             </div>
 
           </section>
 
-          {/* =========================
-              RIGHT
-          ========================== */}
+          {/* =====================================================
+              RIGHT REGISTRATION SECTION
+          ====================================================== */}
 
-          <section className="flex min-h-[760px] items-center justify-center bg-white px-6 py-10 sm:px-10 lg:px-12 xl:px-16">
+          <section className="flex w-full items-center justify-center bg-white px-5 py-8 sm:px-8 sm:py-10 md:w-1/2 md:px-7 lg:px-10 xl:px-14">
 
             <div className="w-full max-w-md">
 
-              {/* Mobile logo */}
+              {/* Mobile Logo */}
 
-              <div className="mb-8 flex justify-center lg:hidden">
+              <div className="mb-5 flex justify-center md:hidden">
 
                 <img
                   src={scoreWellLogo}
                   alt="ScoreWell"
-                  className="h-16 w-auto object-contain"
+                  className="h-16 w-auto object-contain sm:h-20"
                 />
 
               </div>
 
               {/* Heading */}
 
-              <div className="mb-7">
+              <div className="mb-6 text-center md:text-left">
 
-                <div className="mb-3 flex items-center gap-2">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-1.5 text-[10px] font-bold tracking-wide text-purple-700 sm:text-xs">
 
                   <span className="h-2 w-2 rounded-full bg-orange-500" />
 
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-purple-600">
-                    Create Account
-                  </span>
+                  CREATE ACCOUNT
 
                 </div>
 
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                <h1 className="text-2xl font-bold text-purple-950 sm:text-3xl">
 
-                  Join
+                  Join{" "}
 
-                  <span className="text-purple-700">
-                    {" "}ScoreWell
+                  <span className="text-purple-600">
+                    ScoreWell
                   </span>
 
-                </h2>
+                </h1>
 
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Create your account to start using
-                  the ScoreWell examination platform.
+                <p className="mt-2 text-xs leading-5 text-gray-500 sm:text-sm sm:leading-6">
+
+                  Create your account and
+                  begin your journey toward
+                  better learning and assessment.
+
                 </p>
 
               </div>
 
-              {/* Error */}
+              {/* =================================================
+                  FORM CARD
+              ================================================== */}
 
-              {error && (
-                <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
-                  {error}
-                </div>
-              )}
-
-              {/* Form */}
-
-              <div className="rounded-2xl border border-purple-100 bg-white p-6 shadow-[0_15px_45px_rgba(109,40,217,0.08)] sm:p-7">
+              <div className="rounded-2xl border border-purple-200 bg-white p-5 shadow-[0_15px_45px_rgba(91,33,182,0.14),0_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-purple-100/60 sm:rounded-3xl sm:p-7">
 
                 <form
                   onSubmit={handleSubmit}
-                  className="space-y-5"
+                  className="space-y-4 sm:space-y-5"
                 >
+
+                  {/* ERROR */}
+
+                  {error && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {error}
+                    </div>
+                  )}
 
                   {/* NAME */}
 
@@ -606,7 +638,7 @@ const Register = () => {
 
                     <label
                       htmlFor="register-name"
-                      className="mb-2 block text-sm font-semibold text-slate-700"
+                      className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
                     >
                       Full Name
                     </label>
@@ -623,7 +655,8 @@ const Register = () => {
                       placeholder="Enter your full name"
                       autoComplete="name"
                       required
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
                     />
 
                   </div>
@@ -634,7 +667,7 @@ const Register = () => {
 
                     <label
                       htmlFor="register-email"
-                      className="mb-2 block text-sm font-semibold text-slate-700"
+                      className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
                     >
                       Email Address
                     </label>
@@ -651,18 +684,19 @@ const Register = () => {
                       placeholder="Enter your email"
                       autoComplete="email"
                       required
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
                     />
 
                   </div>
 
-                  {/* ROLE */}
+                  {/* ACCOUNT TYPE */}
 
                   <div>
 
                     <label
                       htmlFor="register-role"
-                      className="mb-2 block text-sm font-semibold text-slate-700"
+                      className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
                     >
                       Account Type
                     </label>
@@ -676,7 +710,8 @@ const Register = () => {
                         )
                       }
                       required
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                      disabled={loading}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
                     >
 
                       <option value="">
@@ -701,7 +736,7 @@ const Register = () => {
 
                     <label
                       htmlFor="register-department"
-                      className="mb-2 block text-sm font-semibold text-slate-700"
+                      className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
                     >
                       Department
                     </label>
@@ -718,12 +753,17 @@ const Register = () => {
                           event.target.value
                         )
                       }
-                      disabled={!role}
-                      required={!useNewDepartment}
-                      className={`h-12 w-full rounded-xl border px-4 text-sm outline-none transition ${
+                      disabled={
+                        !role ||
+                        loading
+                      }
+                      required={
+                        !useNewDepartment
+                      }
+                      className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
                         !role
-                          ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                          : "border-slate-200 bg-slate-50 text-slate-900 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                          ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+                          : "border-gray-200 bg-gray-50 text-gray-900 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
                       }`}
                     >
 
@@ -746,7 +786,8 @@ const Register = () => {
                         )
                       )}
 
-                      {role === "INSTRUCTOR" && (
+                      {role ===
+                        "INSTRUCTOR" && (
                         <option value="__ADD_NEW__">
                           + Add New Department
                         </option>
@@ -756,13 +797,16 @@ const Register = () => {
 
                     {/* NEW DEPARTMENT */}
 
-                    {role === "INSTRUCTOR" &&
+                    {role ===
+                      "INSTRUCTOR" &&
                       useNewDepartment && (
                         <div className="mt-3">
 
                           <input
                             type="text"
-                            value={newDepartment}
+                            value={
+                              newDepartment
+                            }
                             onChange={(event) =>
                               setNewDepartment(
                                 event.target.value
@@ -770,20 +814,25 @@ const Register = () => {
                             }
                             placeholder="Enter new department name"
                             required
-                            className="h-12 w-full rounded-xl border border-orange-200 bg-orange-50 px-4 text-sm text-slate-900 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-100"
+                            disabled={loading}
+                            className="w-full rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-100 disabled:opacity-60"
                           />
 
-                          <p className="mt-2 text-xs text-slate-500">
-                            This department will become
-                            available for future students
-                            after the instructor is registered.
+                          <p className="mt-2 text-xs text-gray-500">
+
+                            This department will
+                            become available for
+                            future students after
+                            the instructor is
+                            registered.
+
                           </p>
 
                         </div>
                       )}
 
                     {!role && (
-                      <p className="mt-2 text-xs text-slate-400">
+                      <p className="mt-2 text-xs text-gray-400">
                         Select Student or Instructor first.
                       </p>
                     )}
@@ -796,7 +845,7 @@ const Register = () => {
 
                     <label
                       htmlFor="register-password"
-                      className="mb-2 block text-sm font-semibold text-slate-700"
+                      className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
                     >
                       Password
                     </label>
@@ -819,7 +868,8 @@ const Register = () => {
                         placeholder="Create a password"
                         autoComplete="new-password"
                         required
-                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-20 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                        disabled={loading}
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-16 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
                       />
 
                       <button
@@ -830,7 +880,8 @@ const Register = () => {
                               !previous
                           )
                         }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-purple-50 hover:text-purple-700"
+                        disabled={loading}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 px-2 text-xs font-semibold text-purple-700 hover:text-purple-900 disabled:opacity-50"
                       >
                         {showPassword
                           ? "Hide"
@@ -847,7 +898,7 @@ const Register = () => {
 
                     <label
                       htmlFor="register-confirm-password"
-                      className="mb-2 block text-sm font-semibold text-slate-700"
+                      className="mb-2 block text-xs font-semibold text-gray-700 sm:text-sm"
                     >
                       Confirm Password
                     </label>
@@ -861,7 +912,9 @@ const Register = () => {
                             ? "text"
                             : "password"
                         }
-                        value={confirmPassword}
+                        value={
+                          confirmPassword
+                        }
                         onChange={(event) =>
                           setConfirmPassword(
                             event.target.value
@@ -870,7 +923,8 @@ const Register = () => {
                         placeholder="Confirm your password"
                         autoComplete="new-password"
                         required
-                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-20 text-sm text-slate-900 outline-none transition focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                        disabled={loading}
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-16 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
                       />
 
                       <button
@@ -881,7 +935,8 @@ const Register = () => {
                               !previous
                           )
                         }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-purple-50 hover:text-purple-700"
+                        disabled={loading}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 px-2 text-xs font-semibold text-purple-700 hover:text-purple-900 disabled:opacity-50"
                       >
                         {showConfirmPassword
                           ? "Hide"
@@ -892,39 +947,77 @@ const Register = () => {
 
                   </div>
 
-                  {/* SUBMIT */}
+                  {/* CREATE ACCOUNT */}
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="h-12 w-full rounded-xl bg-purple-700 px-5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex w-full items-center justify-center rounded-xl bg-purple-700 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {loading
-                      ? "Creating Account..."
-                      : "Create Account"}
+
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+
+                        Creating Account...
+
+                      </span>
+                    ) : (
+                      "Create Account"
+                    )}
+
                   </button>
 
-                  {/* LOGIN */}
-
-                  <div className="pt-1 text-center">
-
-                    <span className="text-sm text-slate-500">
-                      Already have an account?
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate("/")
-                      }
-                      className="ml-2 text-sm font-bold text-purple-700 hover:text-purple-900"
-                    >
-                      Login
-                    </button>
-
-                  </div>
-
                 </form>
+
+                {/* OR */}
+
+                <div className="my-6 flex items-center gap-3">
+
+                  <div className="h-px flex-1 bg-gray-200" />
+
+                  <span className="text-xs text-gray-400">
+                    OR
+                  </span>
+
+                  <div className="h-px flex-1 bg-gray-200" />
+
+                </div>
+
+                {/* LOGIN */}
+
+                <div className="text-center">
+
+                  <p className="text-sm text-gray-500">
+                    Already have an account?
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate("/")
+                    }
+                    disabled={loading}
+                    className="mt-2 font-bold text-purple-700 transition hover:text-purple-900"
+                  >
+                    Login
+                  </button>
+
+                </div>
+
+              </div>
+
+              {/* Security Text */}
+
+              <div className="mt-5 text-center">
+
+                <p className="text-xs leading-5 text-gray-400">
+
+                  Start your academic journey
+                  with ScoreWell.
+
+                </p>
 
               </div>
 
@@ -936,11 +1029,11 @@ const Register = () => {
 
       </main>
 
+      {/* FOOTER */}
+
       <Footer />
 
-      {/* =========================
-          SUCCESS / ERROR MODAL
-      ========================== */}
+      {/* MODAL */}
 
       <Modal
         isOpen={modal.isOpen}

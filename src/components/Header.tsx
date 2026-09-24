@@ -12,6 +12,7 @@ import {
   BookOpenCheck,
   BarChart3,
   Loader2,
+  ChevronRight,
 } from "lucide-react";
 
 import scoreWellLogo from "../assets/scoreWellLogo.png";
@@ -92,6 +93,10 @@ const studentMenu: MenuItem[] = [
   },
 ];
 
+/* =========================================================
+   HEADER
+========================================================= */
+
 const Header = () => {
   const navigate = useNavigate();
 
@@ -159,12 +164,10 @@ const Header = () => {
       : "Student";
 
   /* =======================================================
-     MENU NAVIGATION
+     NAVIGATION
   ======================================================= */
 
-  const handleNavigation = (
-    route: string
-  ) => {
+  const handleNavigation = (route: string) => {
     setIsSidebarOpen(false);
     navigate(route);
   };
@@ -199,7 +202,6 @@ const Header = () => {
     } finally {
       setIsSidebarOpen(false);
 
-      // Always return to login
       navigate("/", {
         replace: true,
       });
@@ -212,60 +214,213 @@ const Header = () => {
           GLOBAL HEADER
       =================================================== */}
 
-      <header className="sticky top-0 z-50 w-full border-b border-purple-100 bg-white shadow-sm">
-        <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-50 w-full">
 
-          {/* =================================================
-              LEFT MENU BUTTON
-          ================================================= */}
+        <div
+          className="
+            relative
+            overflow-hidden
+            border-b
+            border-purple-200
+            bg-gradient-to-r
+            from-purple-100
+            via-white
+            to-orange-100
+            shadow-[0_8px_25px_rgba(91,33,182,0.16),0_3px_8px_rgba(249,115,22,0.08)]
+          "
+        >
 
-          <button
-            type="button"
-            onClick={() =>
-              setIsSidebarOpen(true)
-            }
-            className="group flex h-10 w-10 items-center justify-center rounded-xl text-purple-800 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700 active:scale-95"
-            aria-label="Open navigation menu"
-          >
-            <span className="flex flex-col gap-[5px]">
+          {/* Purple glow */}
+          <div
+            className="
+              pointer-events-none
+              absolute
+              -left-16
+              -top-24
+              h-48
+              w-48
+              rounded-full
+              bg-purple-400/20
+              blur-3xl
+            "
+          />
 
-              <span className="flex items-center gap-[5px]">
-                <span className="h-[4px] w-[4px] rounded-full bg-purple-700" />
+          {/* Orange glow */}
+          <div
+            className="
+              pointer-events-none
+              absolute
+              -right-16
+              -top-24
+              h-48
+              w-48
+              rounded-full
+              bg-orange-400/20
+              blur-3xl
+            "
+          />
 
-                <span className="h-[4px] w-5 rounded-full bg-purple-700 transition-all duration-200 group-hover:w-6" />
+          {/* Main Header */}
+          <div className="relative flex h-[72px] items-center justify-between px-4 sm:px-6 lg:px-8">
+
+            {/* =================================================
+                MENU BUTTON
+            ================================================= */}
+
+            <button
+              type="button"
+              onClick={() =>
+                setIsSidebarOpen(true)
+              }
+              className="
+                group
+                relative
+                flex
+                h-11
+                w-11
+                items-center
+                justify-center
+                rounded-xl
+                border
+                border-purple-200
+                bg-white
+                shadow-[0_4px_12px_rgba(91,33,182,0.12)]
+                transition-all
+                duration-300
+                hover:-translate-y-1
+                hover:border-purple-300
+                hover:bg-purple-50
+                hover:shadow-[0_8px_20px_rgba(91,33,182,0.20)]
+                active:scale-95
+              "
+              aria-label="Open navigation menu"
+            >
+
+              <span className="flex flex-col gap-[5px]">
+
+                <span className="flex items-center gap-[5px]">
+                  <span
+                    className="
+                      h-[5px]
+                      w-[5px]
+                      rounded-full
+                      bg-purple-700
+                      transition-all
+                      duration-300
+                      group-hover:scale-125
+                    "
+                  />
+
+                  <span
+                    className="
+                      h-[4px]
+                      w-5
+                      rounded-full
+                      bg-purple-700
+                      transition-all
+                      duration-300
+                      group-hover:w-6
+                    "
+                  />
+                </span>
+
+                <span className="flex items-center gap-[5px]">
+                  <span
+                    className="
+                      h-[5px]
+                      w-[5px]
+                      rounded-full
+                      bg-orange-500
+                      transition-all
+                      duration-300
+                      group-hover:scale-125
+                    "
+                  />
+
+                  <span
+                    className="
+                      h-[4px]
+                      w-5
+                      rounded-full
+                      bg-orange-500
+                      transition-all
+                      duration-300
+                      group-hover:w-6
+                    "
+                  />
+                </span>
+
               </span>
 
-              <span className="flex items-center gap-[5px]">
-                <span className="h-[4px] w-[4px] rounded-full bg-orange-500" />
+            </button>
 
-                <span className="h-[4px] w-5 rounded-full bg-orange-500 transition-all duration-200 group-hover:w-6" />
-              </span>
+            {/* =================================================
+                LOGO
+            ================================================= */}
 
-            </span>
-          </button>
+            <div
+              className="
+                flex
+                h-12
+                items-center
+                rounded-xl
+                border
+                border-gray-100
+                bg-white
+                px-3
+                shadow-[0_4px_14px_rgba(0,0,0,0.07)]
+                transition-all
+                duration-300
+                hover:shadow-[0_7px_18px_rgba(91,33,182,0.12)]
+                sm:px-4
+              "
+            >
 
-          {/* =================================================
-              RIGHT LOGO
-          ================================================= */}
+              <img
+                src={scoreWellLogo}
+                alt="ScoreWell"
+                className="h-9 w-auto object-contain sm:h-10"
+              />
 
-          <div className="flex h-full items-center">
-            <img
-              src={scoreWellLogo}
-              alt="ScoreWell"
-              className="h-10 w-auto object-contain sm:h-11"
-            />
+            </div>
+
           </div>
+
+          {/* =================================================
+              GRADIENT BOTTOM ACCENT
+          ================================================= */}
+
+          <div
+            className="
+              absolute
+              bottom-0
+              left-0
+              h-[3px]
+              w-full
+              bg-gradient-to-r
+              from-purple-700
+              via-purple-500
+              via-60%
+              to-orange-500
+            "
+          />
 
         </div>
       </header>
 
-      {/* ===================================================
+      {/* =====================================================
           OVERLAY
-      =================================================== */}
+      ===================================================== */}
 
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-[2px]"
+          className="
+            fixed
+            inset-0
+            z-[60]
+            bg-purple-950/30
+            backdrop-blur-[4px]
+          "
           onClick={() =>
             setIsSidebarOpen(false)
           }
@@ -273,40 +428,127 @@ const Header = () => {
         />
       )}
 
-      {/* ===================================================
+      {/* =====================================================
           SIDEBAR
-      =================================================== */}
+      ===================================================== */}
 
       <aside
-        className={`fixed left-0 top-0 z-[70] flex h-full w-[300px] max-w-[88vw] flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
-          isSidebarOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
-        }`}
+        className={`
+          fixed
+          left-0
+          top-0
+          z-[70]
+          flex
+          h-full
+          w-[310px]
+          max-w-[88vw]
+          flex-col
+          overflow-hidden
+          bg-gradient-to-b
+          from-white
+          via-white
+          to-purple-50/60
+          shadow-[15px_0_45px_rgba(45,20,90,0.22)]
+          transition-transform
+          duration-300
+          ease-out
+          ${
+            isSidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full"
+          }
+        `}
       >
 
         {/* =================================================
             SIDEBAR HEADER
         ================================================= */}
 
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-purple-100 bg-white px-5">
+        <div
+          className="
+            relative
+            flex
+            h-[72px]
+            shrink-0
+            items-center
+            justify-between
+            border-b
+            border-purple-100
+            bg-gradient-to-r
+            from-white
+            via-purple-50
+            to-orange-50
+            px-5
+          "
+        >
 
-          <img
-            src={scoreWellLogo}
-            alt="ScoreWell"
-            className="h-9 w-auto object-contain"
-          />
+          {/* Logo */}
+          <div
+            className="
+              flex
+              h-11
+              items-center
+              rounded-xl
+              border
+              border-gray-100
+              bg-white
+              px-3
+              shadow-sm
+            "
+          >
+            <img
+              src={scoreWellLogo}
+              alt="ScoreWell"
+              className="h-8 w-auto object-contain"
+            />
+          </div>
 
+          {/* Close */}
           <button
             type="button"
             onClick={() =>
               setIsSidebarOpen(false)
             }
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-all hover:bg-purple-50 hover:text-purple-700 active:scale-95"
+            className="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-gray-100
+              bg-white
+              text-gray-500
+              shadow-sm
+              transition-all
+              duration-200
+              hover:-rotate-3
+              hover:border-purple-200
+              hover:bg-purple-50
+              hover:text-purple-700
+              hover:shadow-md
+              active:scale-95
+            "
             aria-label="Close menu"
           >
-            <X size={21} />
+            <X size={20} />
           </button>
+
+          {/* Gradient line */}
+          <div
+            className="
+              absolute
+              bottom-0
+              left-0
+              h-[3px]
+              w-full
+              bg-gradient-to-r
+              from-purple-700
+              via-purple-500
+              to-orange-500
+            "
+          />
 
         </div>
 
@@ -314,12 +556,23 @@ const Header = () => {
             USER INFORMATION
         ================================================= */}
 
-        <div className="border-b border-purple-100 bg-gradient-to-r from-purple-50 via-white to-orange-50 px-5 py-5">
+        <div
+          className="
+            border-b
+            border-purple-100
+            bg-gradient-to-br
+            from-purple-100/70
+            via-white
+            to-orange-100/60
+            px-5
+            py-5
+          "
+        >
 
           {isLoadingUser ? (
             <div className="flex items-center gap-3">
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-100">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
                 <Loader2
                   size={20}
                   className="animate-spin text-purple-700"
@@ -329,7 +582,7 @@ const Header = () => {
               <div>
                 <div className="h-3 w-28 animate-pulse rounded bg-gray-200" />
 
-                <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-gray-100" />
+                <div className="mt-2 h-2.5 w-36 animate-pulse rounded bg-gray-100" />
               </div>
 
             </div>
@@ -337,24 +590,54 @@ const Header = () => {
             <div className="flex items-center gap-3">
 
               {/* Avatar */}
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-purple-700 text-white shadow-md shadow-purple-200">
-                <User size={20} />
+              <div
+                className="
+                  flex
+                  h-12
+                  w-12
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-gradient-to-br
+                  from-purple-600
+                  via-purple-700
+                  to-purple-900
+                  text-white
+                  shadow-[0_6px_16px_rgba(91,33,182,0.25)]
+                "
+              >
+                <User size={21} />
               </div>
 
-              {/* Details */}
+              {/* User Details */}
               <div className="min-w-0">
 
                 <p className="truncate text-sm font-bold text-gray-900">
                   {user.name}
                 </p>
 
-                <p className="truncate text-xs text-gray-500">
+                <p className="mt-0.5 truncate text-xs text-gray-500">
                   {user.email}
                 </p>
 
-                <div className="mt-1.5">
+                <div className="mt-1.5 flex items-center gap-2">
 
-                  <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
+                  <span
+                    className="
+                      rounded-full
+                      bg-gradient-to-r
+                      from-purple-100
+                      to-purple-200
+                      px-2.5
+                      py-0.5
+                      text-[10px]
+                      font-bold
+                      uppercase
+                      tracking-wide
+                      text-purple-700
+                    "
+                  >
                     {roleLabel}
                   </span>
 
@@ -364,9 +647,9 @@ const Header = () => {
 
             </div>
           ) : (
-            <div className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500">
               User details unavailable
-            </div>
+            </p>
           )}
 
         </div>
@@ -375,13 +658,23 @@ const Header = () => {
             NAVIGATION
         ================================================= */}
 
-        <nav className="flex-1 overflow-y-auto px-3 py-5">
+        <nav className="flex-1 overflow-y-auto px-4 py-5">
 
-          <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+          <p
+            className="
+              mb-4
+              px-2
+              text-[10px]
+              font-bold
+              uppercase
+              tracking-[0.2em]
+              text-gray-400
+            "
+          >
             Navigation
           </p>
 
-          <div className="space-y-1.5">
+          <div className="space-y-3">
 
             {menuItems.map((item) => (
               <button
@@ -390,18 +683,102 @@ const Header = () => {
                 onClick={() =>
                   handleNavigation(item.route)
                 }
-                className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
+                className="
+                  group
+                  relative
+                  flex
+                  min-h-[58px]
+                  w-full
+                  items-center
+                  gap-3
+                  overflow-hidden
+                  rounded-2xl
+                  border
+                  border-purple-100
+                  bg-white
+                  px-3
+                  text-left
+                  text-sm
+                  font-semibold
+                  text-gray-700
+                  shadow-[0_3px_10px_rgba(91,33,182,0.07)]
+                  transition-all
+                  duration-300
+                  hover:-translate-y-1
+                  hover:border-purple-200
+                  hover:bg-gradient-to-r
+                  hover:from-purple-50
+                  hover:via-white
+                  hover:to-orange-50
+                  hover:text-purple-800
+                  hover:shadow-[0_9px_22px_rgba(91,33,182,0.16)]
+                  active:translate-y-0
+                  active:scale-[0.98]
+                "
               >
 
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-500 transition-all duration-200 group-hover:bg-purple-100 group-hover:text-purple-700">
+                {/* Left gradient indicator */}
+                <span
+                  className="
+                    absolute
+                    left-0
+                    top-0
+                    h-full
+                    w-1
+                    -translate-x-full
+                    bg-gradient-to-b
+                    from-purple-700
+                    to-orange-500
+                    transition-transform
+                    duration-300
+                    group-hover:translate-x-0
+                  "
+                />
+
+                {/* Icon */}
+                <span
+                  className="
+                    relative
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-gradient-to-br
+                    from-purple-50
+                    to-orange-50
+                    text-purple-600
+                    shadow-sm
+                    transition-all
+                    duration-300
+                    group-hover:scale-110
+                    group-hover:from-purple-100
+                    group-hover:to-orange-100
+                    group-hover:text-purple-700
+                    group-hover:shadow-md
+                  "
+                >
                   {item.icon}
                 </span>
 
-                <span className="flex-1">
+                {/* Label */}
+                <span className="flex-1 leading-5">
                   {item.label}
                 </span>
 
-                <span className="h-1.5 w-1.5 rounded-full bg-orange-500 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                {/* Arrow */}
+                <ChevronRight
+                  size={17}
+                  className="
+                    text-gray-300
+                    transition-all
+                    duration-300
+                    group-hover:translate-x-1
+                    group-hover:text-orange-500
+                  "
+                />
 
               </button>
             ))}
@@ -412,25 +789,111 @@ const Header = () => {
               PROFILE
           ================================================= */}
 
-          <div className="mt-6 border-t border-gray-100 pt-5">
+          <div className="mt-7 border-t border-purple-100 pt-5">
 
-            <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
+            <p
+              className="
+                mb-4
+                px-2
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-[0.2em]
+                text-gray-400
+              "
+            >
               Account
             </p>
 
             <button
               type="button"
               onClick={handleProfileClick}
-              className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-purple-50 hover:text-purple-700"
+              className="
+                group
+                relative
+                flex
+                min-h-[58px]
+                w-full
+                items-center
+                gap-3
+                overflow-hidden
+                rounded-2xl
+                border
+                border-purple-100
+                bg-white
+                px-3
+                text-left
+                text-sm
+                font-semibold
+                text-gray-700
+                shadow-[0_3px_10px_rgba(91,33,182,0.07)]
+                transition-all
+                duration-300
+                hover:-translate-y-1
+                hover:border-purple-200
+                hover:bg-gradient-to-r
+                hover:from-purple-50
+                hover:to-orange-50
+                hover:text-purple-800
+                hover:shadow-[0_9px_22px_rgba(91,33,182,0.16)]
+              "
             >
 
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-500 transition-all duration-200 group-hover:bg-purple-100 group-hover:text-purple-700">
+              <span
+                className="
+                  absolute
+                  left-0
+                  top-0
+                  h-full
+                  w-1
+                  -translate-x-full
+                  bg-gradient-to-b
+                  from-purple-700
+                  to-orange-500
+                  transition-transform
+                  duration-300
+                  group-hover:translate-x-0
+                "
+              />
+
+              <span
+                className="
+                  flex
+                  h-10
+                  w-10
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-gradient-to-br
+                  from-purple-50
+                  to-orange-50
+                  text-purple-600
+                  shadow-sm
+                  transition-all
+                  duration-300
+                  group-hover:scale-110
+                  group-hover:from-purple-100
+                  group-hover:to-orange-100
+                  group-hover:text-purple-700
+                "
+              >
                 <User size={19} />
               </span>
 
-              <span>
+              <span className="flex-1">
                 Profile Details
               </span>
+
+              <ChevronRight
+                size={17}
+                className="
+                  text-gray-300
+                  transition-all
+                  duration-300
+                  group-hover:translate-x-1
+                  group-hover:text-orange-500
+                "
+              />
 
             </button>
 
@@ -442,25 +905,110 @@ const Header = () => {
             LOGOUT
         ================================================= */}
 
-        <div className="shrink-0 border-t border-purple-100 bg-white px-4 py-4">
+        <div
+          className="
+            shrink-0
+            border-t
+            border-purple-100
+            bg-gradient-to-r
+            from-white
+            via-purple-50/50
+            to-orange-50/50
+            px-4
+            py-4
+          "
+        >
 
           <button
             type="button"
             onClick={handleLogout}
-            className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-gray-600 transition-all duration-200 hover:bg-orange-50 hover:text-orange-600"
+            className="
+              group
+              relative
+              flex
+              min-h-[58px]
+              w-full
+              items-center
+              gap-3
+              overflow-hidden
+              rounded-2xl
+              border
+              border-orange-100
+              bg-white
+              px-3
+              text-left
+              text-sm
+              font-semibold
+              text-gray-600
+              shadow-[0_3px_10px_rgba(249,115,22,0.07)]
+              transition-all
+              duration-300
+              hover:-translate-y-1
+              hover:border-orange-200
+              hover:bg-gradient-to-r
+              hover:from-orange-50
+              hover:to-white
+              hover:text-orange-600
+              hover:shadow-[0_9px_22px_rgba(249,115,22,0.16)]
+              active:translate-y-0
+            "
           >
 
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-500 transition-all duration-200 group-hover:bg-orange-100 group-hover:text-orange-600">
+            <span
+              className="
+                absolute
+                left-0
+                top-0
+                h-full
+                w-1
+                -translate-x-full
+                bg-gradient-to-b
+                from-orange-400
+                to-orange-600
+                transition-transform
+                duration-300
+                group-hover:translate-x-0
+              "
+            />
+
+            <span
+              className="
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-xl
+                bg-orange-50
+                text-orange-500
+                shadow-sm
+                transition-all
+                duration-300
+                group-hover:scale-110
+                group-hover:bg-orange-100
+              "
+            >
               <LogOut size={19} />
             </span>
 
-            <span>
+            <span className="flex-1">
               Logout
             </span>
 
+            <ChevronRight
+              size={17}
+              className="
+                text-gray-300
+                transition-all
+                duration-300
+                group-hover:translate-x-1
+                group-hover:text-orange-500
+              "
+            />
+
           </button>
 
-          <p className="mt-3 text-center text-[10px] text-gray-400">
+          <p className="mt-3 text-center text-[10px] font-medium text-gray-400">
             ScoreWell • Examination Platform
           </p>
 
