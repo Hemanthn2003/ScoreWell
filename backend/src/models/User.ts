@@ -6,8 +6,7 @@ import mongoose, {
 
 export type UserRole =
   | "STUDENT"
-  | "INSTRUCTOR"
-  | "PRINCIPAL";
+  | "INSTRUCTOR";
 
 export interface IUser extends Document {
   name: string;
@@ -45,7 +44,6 @@ const userSchema = new Schema<IUser>(
       enum: [
         "STUDENT",
         "INSTRUCTOR",
-        "PRINCIPAL",
       ],
       required: true,
     },
@@ -60,10 +58,10 @@ const userSchema = new Schema<IUser>(
       default: true,
     },
 
-    isPermitted: {
-      type: Boolean,
-      default: true,
-    },
+        isPermitted: {
+        type: Boolean,
+        required: false,
+        },
   },
   {
     collection: "user",
