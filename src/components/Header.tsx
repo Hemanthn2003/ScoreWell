@@ -17,6 +17,11 @@ import {
 
 import scoreWellLogo from "../assets/scoreWellLogo.png";
 
+
+// =========================================================
+// TYPES
+// =========================================================
+
 type UserRole = "STUDENT" | "INSTRUCTOR";
 
 interface LoggedInUser {
@@ -35,13 +40,19 @@ interface MenuItem {
   route: string;
 }
 
+
+// =========================================================
+// API
+// =========================================================
+
 const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:5000";
 
-/* =========================================================
-   INSTRUCTOR MENU
-========================================================= */
+
+// =========================================================
+// INSTRUCTOR MENU
+// =========================================================
 
 const instructorMenu: MenuItem[] = [
   {
@@ -71,9 +82,10 @@ const instructorMenu: MenuItem[] = [
   },
 ];
 
-/* =========================================================
-   STUDENT MENU
-========================================================= */
+
+// =========================================================
+// STUDENT MENU
+// =========================================================
 
 const studentMenu: MenuItem[] = [
   {
@@ -93,9 +105,10 @@ const studentMenu: MenuItem[] = [
   },
 ];
 
-/* =========================================================
-   HEADER
-========================================================= */
+
+// =========================================================
+// HEADER
+// =========================================================
 
 const Header = () => {
   const navigate = useNavigate();
@@ -109,9 +122,10 @@ const Header = () => {
   const [isLoadingUser, setIsLoadingUser] =
     useState(true);
 
-  /* =======================================================
-     FETCH LOGGED-IN USER
-  ======================================================= */
+
+  // =======================================================
+  // FETCH LOGGED-IN USER
+  // =======================================================
 
   useEffect(() => {
     const fetchLoggedInUser = async () => {
@@ -149,9 +163,10 @@ const Header = () => {
     fetchLoggedInUser();
   }, []);
 
-  /* =======================================================
-     ROLE BASED MENU
-  ======================================================= */
+
+  // =======================================================
+  // ROLE BASED MENU
+  // =======================================================
 
   const menuItems =
     user?.role === "INSTRUCTOR"
@@ -163,27 +178,39 @@ const Header = () => {
       ? "Instructor"
       : "Student";
 
-  /* =======================================================
-     NAVIGATION
-  ======================================================= */
+
+  // =======================================================
+  // NORMAL NAVIGATION
+  // =======================================================
 
   const handleNavigation = (route: string) => {
     setIsSidebarOpen(false);
     navigate(route);
   };
 
-  /* =======================================================
-     PROFILE
-  ======================================================= */
+
+  // =======================================================
+  // PROFILE NAVIGATION
+  // =======================================================
 
   const handleProfileClick = () => {
     setIsSidebarOpen(false);
-    navigate("/profile");
+
+    if (user?.role === "STUDENT") {
+      navigate("/student/profile");
+      return;
+    }
+
+    if (user?.role === "INSTRUCTOR") {
+      navigate("/instructor/profile");
+      return;
+    }
   };
 
-  /* =======================================================
-     LOGOUT
-  ======================================================= */
+
+  // =======================================================
+  // LOGOUT
+  // =======================================================
 
   const handleLogout = async () => {
     try {
@@ -207,6 +234,11 @@ const Header = () => {
       });
     }
   };
+
+
+  // =======================================================
+  // UI
+  // =======================================================
 
   return (
     <>
@@ -299,6 +331,7 @@ const Header = () => {
               <span className="flex flex-col gap-[5px]">
 
                 <span className="flex items-center gap-[5px]">
+
                   <span
                     className="
                       h-[5px]
@@ -322,9 +355,11 @@ const Header = () => {
                       group-hover:w-6
                     "
                   />
+
                 </span>
 
                 <span className="flex items-center gap-[5px]">
+
                   <span
                     className="
                       h-[5px]
@@ -348,11 +383,13 @@ const Header = () => {
                       group-hover:w-6
                     "
                   />
+
                 </span>
 
               </span>
 
             </button>
+
 
             {/* =================================================
                 LOGO
@@ -386,6 +423,7 @@ const Header = () => {
 
           </div>
 
+
           {/* =================================================
               GRADIENT BOTTOM ACCENT
           ================================================= */}
@@ -406,7 +444,9 @@ const Header = () => {
           />
 
         </div>
+
       </header>
+
 
       {/* =====================================================
           OVERLAY
@@ -427,6 +467,7 @@ const Header = () => {
           aria-hidden="true"
         />
       )}
+
 
       {/* =====================================================
           SIDEBAR
@@ -503,6 +544,7 @@ const Header = () => {
             />
           </div>
 
+
           {/* Close */}
           <button
             type="button"
@@ -535,6 +577,7 @@ const Header = () => {
             <X size={20} />
           </button>
 
+
           {/* Gradient line */}
           <div
             className="
@@ -551,6 +594,7 @@ const Header = () => {
           />
 
         </div>
+
 
         {/* =================================================
             USER INFORMATION
@@ -570,23 +614,30 @@ const Header = () => {
         >
 
           {isLoadingUser ? (
+
             <div className="flex items-center gap-3">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
+
                 <Loader2
                   size={20}
                   className="animate-spin text-purple-700"
                 />
+
               </div>
 
               <div>
+
                 <div className="h-3 w-28 animate-pulse rounded bg-gray-200" />
 
                 <div className="mt-2 h-2.5 w-36 animate-pulse rounded bg-gray-100" />
+
               </div>
 
             </div>
+
           ) : user ? (
+
             <div className="flex items-center gap-3">
 
               {/* Avatar */}
@@ -609,6 +660,7 @@ const Header = () => {
               >
                 <User size={21} />
               </div>
+
 
               {/* User Details */}
               <div className="min-w-0">
@@ -646,13 +698,17 @@ const Header = () => {
               </div>
 
             </div>
+
           ) : (
+
             <p className="text-sm text-gray-500">
               User details unavailable
             </p>
+
           )}
 
         </div>
+
 
         {/* =================================================
             NAVIGATION
@@ -674,9 +730,11 @@ const Header = () => {
             Navigation
           </p>
 
+
           <div className="space-y-3">
 
             {menuItems.map((item) => (
+
               <button
                 key={item.route}
                 type="button"
@@ -735,6 +793,7 @@ const Header = () => {
                   "
                 />
 
+
                 {/* Icon */}
                 <span
                   className="
@@ -763,10 +822,12 @@ const Header = () => {
                   {item.icon}
                 </span>
 
+
                 {/* Label */}
                 <span className="flex-1 leading-5">
                   {item.label}
                 </span>
+
 
                 {/* Arrow */}
                 <ChevronRight
@@ -781,9 +842,11 @@ const Header = () => {
                 />
 
               </button>
+
             ))}
 
           </div>
+
 
           {/* =================================================
               PROFILE
@@ -804,6 +867,7 @@ const Header = () => {
             >
               Account
             </p>
+
 
             <button
               type="button"
@@ -856,6 +920,7 @@ const Header = () => {
                 "
               />
 
+
               <span
                 className="
                   flex
@@ -880,9 +945,11 @@ const Header = () => {
                 <User size={19} />
               </span>
 
+
               <span className="flex-1">
                 Profile Details
               </span>
+
 
               <ChevronRight
                 size={17}
@@ -900,6 +967,7 @@ const Header = () => {
           </div>
 
         </nav>
+
 
         {/* =================================================
             LOGOUT
@@ -971,6 +1039,7 @@ const Header = () => {
               "
             />
 
+
             <span
               className="
                 flex
@@ -991,9 +1060,11 @@ const Header = () => {
               <LogOut size={19} />
             </span>
 
+
             <span className="flex-1">
               Logout
             </span>
+
 
             <ChevronRight
               size={17}
@@ -1008,6 +1079,7 @@ const Header = () => {
 
           </button>
 
+
           <p className="mt-3 text-center text-[10px] font-medium text-gray-400">
             ScoreWell • Examination Platform
           </p>
@@ -1018,5 +1090,6 @@ const Header = () => {
     </>
   );
 };
+
 
 export default Header;

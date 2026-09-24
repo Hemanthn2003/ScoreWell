@@ -9,46 +9,43 @@ import Login from "./pages/login/Login";
 import Register from "./pages/login/Register";
 import ForgotPassword from "./pages/login/ForgotPassword";
 
-import StudentDashboard from "./pages/student/StudentDashboard";
-import InstructorDashboard from "./pages/instructor/InstructorDashboard";
+// =========================================================
+// STUDENT
+// =========================================================
 
-import Header from "./components/Header";
+import StudentDashboard, {
+  StudentHome,
+} from "./pages/student/StudentDashboard";
 
-function PlaceholderPage({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-orange-50">
+import NewExams from "./pages/student/NewExams";
+import MyPerformance from "./pages/student/MyPerformance";
+import StudentProfile from "./pages/student/StudentProfile";
 
-      <Header />
+// =========================================================
+// INSTRUCTOR
+// =========================================================
 
-      <main className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+import InstructorDashboard, {
+  InstructorHome,
+} from "./pages/instructor/InstructorDashboard";
 
-        <div className="rounded-3xl border border-purple-100 bg-white p-8 shadow-lg shadow-purple-100/40">
+import CreateQuestionSet from "./pages/instructor/CreateQuestionSet";
+import StudentsExaminationStatus from "./pages/instructor/StudentsExaminationStatus";
+import CreateExam from "./pages/instructor/CreateExam";
+import NewlyRequestedStudent from "./pages/instructor/NewlyRequestedStudent";
+import InstructorProfile from "./pages/instructor/InstructorProfile";
 
-          <h1 className="text-2xl font-bold text-gray-900">
-            {title}
-          </h1>
 
-          <p className="mt-2 text-sm text-gray-500">
-            {description}
-          </p>
-
-        </div>
-
-      </main>
-    </div>
-  );
-}
+// =========================================================
+// APP
+// =========================================================
 
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
+
 
         {/* =================================================
             AUTHENTICATION
@@ -69,97 +66,140 @@ function App() {
           element={<ForgotPassword />}
         />
 
+
         {/* =================================================
             STUDENT
+            NESTED ROUTES
         ================================================= */}
 
         <Route
           path="/student"
           element={<StudentDashboard />}
-        />
+        >
 
-        <Route
-          path="/student/new-exams"
-          element={
-            <PlaceholderPage
-              title="New Exams"
-              description="View examinations currently available for you."
-            />
-          }
-        />
+          {/* -----------------------------------------------
+              STUDENT HOME
+              /student
+          ----------------------------------------------- */}
 
-        <Route
-          path="/student/my-performance"
-          element={
-            <PlaceholderPage
-              title="My Performance"
-              description="View your examination performance and results."
-            />
-          }
-        />
+          <Route
+            index
+            element={<StudentHome />}
+          />
+
+
+          {/* -----------------------------------------------
+              AVAILABLE EXAMINATIONS
+              /student/new-exams
+          ----------------------------------------------- */}
+
+          <Route
+            path="new-exams"
+            element={<NewExams />}
+          />
+
+
+          {/* -----------------------------------------------
+              MY ATTEMPTS
+              /student/my-performance
+          ----------------------------------------------- */}
+
+          <Route
+            path="my-performance"
+            element={<MyPerformance />}
+          />
+
+
+          {/* -----------------------------------------------
+              STUDENT PROFILE
+              /student/profile
+          ----------------------------------------------- */}
+
+          <Route
+            path="profile"
+            element={<StudentProfile />}
+          />
+
+        </Route>
+
 
         {/* =================================================
             INSTRUCTOR
+            NESTED ROUTES
         ================================================= */}
 
         <Route
           path="/instructor"
           element={<InstructorDashboard />}
-        />
+        >
 
-        <Route
-          path="/instructor/create-question-set"
-          element={
-            <PlaceholderPage
-              title="Create Question Set"
-              description="Create and manage examination question sets."
-            />
-          }
-        />
+          {/* -----------------------------------------------
+              INSTRUCTOR HOME
+              /instructor
+          ----------------------------------------------- */}
 
-        <Route
-          path="/instructor/students-examination-status"
-          element={
-            <PlaceholderPage
-              title="Students Examination Status"
-              description="Monitor student examination activity and status."
-            />
-          }
-        />
+          <Route
+            index
+            element={<InstructorHome />}
+          />
 
-        <Route
-          path="/instructor/create-exam"
-          element={
-            <PlaceholderPage
-              title="Create Exam"
-              description="Create and publish a new examination."
-            />
-          }
-        />
 
-        <Route
-          path="/instructor/newly-requested-student"
-          element={
-            <PlaceholderPage
-              title="Newly Requested Student"
-              description="Review and manage newly requested student accounts."
-            />
-          }
-        />
+          {/* -----------------------------------------------
+              CREATE QUESTION SET
+              /instructor/create-question-set
+          ----------------------------------------------- */}
 
-        {/* =================================================
-            COMMON PROFILE
-        ================================================= */}
+          <Route
+            path="create-question-set"
+            element={<CreateQuestionSet />}
+          />
 
-        <Route
-          path="/profile"
-          element={
-            <PlaceholderPage
-              title="Profile Details"
-              description="View and manage your ScoreWell profile."
-            />
-          }
-        />
+
+          {/* -----------------------------------------------
+              STUDENTS EXAMINATION STATUS
+              /instructor/students-examination-status
+          ----------------------------------------------- */}
+
+          <Route
+            path="students-examination-status"
+            element={<StudentsExaminationStatus />}
+          />
+
+
+          {/* -----------------------------------------------
+              CREATE EXAM
+              /instructor/create-exam
+          ----------------------------------------------- */}
+
+          <Route
+            path="create-exam"
+            element={<CreateExam />}
+          />
+
+
+          {/* -----------------------------------------------
+              NEWLY REQUESTED STUDENT
+              /instructor/newly-requested-student
+          ----------------------------------------------- */}
+
+          <Route
+            path="newly-requested-student"
+            element={<NewlyRequestedStudent />}
+          />
+
+
+          {/* -----------------------------------------------
+              INSTRUCTOR PROFILE
+              /instructor/profile
+          ----------------------------------------------- */}
+
+          <Route
+            path="profile"
+            element={<InstructorProfile />}
+          />
+
+        </Route>
+
 
         {/* =================================================
             UNKNOWN ROUTE
@@ -176,8 +216,10 @@ function App() {
         />
 
       </Routes>
+
     </BrowserRouter>
   );
 }
+
 
 export default App;
