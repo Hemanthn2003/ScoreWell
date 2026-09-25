@@ -16,6 +16,8 @@ import examinationStatusRoutes from "./src/routes/examinationStatusRoutes";
 
 import studentRequestRoutes from "./src/routes/studentRequestRoutes";
 
+import instructorDashboardRoutes from "./src/routes/instructorDashboardRoutes";
+
 const app = express();
 
 const PORT =
@@ -92,6 +94,10 @@ app.use(
 /* =========================================================
    EXAMS
 ========================================================= */
+app.use(
+  "/api/instructor/dashboard",
+  instructorDashboardRoutes
+);
 
 app.use(
   "/api/exams",
