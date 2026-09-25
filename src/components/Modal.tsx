@@ -38,46 +38,118 @@ const Modal = ({
         : "bg-purple-100 text-purple-600";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+    <div
+      className="
+        fixed
+        inset-0
+        z-[100]
+        flex
+        items-center
+        justify-center
+        bg-black/40
+        px-4
+        backdrop-blur-sm
+      "
+    >
       <div
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-2xl"
+        className="
+          w-full
+          max-w-md
+          overflow-hidden
+          rounded-2xl
+          border
+          border-purple-100
+          bg-white
+          shadow-2xl
+        "
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
       >
-        <div className="h-1 w-full bg-gradient-to-r from-purple-700 via-purple-500 to-orange-400" />
+        {/* TOP GRADIENT */}
+        <div
+          className="
+            h-1
+            w-full
+            bg-gradient-to-r
+            from-purple-700
+            via-purple-500
+            to-orange-400
+          "
+        />
 
         <div className="p-6 sm:p-7">
           <div className="flex flex-col items-center text-center">
+
+            {/* ICON */}
             <div
-              className={`mb-4 flex h-14 w-14 items-center justify-center rounded-full text-2xl font-bold ${iconClasses}`}
+              className={`
+                mb-4
+                flex
+                h-14
+                w-14
+                items-center
+                justify-center
+                rounded-full
+                text-2xl
+                font-bold
+                ${iconClasses}
+              `}
             >
               {icon}
             </div>
 
+            {/* TITLE */}
             <h2
               id="modal-title"
-              className="text-xl font-bold text-purple-950"
+              className="
+                text-xl
+                font-bold
+                text-purple-950
+              "
             >
               {title}
             </h2>
 
+            {/* MESSAGE */}
             {message && (
-              <p className="mt-2 text-sm leading-6 text-gray-600">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-6
+                  text-gray-600
+                "
+              >
                 {message}
               </p>
             )}
 
+            {/* CUSTOM CONTENT */}
             {children && (
               <div className="mt-4 w-full">
                 {children}
               </div>
             )}
 
+            {/* CLOSE BUTTON */}
             <button
               type="button"
               onClick={onClose}
-              className="mt-6 w-full rounded-xl bg-purple-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-800 active:scale-[0.99]"
+              className="
+                mt-6
+                w-full
+                rounded-xl
+                bg-purple-700
+                px-5
+                py-3
+                text-sm
+                font-semibold
+                text-white
+                transition
+                hover:bg-purple-800
+                active:scale-[0.99]
+              "
             >
               {closeButtonText}
             </button>

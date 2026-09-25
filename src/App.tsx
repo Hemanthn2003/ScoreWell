@@ -30,11 +30,14 @@ import InstructorDashboard, {
 } from "./pages/instructor/InstructorDashboard";
 
 import CreateQuestionSet from "./pages/instructor/CreateQuestionSet";
-import StudentsExaminationStatus from "./pages/instructor/StudentsExaminationStatus";
-import CreateExam from "./pages/instructor/CreateExam";
-import NewlyRequestedStudent from "./pages/instructor/NewlyRequestedStudent";
-import InstructorProfile from "./pages/instructor/InstructorProfile";
 
+import StudentsExaminationStatus from "./pages/instructor/StudentsExaminationStatus";
+
+import CreateExam from "./pages/instructor/CreateExam";
+
+import NewlyRequestedStudent from "./pages/instructor/NewlyRequestedStudent";
+
+import InstructorProfile from "./pages/instructor/InstructorProfile";
 
 // =========================================================
 // APP
@@ -43,9 +46,7 @@ import InstructorProfile from "./pages/instructor/InstructorProfile";
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
-
 
         {/* =================================================
             AUTHENTICATION
@@ -77,44 +78,25 @@ function App() {
           element={<StudentDashboard />}
         >
 
-          {/* -----------------------------------------------
-              STUDENT HOME
-              /student
-          ----------------------------------------------- */}
-
+          {/* STUDENT HOME */}
           <Route
             index
             element={<StudentHome />}
           />
 
-
-          {/* -----------------------------------------------
-              AVAILABLE EXAMINATIONS
-              /student/new-exams
-          ----------------------------------------------- */}
-
+          {/* AVAILABLE EXAMINATIONS */}
           <Route
             path="new-exams"
             element={<NewExams />}
           />
 
-
-          {/* -----------------------------------------------
-              MY ATTEMPTS
-              /student/my-performance
-          ----------------------------------------------- */}
-
+          {/* MY PERFORMANCE */}
           <Route
             path="my-performance"
             element={<MyPerformance />}
           />
 
-
-          {/* -----------------------------------------------
-              STUDENT PROFILE
-              /student/profile
-          ----------------------------------------------- */}
-
+          {/* STUDENT PROFILE */}
           <Route
             path="profile"
             element={<StudentProfile />}
@@ -133,66 +115,41 @@ function App() {
           element={<InstructorDashboard />}
         >
 
-          {/* -----------------------------------------------
-              INSTRUCTOR HOME
-              /instructor
-          ----------------------------------------------- */}
-
+          {/* INSTRUCTOR HOME */}
           <Route
             index
             element={<InstructorHome />}
           />
 
-
-          {/* -----------------------------------------------
-              CREATE QUESTION SET
-              /instructor/create-question-set
-          ----------------------------------------------- */}
-
+          {/* CREATE QUESTION SET */}
           <Route
             path="create-question-set"
             element={<CreateQuestionSet />}
           />
 
-
-          {/* -----------------------------------------------
-              STUDENTS EXAMINATION STATUS
-              /instructor/students-examination-status
-          ----------------------------------------------- */}
-
+          {/* STUDENTS EXAMINATION STATUS */}
           <Route
             path="students-examination-status"
-            element={<StudentsExaminationStatus />}
+            element={
+              <StudentsExaminationStatus />
+            }
           />
 
-
-          {/* -----------------------------------------------
-              CREATE EXAM
-              /instructor/create-exam
-          ----------------------------------------------- */}
-
+          {/* CREATE EXAM */}
           <Route
             path="create-exam"
             element={<CreateExam />}
           />
 
-
-          {/* -----------------------------------------------
-              NEWLY REQUESTED STUDENT
-              /instructor/newly-requested-student
-          ----------------------------------------------- */}
-
+          {/* NEWLY REQUESTED STUDENT */}
           <Route
             path="newly-requested-student"
-            element={<NewlyRequestedStudent />}
+            element={
+              <NewlyRequestedStudent />
+            }
           />
 
-
-          {/* -----------------------------------------------
-              INSTRUCTOR PROFILE
-              /instructor/profile
-          ----------------------------------------------- */}
-
+          {/* INSTRUCTOR PROFILE */}
           <Route
             path="profile"
             element={<InstructorProfile />}
@@ -216,10 +173,8 @@ function App() {
         />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
-
 
 export default App;

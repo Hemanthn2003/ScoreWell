@@ -12,6 +12,10 @@ import questionSetRoutes from "./src/routes/questionSetRoutes";
 
 import examRoutes from "./src/routes/examRoutes";
 
+import examinationStatusRoutes from "./src/routes/examinationStatusRoutes";
+
+import studentRequestRoutes from "./src/routes/studentRequestRoutes";
+
 const app = express();
 
 const PORT =
@@ -94,6 +98,15 @@ app.use(
   examRoutes
 );
 
+app.use(
+  "/api/examination-status",
+  examinationStatusRoutes
+);
+
+app.use(
+  "/api/student-requests",
+  studentRequestRoutes
+);
 /* =========================================================
    START SERVER
 ========================================================= */
