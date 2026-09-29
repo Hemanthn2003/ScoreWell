@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 interface UserProfile {
   name: string;
@@ -10,11 +14,26 @@ interface UserProfile {
 }
 
 function InstructorProfile() {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [user, setUser] =
+    useState<UserProfile | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  // Prevent the initial profile API request from being
+  // repeated by React StrictMode during development.
+  const hasLoadedProfile = useRef(false);
 
   useEffect(() => {
+    if (hasLoadedProfile.current) {
+      return;
+    }
+
+    hasLoadedProfile.current = true;
+
     const fetchProfile = async () => {
       try {
         setLoading(true);
@@ -32,7 +51,8 @@ function InstructorProfile() {
 
         if (!response.ok || !data.success) {
           throw new Error(
-            data.message || "Unable to load profile."
+            data.message ||
+              "Unable to load profile."
           );
         }
 
@@ -48,14 +68,12 @@ function InstructorProfile() {
       }
     };
 
-    fetchProfile();
+    void fetchProfile();
   }, []);
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-purple-50 via-white to-orange-50 px-4 py-8 sm:px-6 lg:px-8">
-
       <div className="mx-auto max-w-5xl">
-
         {/* Header */}
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-wider text-orange-500">
@@ -71,7 +89,6 @@ function InstructorProfile() {
           </p>
         </div>
 
-
         {/* Loading */}
         {loading && (
           <div className="rounded-3xl border border-purple-100 bg-white p-10 text-center shadow-lg shadow-purple-100/40">
@@ -82,7 +99,6 @@ function InstructorProfile() {
             </p>
           </div>
         )}
-
 
         {/* Error */}
         {!loading && error && (
@@ -99,16 +115,12 @@ function InstructorProfile() {
           </div>
         )}
 
-
         {/* Profile */}
         {!loading && !error && user && (
           <div className="overflow-hidden rounded-3xl border border-purple-100 bg-white shadow-xl shadow-purple-100/50">
-
             {/* Profile Banner */}
             <div className="bg-gradient-to-r from-purple-700 via-purple-600 to-orange-500 px-6 py-8 sm:px-8">
-
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-
                 {/* Avatar */}
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-white/80 bg-white text-3xl font-bold text-purple-700 shadow-lg">
                   {user.name
@@ -129,20 +141,16 @@ function InstructorProfile() {
                     {user.email}
                   </p>
                 </div>
-
               </div>
             </div>
 
-
             {/* Details */}
             <div className="p-6 sm:p-8">
-
               <h3 className="text-lg font-bold text-gray-900">
                 Personal Information
               </h3>
 
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
-
                 {/* Name */}
                 <div className="rounded-2xl border border-purple-100 bg-purple-50/40 p-5">
                   <p className="text-xs font-semibold uppercase tracking-wider text-purple-500">
@@ -153,7 +161,6 @@ function InstructorProfile() {
                     {user.name}
                   </p>
                 </div>
-
 
                 {/* Email */}
                 <div className="rounded-2xl border border-purple-100 bg-purple-50/40 p-5">
@@ -166,7 +173,6 @@ function InstructorProfile() {
                   </p>
                 </div>
 
-
                 {/* Role */}
                 <div className="rounded-2xl border border-orange-100 bg-orange-50/40 p-5">
                   <p className="text-xs font-semibold uppercase tracking-wider text-orange-500">
@@ -178,7 +184,6 @@ function InstructorProfile() {
                   </p>
                 </div>
 
-
                 {/* Department */}
                 <div className="rounded-2xl border border-orange-100 bg-orange-50/40 p-5">
                   <p className="text-xs font-semibold uppercase tracking-wider text-orange-500">
@@ -189,21 +194,16 @@ function InstructorProfile() {
                     {user.department || "Not specified"}
                   </p>
                 </div>
-
               </div>
-
 
               {/* Account Status */}
               <div className="mt-8">
-
                 <h3 className="text-lg font-bold text-gray-900">
                   Account Status
                 </h3>
 
                 <div className="mt-4 rounded-2xl border border-green-100 bg-green-50 p-5">
-
                   <div className="flex items-center gap-3">
-
                     <span className="flex h-3 w-3 rounded-full bg-green-500" />
 
                     <div>
@@ -215,20 +215,13 @@ function InstructorProfile() {
                         Your ScoreWell instructor account is currently active.
                       </p>
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
         )}
-
       </div>
-
     </div>
   );
 }

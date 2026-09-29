@@ -2,6 +2,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from "react";
 
 import {
@@ -19,6 +20,9 @@ import {
   CircleCheck,
   CircleX,
   Loader2,
+  FileUp,
+  FileText,
+  Sparkles,
 } from "lucide-react";
 
 /* =========================================================
@@ -143,10 +147,31 @@ const CreateQuestionSet = () => {
     useState<string | null>(null);
 
   /* =======================================================
+     PDF IMPORT
+  ======================================================= */
+
+  const [isImportingPdf, setIsImportingPdf] =
+    useState(false);
+
+  const pdfInputRef =
+    useRef<HTMLInputElement | null>(null);
+
+  // React StrictMode runs mount effects twice in development.
+  // These guards keep each initial API request to one call.
+  const hasLoadedUser = useRef(false);
+  const hasLoadedQuestionSets = useRef(false);
+
+  /* =======================================================
      LOAD USER
   ======================================================= */
 
   useEffect(() => {
+    if (hasLoadedUser.current) {
+      return;
+    }
+
+    hasLoadedUser.current = true;
+
     const loadUser = async () => {
       try {
         const response = await fetch(
@@ -230,7 +255,12 @@ const CreateQuestionSet = () => {
   };
 
   useEffect(() => {
-    loadQuestionSets();
+    if (hasLoadedQuestionSets.current) {
+      return;
+    }
+
+    hasLoadedQuestionSets.current = true;
+    void loadQuestionSets();
   }, []);
 
   /* =======================================================
@@ -664,6 +694,106 @@ const CreateQuestionSet = () => {
       setEditingQuestionIndex(
         null
       );
+    }
+  };
+
+  /* =======================================================
+     IMPORT QUESTIONS FROM PDF
+  ======================================================= */
+
+  const handlePdfImport = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    // Allow selecting the same PDF again later.
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      setError("Please select a PDF file.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("PDF size must be 10 MB or less.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setIsImportingPdf(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("pdf", file);
+
+      const response = await fetch(
+        `${API_URL}/api/question-sets/import-pdf`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to read questions from the PDF."
+        );
+      }
+
+      const importedQuestions: Question[] =
+        (data.questions || []).map(
+          (question: Question) => ({
+            question: question.question || "",
+            options: Array.isArray(question.options)
+              ? question.options
+              : [],
+            questionType:
+              question.questionType === "MULTI"
+                ? "MULTI"
+                : "SINGLE",
+            answer: Array.isArray(question.answer)
+              ? question.answer
+              : [],
+          })
+        );
+
+      if (importedQuestions.length === 0) {
+        throw new Error(
+          "No questions could be detected. Make sure the PDF follows the supported question format."
+        );
+      }
+
+      setQuestions((previous) => [
+        ...previous,
+        ...importedQuestions,
+      ]);
+
+      const warningText =
+        Array.isArray(data.warnings) &&
+        data.warnings.length > 0
+          ? ` ${data.warnings.length} question(s) need review before saving.`
+          : "";
+
+      setSuccess(
+        `${importedQuestions.length} question(s) imported successfully.${warningText}`
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to import PDF questions."
+      );
+    } finally {
+      setIsImportingPdf(false);
     }
   };
 
@@ -1146,6 +1276,72 @@ const CreateQuestionSet = () => {
                   will be automatically stored
                   from your instructor account.
                 </p>
+
+              </div>
+
+              {/* PDF IMPORT */}
+
+              <div className="mt-6 overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-purple-50 p-4 sm:p-5">
+
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-purple-700 text-white shadow-lg shadow-orange-100">
+                      <FileText size={21} />
+                    </div>
+
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-black text-slate-900">
+                          Import Questions from PDF
+                        </h3>
+                        <span className="rounded-full bg-purple-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-purple-700">
+                          Smart Import
+                        </span>
+                      </div>
+
+                      <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
+                        Upload a text-based MCQ PDF. ScoreWell will read the questions, four options and correct answers, then detect SINGLE or MULTI automatically. You can review and edit everything before saving.
+                      </p>
+
+                      <p className="mt-1 text-[11px] font-semibold text-slate-400">
+                        Supported pattern: Question → A/B/C/D options → Correct Answer. Maximum 10 MB.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0">
+                    <input
+                      ref={pdfInputRef}
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      onChange={handlePdfImport}
+                      className="hidden"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => pdfInputRef.current?.click()}
+                      disabled={isImportingPdf}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-700 to-purple-900 px-4 py-3 text-xs font-black text-white shadow-lg shadow-purple-200 transition hover:-translate-y-0.5 hover:from-purple-800 hover:to-purple-950 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                    >
+                      {isImportingPdf ? (
+                        <Loader2 size={17} className="animate-spin" />
+                      ) : (
+                        <FileUp size={17} />
+                      )}
+                      {isImportingPdf
+                        ? "Reading PDF..."
+                        : "Choose PDF"}
+                    </button>
+                  </div>
+
+                </div>
+
+                <div className="mt-4 flex items-center gap-2 rounded-xl border border-purple-100 bg-white/80 px-3 py-2.5 text-[11px] font-semibold text-purple-700">
+                  <Sparkles size={14} className="shrink-0 text-orange-500" />
+                  Imported questions appear in the Question Bank on the right, where you can edit or delete them before saving.
+                </div>
 
               </div>
 

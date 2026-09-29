@@ -1,12 +1,24 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
 
 import {
   Link,
 } from "react-router-dom";
+
+import {
+  CalendarClock,
+  CalendarDays,
+  Clock3,
+  ShieldCheck,
+  Timer,
+} from "lucide-react";
 
 type QuestionType =
   | "SINGLE"
@@ -59,10 +71,23 @@ interface Exam {
 
   mode: ExamMode;
   maxAttempts: number;
+  startDate?: string | null;
+  deadlineDate?: string | null;
+
+  strictExam?: {
+    _id: string;
+    examId: string;
+    questionSetIds: string[];
+    attemptChances: number;
+    deadlineDate: string;
+    instructorId: string;
+    durationMinutes: number;
+  } | null;
 
   status:
     | "UNPUBLISHED"
     | "PUBLISHED"
+    | "EXPIRED"
     | "CLOSED";
 
   selectedStudents?: Student[];
@@ -76,6 +101,8 @@ interface User {
   department?: string | null;
 }
 
+
+dayjs.extend(duration);
 
 /* =========================================================
    HELPERS
@@ -94,6 +121,40 @@ const emptyQuestion =
   });
 
 
+
+const formatCountdown = (
+  deadline?: string | null,
+  nowMs = Date.now()
+): string => {
+  if (!deadline) return "No deadline set";
+
+  const deadlineMs = dayjs(deadline).valueOf();
+
+  if (!Number.isFinite(deadlineMs)) {
+    return "Invalid deadline";
+  }
+
+  const remaining = deadlineMs - nowMs;
+
+  if (remaining <= 0) {
+    return "Expired";
+  }
+
+  const totalSeconds = Math.floor(remaining / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s left`;
+};
+
+const formatDateTime = (value?: string | null): string => {
+  if (!value) return "Not set";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Invalid date";
+  return date.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+};
 
 /* =========================================================
    INLINE QUESTION SET CREATOR
@@ -947,6 +1008,16 @@ const CreateExam = () => {
     setSuccess,
   ] = useState("");
 
+  const [nowTick, setNowTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNowTick(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   /* =======================================================
      FORM
   ======================================================= */
@@ -1004,6 +1075,24 @@ const CreateExam = () => {
     maxAttempts,
     setMaxAttempts,
   ] = useState(1);
+
+  const [startDate, setStartDate] = useState("");
+  const [deadlineDate, setDeadlineDate] = useState("");
+
+  const [
+    strictMode,
+    setStrictMode,
+  ] = useState(false);
+
+  const [
+    strictAttemptChances,
+    setStrictAttemptChances,
+  ] = useState(1);
+
+  const [
+    strictDeadlineDate,
+    setStrictDeadlineDate,
+  ] = useState("");
 
   const [
     selectedStudentIds,
@@ -1130,9 +1219,19 @@ const CreateExam = () => {
       }
     };
 
+  const hasLoadedInitialData = useRef(false);
+
   useEffect(() => {
+    if (hasLoadedInitialData.current) {
+      return;
+    }
+
+    hasLoadedInitialData.current = true;
     void loadData();
   }, []);
+
+  // Exam data is fetched once when this page opens.
+  // Countdown/status display is calculated locally from the dates.
 
   /* =======================================================
      QUESTION COUNT LIMIT
@@ -1226,6 +1325,9 @@ const CreateExam = () => {
       setMaxAttempts(
         1
       );
+      setStrictMode(false);
+      setStrictAttemptChances(1);
+      setStrictDeadlineDate("");
       setSelectedStudentIds(
         []
       );
@@ -1289,6 +1391,45 @@ const CreateExam = () => {
 
     setMaxAttempts(
       exam.maxAttempts
+    );
+
+    const toLocalDateTime = (value?: string | Date | null): string => {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    setStartDate(toLocalDateTime(exam.startDate));
+    setDeadlineDate(toLocalDateTime(exam.deadlineDate));
+
+    setStrictMode(Boolean(exam.strictExam));
+    setStrictAttemptChances(
+      exam.strictExam?.attemptChances ?? 1
+    );
+    setStrictDeadlineDate(
+      exam.strictExam?.deadlineDate
+        ? (() => {
+            const date = new Date(
+              exam.strictExam.deadlineDate
+            );
+
+            const year = date.getFullYear();
+            const month = String(
+              date.getMonth() + 1
+            ).padStart(2, "0");
+            const day = String(
+              date.getDate()
+            ).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+          })()
+        : ""
     );
 
     setSelectedStudentIds(
@@ -1457,6 +1598,64 @@ const CreateExam = () => {
         return;
       }
 
+      if (startDate && deadlineDate) {
+        const start = new Date(startDate).getTime();
+        const deadline = new Date(deadlineDate).getTime();
+        if (Number.isNaN(start) || Number.isNaN(deadline)) {
+          setError("Select valid start and deadline date/time values.");
+          return;
+        }
+        if (deadline <= start) {
+          setError("Deadline must be after the start date and time.");
+          return;
+        }
+      }
+
+      if (deadlineDate && new Date(deadlineDate).getTime() <= Date.now()) {
+        setError("Deadline date and time must be in the future.");
+        return;
+      }
+
+      if (strictMode) {
+        if (
+          !Number.isInteger(strictAttemptChances) ||
+          strictAttemptChances < 1
+        ) {
+          setError(
+            "Strict mode attempt chances must be at least 1."
+          );
+          return;
+        }
+
+        if (!strictDeadlineDate) {
+          setError(
+            "Select a strict mode deadline date."
+          );
+          return;
+        }
+
+        const selectedDeadline = new Date(
+          `${strictDeadlineDate}T23:59:59`
+        );
+
+        if (Number.isNaN(selectedDeadline.getTime())) {
+          setError(
+            "Select a valid strict mode deadline date."
+          );
+          return;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (selectedDeadline < today) {
+          setError(
+            "Strict mode deadline cannot be in the past."
+          );
+          return;
+        }
+      }
+
       setSaving(true);
 
       try {
@@ -1515,6 +1714,20 @@ const CreateExam = () => {
                   mode,
 
                   maxAttempts,
+
+                  startDate: startDate || undefined,
+
+                  deadlineDate: deadlineDate || undefined,
+
+                  strictMode,
+
+                  strictAttemptChances: strictMode
+                    ? strictAttemptChances
+                    : undefined,
+
+                  strictDeadlineDate: strictMode
+                    ? strictDeadlineDate
+                    : undefined,
 
                   studentIds:
                     mode ===
@@ -1658,9 +1871,10 @@ const CreateExam = () => {
         await loadData();
 
         setSuccess(
-          action ===
-            "publish"
-            ? "Exam published successfully."
+          action === "publish"
+            ? data.exam?.status === "UNPUBLISHED"
+              ? "Exam scheduled successfully. It will publish automatically at the configured start time."
+              : "Exam published successfully."
             : "Exam unpublished successfully."
         );
       } catch (error) {
@@ -1672,19 +1886,11 @@ const CreateExam = () => {
       }
     };
 
-  const unpublishedExams =
-    exams.filter(
-      (exam) =>
-        exam.status !==
-        "PUBLISHED"
-    );
+  const unpublishedExams = exams.filter((exam) => exam.status === "UNPUBLISHED");
 
-  const publishedExams =
-    exams.filter(
-      (exam) =>
-        exam.status ===
-        "PUBLISHED"
-    );
+  const publishedExams = exams.filter((exam) => exam.status === "PUBLISHED");
+
+  const expiredExams = exams.filter((exam) => exam.status === "EXPIRED");
 
   /* =======================================================
      INLINE QUESTION SET PAGE
@@ -2350,6 +2556,138 @@ const CreateExam = () => {
           </div>
 
           {/* =================================================
+              EXAM SCHEDULE
+          ================================================= */}
+
+          <div className="mt-8 overflow-hidden rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 via-white to-orange-50 p-5 shadow-lg shadow-purple-100/30">
+            <div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-orange-500 text-white shadow-lg shadow-purple-200"><CalendarClock size={21} /></div><div><p className="text-base font-black text-slate-900">Exam Schedule</p><p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">Set when the exam should become available and when it should expire. Leave the start date empty for manual publication; publishing manually will automatically record that moment as the start time.</p></div></div>
+            <div className="mt-5 grid gap-5 md:grid-cols-2">
+              <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm"><label className="text-sm font-bold text-slate-700">Start Date & Time</label><p className="mt-1 text-xs text-slate-500">The exam automatically publishes at this time when it is scheduled.</p><div className="relative mt-3"><CalendarDays size={19} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-purple-600" /><input type="datetime-local" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-11 font-semibold text-slate-700 outline-none transition [color-scheme:light] focus:border-purple-400 focus:ring-4 focus:ring-purple-100" /></div></div>
+              <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm"><label className="text-sm font-bold text-slate-700">Deadline Date & Time</label><p className="mt-1 text-xs text-slate-500">The exam automatically changes to Expired when this exact time arrives.</p><div className="relative mt-3"><Timer size={19} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" /><input type="datetime-local" value={deadlineDate} onChange={(event) => setDeadlineDate(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-11 font-semibold text-slate-700 outline-none transition [color-scheme:light] focus:border-orange-400 focus:ring-4 focus:ring-orange-100" /></div></div>
+            </div>
+          </div>
+
+          {/* =================================================
+              EXAM STRICT MODE
+          ================================================= */}
+
+          <div className={`mt-8 overflow-hidden rounded-2xl border p-5 transition ${
+            strictMode
+              ? "border-purple-200 bg-gradient-to-br from-purple-50 via-white to-orange-50 shadow-lg shadow-purple-100/50"
+              : "border-slate-200 bg-white"
+          }`}>
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+              <div className="flex items-start gap-3">
+
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                  strictMode
+                    ? "bg-gradient-to-br from-purple-600 to-orange-500 text-white shadow-lg shadow-purple-200"
+                    : "bg-purple-50 text-purple-600"
+                }`}>
+                  <ShieldCheck size={21} />
+                </div>
+
+                <div>
+                  <p className="text-base font-black text-slate-900">
+                    Exam Strict Mode
+                  </p>
+                  <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
+                    Control how many times a student can attempt this examination and set the final date by which the examination must be completed.
+                  </p>
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                aria-pressed={strictMode}
+                onClick={() => setStrictMode((previous) => !previous)}
+                className={`relative h-8 w-14 shrink-0 rounded-full transition ${
+                  strictMode
+                    ? "bg-gradient-to-r from-purple-600 to-orange-500"
+                    : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition ${
+                    strictMode ? "left-7" : "left-1"
+                  }`}
+                />
+              </button>
+
+            </div>
+
+            {strictMode && (
+              <div className="mt-5 grid gap-5 md:grid-cols-2">
+
+                <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-bold text-slate-700">
+                    Strict Mode Attempt Chances
+                  </label>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    Maximum number of attempts permitted under strict mode.
+                  </p>
+
+                  <input
+                    type="number"
+                    min={1}
+                    value={strictAttemptChances}
+                    onChange={(event) =>
+                      setStrictAttemptChances(
+                        Math.max(1, Number(event.target.value))
+                      )
+                    }
+                    className="mt-3 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
+                  />
+                </div>
+
+                <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-bold text-slate-700">
+                    Deadline Date
+                  </label>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    Students must complete the examination on or before this date.
+                  </p>
+
+                  <div className="relative mt-3">
+                    <CalendarDays
+                      size={19}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-purple-600"
+                    />
+
+                    <input
+                      type="date"
+                      value={strictDeadlineDate}
+                      min={(() => {
+                        const today = new Date();
+                        const year = today.getFullYear();
+                        const month = String(
+                          today.getMonth() + 1
+                        ).padStart(2, "0");
+                        const day = String(
+                          today.getDate()
+                        ).padStart(2, "0");
+                        return `${year}-${month}-${day}`;
+                      })()}
+                      onChange={(event) =>
+                        setStrictDeadlineDate(event.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-11 font-semibold text-slate-700 outline-none transition [color-scheme:light] focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                    />
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
+          {/* =================================================
               SAVE
           ================================================= */}
 
@@ -2527,7 +2865,11 @@ const CreateExam = () => {
 
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    {exam.startDate && new Date(exam.startDate).getTime() > nowTick && (
+                    <div className="mt-4 rounded-2xl border border-purple-100 bg-purple-50 p-4"><div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-purple-700"><Clock3 size={15} /> Scheduled Start</div><p className="mt-1 text-sm font-bold text-slate-800">{formatDateTime(exam.startDate)}</p></div>
+                  )}
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
 
                       <div className="rounded-xl bg-white p-3">
                         <p className="text-slate-400">
@@ -2682,6 +3024,8 @@ const CreateExam = () => {
 
                   </div>
 
+                  <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-green-700"><Timer size={15} /> Time Remaining</div><span className="text-sm font-black text-green-800">{formatCountdown(exam.deadlineDate, nowTick)}</span></div><p className="mt-2 text-xs font-semibold text-green-700">Deadline: {formatDateTime(exam.deadlineDate)}</p></div>
+
                   <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
 
                     <div className="rounded-xl bg-white p-3">
@@ -2770,6 +3114,17 @@ const CreateExam = () => {
 
           </div>
 
+        </section>
+
+        {/* =================================================
+            EXPIRED SECTION
+        ================================================= */}
+        <section className="mt-12 border-t border-slate-100 pt-10">
+          <div><p className="text-xs font-bold uppercase tracking-[0.15em] text-red-500">Section 03</p><h2 className="mt-1 text-xl font-bold text-slate-900">Expired Exams</h2><p className="mt-1 text-sm text-slate-500">Exams whose deadline has passed. Edit the schedule before publishing an expired exam again.</p></div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {expiredExams.length === 0 && <div className="md:col-span-2 rounded-2xl border border-dashed border-red-200 bg-red-50/30 p-10 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-600"><Timer size={24} /></div><h3 className="mt-4 font-bold text-slate-800">No expired exams</h3><p className="mt-1 text-sm text-slate-500">Expired examinations will appear here automatically.</p></div>}
+            {expiredExams.map((exam) => <div key={exam._id} className="rounded-2xl border border-red-100 bg-gradient-to-br from-white to-red-50/40 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><div className="flex items-start justify-between gap-3"><div><span className="rounded-full bg-red-100 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-red-700">Expired</span><h3 className="mt-3 text-lg font-bold text-slate-900">{exam.title}</h3><p className="mt-1 text-sm text-slate-500">{exam.department}</p></div><span className="rounded-xl bg-purple-100 px-3 py-2 text-xs font-bold text-purple-700">{exam.mode}</span></div><div className="mt-4 grid grid-cols-2 gap-2 text-xs"><div className="rounded-xl bg-white p-3"><p className="text-slate-400">Started</p><p className="mt-1 font-bold text-slate-800">{formatDateTime(exam.startDate)}</p></div><div className="rounded-xl bg-white p-3"><p className="text-slate-400">Deadline</p><p className="mt-1 font-bold text-slate-800">{formatDateTime(exam.deadlineDate)}</p></div></div><div className="mt-5 flex flex-wrap gap-2"><button type="button" onClick={() => openEdit(exam)} className="rounded-xl bg-purple-100 px-4 py-2.5 text-xs font-bold text-purple-700 hover:bg-purple-200">Edit</button><button type="button" onClick={() => changePublication(exam, "publish")} className="rounded-xl bg-green-100 px-4 py-2.5 text-xs font-bold text-green-700 hover:bg-green-200">Publish</button><button type="button" onClick={() => deleteExam(exam._id)} className="rounded-xl bg-red-100 px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-200">Delete</button></div></div>)}
+          </div>
         </section>
 
       </div>

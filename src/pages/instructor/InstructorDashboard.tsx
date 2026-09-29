@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -210,6 +211,10 @@ export function InstructorHome() {
   const [error, setError] =
     useState("");
 
+  // Prevent the initial dashboard request from being repeated
+  // by React StrictMode during development.
+  const hasLoadedInitialDashboard = useRef(false);
+
   const fetchDashboard =
     useCallback(
       async (
@@ -290,6 +295,11 @@ export function InstructorHome() {
     );
 
   useEffect(() => {
+    if (hasLoadedInitialDashboard.current) {
+      return;
+    }
+
+    hasLoadedInitialDashboard.current = true;
     void fetchDashboard();
   }, [fetchDashboard]);
 

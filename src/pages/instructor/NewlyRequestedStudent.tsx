@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -83,6 +84,10 @@ const NewlyRequestedStudent = () => {
 
   const [successMessage, setSuccessMessage] =
     useState("");
+
+  // Prevent the initial pair of API requests from being
+  // repeated by React StrictMode during development.
+  const hasLoadedInitialStudents = useRef(false);
 
   const fetchPendingStudents =
     useCallback(async () => {
@@ -183,6 +188,11 @@ const NewlyRequestedStudent = () => {
   ]);
 
   useEffect(() => {
+    if (hasLoadedInitialStudents.current) {
+      return;
+    }
+
+    hasLoadedInitialStudents.current = true;
     void refreshAll();
   }, [refreshAll]);
 

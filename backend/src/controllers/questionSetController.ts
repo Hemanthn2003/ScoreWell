@@ -5,6 +5,7 @@ import type {
 
 import QuestionSet from "../models/Question";
 import User from "../models/User";
+import pdfParse from "pdf-parse";
 
 /* =========================================================
    TYPES
@@ -134,6 +135,301 @@ const validateQuestions = (
 
   return null;
 };
+
+/* =========================================================
+   PDF QUESTION IMPORT
+========================================================= */
+
+interface ParsedPdfQuestion {
+  question: string;
+  options: string[];
+  questionType: "SINGLE" | "MULTI";
+  answer: string[];
+}
+
+const cleanPdfLine = (line: string): string =>
+  line
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+
+const normalizeAnswerToken = (token: string): string =>
+  token
+    .trim()
+    .replace(/^[\[\](){}]+|[\[\](){}]+$/g, "")
+    .replace(/[.)]$/, "")
+    .trim();
+
+const parseCorrectAnswers = (
+  answerText: string,
+  options: string[]
+): string[] => {
+  const normalized = answerText
+    .replace(/^(correct\s*)?answer\s*[:\-]?/i, "")
+    .trim();
+
+  if (!normalized) {
+    return [];
+  }
+
+  const tokens = normalized
+    .split(/\s*(?:,|\/|&|\band\b)\s*/i)
+    .map(normalizeAnswerToken)
+    .filter(Boolean);
+
+  const answers: string[] = [];
+
+  for (const token of tokens) {
+    const letterMatch = token.match(/^([A-H])$/i);
+
+    if (letterMatch) {
+      const optionIndex =
+        letterMatch[1].toUpperCase().charCodeAt(0) -
+        65;
+
+      if (options[optionIndex]) {
+        answers.push(options[optionIndex]);
+        continue;
+      }
+    }
+
+    const optionWithLetter = token.match(
+      /^([A-H])[.)]\s*(.+)$/i
+    );
+
+    if (optionWithLetter) {
+      const optionIndex =
+        optionWithLetter[1].toUpperCase().charCodeAt(0) -
+        65;
+
+      if (options[optionIndex]) {
+        answers.push(options[optionIndex]);
+        continue;
+      }
+    }
+
+    const exactOption = options.find(
+      (option) =>
+        option.trim().toLowerCase() ===
+        token.trim().toLowerCase()
+    );
+
+    if (exactOption) {
+      answers.push(exactOption);
+    }
+  }
+
+  return [...new Set(answers)];
+};
+
+const parsePdfQuestions = (
+  text: string
+): {
+  questions: ParsedPdfQuestion[];
+  warnings: string[];
+} => {
+  const normalizedText = text
+    .replace(/\r/g, "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, " ");
+
+  const lines = normalizedText
+    .split("\n")
+    .map(cleanPdfLine)
+    .filter(Boolean);
+
+  const questionStart = /^(?:Q(?:uestion)?\s*)?(\d{1,4})[.)\-:]\s+(.+)$/i;
+  const optionStart = /^([A-H])[.)\-:]\s+(.+)$/i;
+  const answerStart = /^(?:correct\s+answer|correct\s+answers|answer|answers|ans)\s*[:\-]?\s*(.*)$/i;
+
+  const blocks: string[][] = [];
+  let currentBlock: string[] = [];
+
+  for (const line of lines) {
+    const questionMatch = line.match(questionStart);
+
+    if (questionMatch) {
+      if (currentBlock.length > 0) {
+        blocks.push(currentBlock);
+      }
+
+      currentBlock = [line];
+      continue;
+    }
+
+    if (currentBlock.length > 0) {
+      currentBlock.push(line);
+    }
+  }
+
+  if (currentBlock.length > 0) {
+    blocks.push(currentBlock);
+  }
+
+  const questions: ParsedPdfQuestion[] = [];
+  const warnings: string[] = [];
+
+  blocks.forEach((block, blockIndex) => {
+    const first = block[0].match(questionStart);
+
+    if (!first) {
+      return;
+    }
+
+    const questionLines: string[] = [first[2]];
+    const options: string[] = [];
+    let answerText = "";
+    let readingAnswerContinuation = false;
+
+    for (let index = 1; index < block.length; index += 1) {
+      const line = block[index];
+      const optionMatch = line.match(optionStart);
+      const answerMatch = line.match(answerStart);
+
+      if (answerMatch) {
+        answerText = answerMatch[1].trim();
+        readingAnswerContinuation = true;
+        continue;
+      }
+
+      if (readingAnswerContinuation) {
+        // Continue a wrapped answer line only when it does not
+        // look like another option/question.
+        if (!optionMatch && !questionStart.test(line)) {
+          answerText = `${answerText} ${line}`.trim();
+          continue;
+        }
+        readingAnswerContinuation = false;
+      }
+
+      if (optionMatch) {
+        options.push(optionMatch[2].trim());
+        continue;
+      }
+
+      if (options.length === 0) {
+        questionLines.push(line);
+      }
+    }
+
+    const question = questionLines
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!question || options.length < 2) {
+      warnings.push(
+        `Question ${blockIndex + 1} could not be parsed completely.`
+      );
+      return;
+    }
+
+    const answers = parseCorrectAnswers(
+      answerText,
+      options
+    );
+
+    if (answers.length === 0) {
+      warnings.push(
+        `Question ${blockIndex + 1} has no recognizable correct answer. Review it before saving.`
+      );
+    }
+
+    questions.push({
+      question,
+      options,
+      questionType:
+        answers.length > 1 ? "MULTI" : "SINGLE",
+      answer: answers,
+    });
+  });
+
+  return { questions, warnings };
+};
+
+export const importQuestionsFromPdf =
+  async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          message: "Authentication required.",
+        });
+        return;
+      }
+
+      if (req.user.role !== "INSTRUCTOR") {
+        res.status(403).json({
+          success: false,
+          message:
+            "Only instructors can import question PDFs.",
+        });
+        return;
+      }
+
+      const file = req.file;
+
+      if (!file) {
+        res.status(400).json({
+          success: false,
+          message: "Please upload a PDF file.",
+        });
+        return;
+      }
+
+      if (
+        file.mimetype !== "application/pdf" &&
+        !file.originalname.toLowerCase().endsWith(".pdf")
+      ) {
+        res.status(400).json({
+          success: false,
+          message: "Only PDF files are supported.",
+        });
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        res.status(400).json({
+          success: false,
+          message: "PDF size must be 10 MB or less.",
+        });
+        return;
+      }
+
+      const pdf = await pdfParse(file.buffer);
+      const parsed = parsePdfQuestions(pdf.text || "");
+
+      if (parsed.questions.length === 0) {
+        res.status(422).json({
+          success: false,
+          message:
+            "No questions could be detected. Use the supported format: numbered question, A/B/C/D options, and Correct Answer.",
+          warnings: parsed.warnings,
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        message: `Detected ${parsed.questions.length} question(s) from the PDF.`,
+        questions: parsed.questions,
+        warnings: parsed.warnings,
+      });
+    } catch (error) {
+      console.error(
+        "Import question PDF error:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Failed to read the PDF. Make sure it is a valid text-based PDF.",
+      });
+    }
+  };
 
 /* =========================================================
    GET MY QUESTION SETS

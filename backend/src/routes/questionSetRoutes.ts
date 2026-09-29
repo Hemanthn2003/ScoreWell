@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 
 import {
   authenticate,
@@ -11,10 +12,37 @@ import {
   deleteQuestionSet,
   publishQuestionSet,
   unpublishQuestionSet,
+  importQuestionsFromPdf,
 } from "../controllers/questionSetController";
 
-const router =
-  Router();
+const router = Router();
+
+/* =========================================================
+   PDF UPLOAD
+========================================================= */
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, callback) => {
+    const isPdf =
+      file.mimetype === "application/pdf" ||
+      file.originalname
+        .toLowerCase()
+        .endsWith(".pdf");
+
+    if (!isPdf) {
+      callback(
+        new Error("Only PDF files are supported.")
+      );
+      return;
+    }
+
+    callback(null, true);
+  },
+});
 
 /* =========================================================
    AUTHENTICATION
@@ -31,6 +59,16 @@ router.use(
 router.get(
   "/",
   getMyQuestionSets
+);
+
+/* =========================================================
+   IMPORT QUESTIONS FROM PDF
+========================================================= */
+
+router.post(
+  "/import-pdf",
+  upload.single("pdf"),
+  importQuestionsFromPdf
 );
 
 /* =========================================================

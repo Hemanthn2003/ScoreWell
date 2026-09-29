@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -1314,6 +1315,10 @@ const StudentsExaminationStatus =
       setActiveTab,
     ] = useState<StatusTab>("UNATTEMPTED");
 
+    // Prevent the initial status request from being repeated
+    // by React StrictMode during development.
+    const hasLoadedInitialStatus = useRef(false);
+
     /* =======================================================
        LOAD STATUS
     ======================================================= */
@@ -1364,7 +1369,12 @@ const StudentsExaminationStatus =
       };
 
     useEffect(() => {
-      loadStatus();
+      if (hasLoadedInitialStatus.current) {
+        return;
+      }
+
+      hasLoadedInitialStatus.current = true;
+      void loadStatus();
     }, []);
 
     /* =======================================================

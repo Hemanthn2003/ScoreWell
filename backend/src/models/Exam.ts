@@ -7,6 +7,7 @@ import mongoose, {
 export type ExamStatus =
   | "UNPUBLISHED"
   | "PUBLISHED"
+  | "EXPIRED"
   | "CLOSED";
 
 export type ExamMode =
@@ -39,17 +40,11 @@ const negativeMarkingSchema =
     }
   );
 
-export interface IExam
-  extends Document {
+export interface IExam extends Document {
   title: string;
   description: string;
 
   questionSetIds: string[];
-
-  /*
-   * Randomly selected question IDs from
-   * all selected question sets.
-   */
   questionIds: string[];
 
   department: string;
@@ -57,14 +52,18 @@ export interface IExam
 
   durationMinutes: number;
   questionCount: number;
-
   marksPerQuestion: number;
 
   negativeMarking: INegativeMarking;
 
   mode: ExamMode;
-
   maxAttempts: number;
+
+  /** When the exam should become PUBLISHED. */
+  startDate?: Date | null;
+
+  /** When the exam should become EXPIRED. */
+  deadlineDate?: Date | null;
 
   status: ExamStatus;
 }
@@ -146,11 +145,22 @@ const examSchema =
         default: 1,
       },
 
+      startDate: {
+        type: Date,
+        default: null,
+      },
+
+      deadlineDate: {
+        type: Date,
+        default: null,
+      },
+
       status: {
         type: String,
         enum: [
           "UNPUBLISHED",
           "PUBLISHED",
+          "EXPIRED",
           "CLOSED",
         ],
         required: true,
@@ -163,6 +173,9 @@ const examSchema =
       versionKey: false,
     }
   );
+
+examSchema.index({ status: 1, startDate: 1 });
+examSchema.index({ status: 1, deadlineDate: 1 });
 
 const Exam: Model<IExam> =
   mongoose.models.Exam ||
