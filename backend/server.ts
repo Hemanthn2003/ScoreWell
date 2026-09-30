@@ -7,16 +7,12 @@ import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db";
 
 import authRoutes from "./src/routes/authRoutes";
-
 import questionSetRoutes from "./src/routes/questionSetRoutes";
-
 import examRoutes from "./src/routes/examRoutes";
-
 import examinationStatusRoutes from "./src/routes/examinationStatusRoutes";
-
 import studentRequestRoutes from "./src/routes/studentRequestRoutes";
-
 import instructorDashboardRoutes from "./src/routes/instructorDashboardRoutes";
+import studentPerformanceRoutes from "./src/routes/studentPerformanceRoutes";
 
 const app = express();
 
@@ -92,27 +88,50 @@ app.use(
 );
 
 /* =========================================================
-   EXAMS
+   INSTRUCTOR DASHBOARD
 ========================================================= */
+
 app.use(
   "/api/instructor/dashboard",
   instructorDashboardRoutes
 );
+
+/* =========================================================
+   EXAMS
+========================================================= */
 
 app.use(
   "/api/exams",
   examRoutes
 );
 
+/* =========================================================
+   EXAMINATION STATUS
+========================================================= */
+
 app.use(
   "/api/examination-status",
   examinationStatusRoutes
 );
 
+/* =========================================================
+   STUDENT REQUESTS
+========================================================= */
+
 app.use(
   "/api/student-requests",
   studentRequestRoutes
 );
+
+/* =========================================================
+   STUDENT PERFORMANCE
+========================================================= */
+
+app.use(
+  "/api/student-performance",
+  studentPerformanceRoutes
+);
+
 /* =========================================================
    START SERVER
 ========================================================= */
