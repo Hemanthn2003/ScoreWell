@@ -8,6 +8,26 @@ import Exam from "../models/Exam";
 import QuestionSet from "../models/Question";
 import Attempt from "../models/Attempt";
 
+/* =====================================================
+   HELPERS
+===================================================== */
+
+const normalizeDepartment = (
+  department?: string | null
+): string => {
+  return (department ?? "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u00A0/g, " ")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+};
+
+/* =====================================================
+   INSTRUCTOR DASHBOARD
+===================================================== */
+
 export const getInstructorDashboard = async (
   req: Request,
   res: Response
@@ -73,6 +93,11 @@ export const getInstructorDashboard = async (
     const department =
       instructor.department;
 
+    const normalizedInstructorDepartment =
+      normalizeDepartment(
+        instructor.department
+      );
+
     /* =====================================================
        EXAMS CREATED BY THIS INSTRUCTOR
     ===================================================== */
@@ -99,12 +124,24 @@ export const getInstructorDashboard = async (
         .lean();
 
     /* =====================================================
-       STUDENTS FROM INSTRUCTOR DEPARTMENT
+       STUDENTS
+
+       IMPORTANT:
+       Do NOT perform an exact MongoDB department match.
+
+       First get all students and then compare normalized
+       department values in JavaScript.
+
+       This handles:
+       - different capitalization
+       - extra spaces
+       - non-breaking spaces
+       - zero-width characters
+       - Unicode normalization
     ===================================================== */
 
-    const students = await User.find({
+    const allStudents = await User.find({
       role: "STUDENT",
-      department,
     })
       .select(
         "_id name email role department isActive isPermitted"
@@ -113,6 +150,90 @@ export const getInstructorDashboard = async (
         name: 1,
       })
       .lean();
+
+    const students = allStudents.filter(
+      (student) => {
+        const studentDepartment =
+          normalizeDepartment(
+            student.department
+          );
+
+        return (
+          studentDepartment ===
+          normalizedInstructorDepartment
+        );
+      }
+    );
+
+    /* =====================================================
+       DEBUG INFORMATION
+
+       These logs can be removed after confirming the
+       correct students are appearing.
+    ===================================================== */
+
+    console.log(
+      "================================================="
+    );
+
+    console.log(
+      "INSTRUCTOR DASHBOARD STUDENT CHECK"
+    );
+
+    console.log(
+      "Instructor:",
+      instructor.name
+    );
+
+    console.log(
+      "Instructor department:",
+      JSON.stringify(
+        instructor.department
+      )
+    );
+
+    console.log(
+      "Normalized instructor department:",
+      JSON.stringify(
+        normalizedInstructorDepartment
+      )
+    );
+
+    console.log(
+      "Total students in database:",
+      allStudents.length
+    );
+
+    console.log(
+      "Students in instructor department:",
+      students.length
+    );
+
+    console.log(
+      "Department students:"
+    );
+
+    students.forEach((student) => {
+      console.log({
+        id: student._id.toString(),
+        name: student.name,
+        email: student.email,
+        department:
+          student.department,
+        normalizedDepartment:
+          normalizeDepartment(
+            student.department
+          ),
+        isPermitted:
+          student.isPermitted,
+        isActive:
+          student.isActive,
+      });
+    });
+
+    console.log(
+      "================================================="
+    );
 
     /* =====================================================
        PENDING STUDENT REQUESTS

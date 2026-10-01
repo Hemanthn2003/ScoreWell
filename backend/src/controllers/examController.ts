@@ -32,31 +32,66 @@ interface CreateExamBody {
   deadlineDate?: string;
 }
 
-const parseDateTime = (value?: string): Date | null => {
-  if (!value || !value.trim()) return null;
+const parseDateTime = (
+  value?: string
+): Date | null => {
+  if (!value || !value.trim()) {
+    return null;
+  }
+
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+
+  return Number.isNaN(parsed.getTime())
+    ? null
+    : parsed;
 };
 
-const syncExamStatuses = async (): Promise<void> => {
-  const now = new Date();
+const syncExamStatuses =
+  async (): Promise<void> => {
+    const now = new Date();
 
-  await Exam.updateMany(
-    { status: "UNPUBLISHED", startDate: { $ne: null, $lte: now } },
-    { $set: { status: "PUBLISHED" } }
-  );
+    await Exam.updateMany(
+      {
+        status: "UNPUBLISHED",
+        startDate: {
+          $ne: null,
+          $lte: now,
+        },
+      },
+      {
+        $set: {
+          status: "PUBLISHED",
+        },
+      }
+    );
 
-  await Exam.updateMany(
-    { status: "PUBLISHED", deadlineDate: { $ne: null, $lte: now } },
-    { $set: { status: "EXPIRED" } }
-  );
-};
+    await Exam.updateMany(
+      {
+        status: "PUBLISHED",
+        deadlineDate: {
+          $ne: null,
+          $lte: now,
+        },
+      },
+      {
+        $set: {
+          status: "EXPIRED",
+        },
+      }
+    );
+  };
 
 void syncExamStatuses();
+
 setInterval(() => {
-  void syncExamStatuses().catch((error) => {
-    console.error("Exam status scheduler error:", error);
-  });
+  void syncExamStatuses().catch(
+    (error) => {
+      console.error(
+        "Exam status scheduler error:",
+        error
+      );
+    }
+  );
 }, 30_000);
 
 const validateObjectIds = (
@@ -65,6 +100,15 @@ const validateObjectIds = (
   return ids.every((id) =>
     mongoose.Types.ObjectId.isValid(id)
   );
+};
+
+const normalizeDepartment = (
+  department?: string | null
+): string => {
+  return (department ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 };
 
 const shuffle = <T>(
@@ -103,7 +147,7 @@ const getInstructor = async (
   return User.findById(
     req.user.userId
   ).select(
-    "name email role department"
+    "name email role department isActive"
   );
 };
 
@@ -118,6 +162,7 @@ export const getMyExams =
   ): Promise<void> => {
     try {
       await syncExamStatuses();
+
       if (
         !req.user ||
         req.user.role !== "INSTRUCTOR"
@@ -155,13 +200,21 @@ export const getMyExams =
               (exam) => exam._id
             ),
           },
-          instructorId: req.user.userId,
+
+          instructorId:
+            req.user.userId,
         });
 
       const strictExamMap =
-        new Map<string, (typeof strictExams)[number]>();
+        new Map<
+          string,
+          (typeof strictExams)[number]
+        >();
 
-      for (const strictExam of strictExams) {
+      for (
+        const strictExam of
+          strictExams
+      ) {
         strictExamMap.set(
           strictExam.examId.toString(),
           strictExam
@@ -213,10 +266,13 @@ export const getMyExams =
                 (student) => ({
                   _id:
                     student.studentId.toString(),
+
                   name:
                     student.studentName,
+
                   email:
                     student.studentEmail,
+
                   department:
                     student.department,
                 })
@@ -321,16 +377,31 @@ export const getDepartmentStudents =
         return;
       }
 
-      const students =
+      /*
+       * IMPORTANT:
+       *
+       * We intentionally DO NOT check
+       * instructor.isActive here.
+       *
+       * We also intentionally DO NOT
+       * check student.isActive.
+       *
+       * Requirement:
+       * Every STUDENT whose
+       * isPermitted === true and whose
+       * department matches the instructor
+       * must be returned.
+       */
+
+      const instructorDepartment =
+        normalizeDepartment(
+          instructor.department
+        );
+
+      const allPermittedStudents =
         await User.find({
           role: "STUDENT",
-
-          department:
-            instructor.department,
-
           isPermitted: true,
-
-          isActive: true,
         })
           .select(
             "_id name email department"
@@ -338,6 +409,56 @@ export const getDepartmentStudents =
           .sort({
             name: 1,
           });
+
+      const students =
+        allPermittedStudents
+          .filter((student) => {
+            return (
+              normalizeDepartment(
+                student.department
+              ) ===
+              instructorDepartment
+            );
+          })
+          .map((student) => ({
+            _id: student._id,
+            name: student.name,
+            email: student.email,
+            department:
+              student.department ?? "",
+          }));
+
+      console.log(
+        "Instructor department:",
+        instructor.department
+      );
+
+      console.log(
+        "Normalized instructor department:",
+        instructorDepartment
+      );
+
+      console.log(
+        "Total permitted students:",
+        allPermittedStudents.length
+      );
+
+      console.log(
+        "Department students returned:",
+        students.length
+      );
+
+      console.log(
+        "Students returned:",
+        students.map(
+          (student) => ({
+            name: student.name,
+            email: student.email,
+            department:
+              student.department,
+          })
+        )
+      );
 
       res.status(200).json({
         success: true,
@@ -486,34 +607,77 @@ export const createExam =
         return;
       }
 
-      const parsedStartDate = parseDateTime(startDate);
-      const parsedDeadlineDate = parseDateTime(deadlineDate);
+      const parsedStartDate =
+        parseDateTime(startDate);
 
-      if (startDate && !parsedStartDate) {
-        res.status(400).json({ success: false, message: "Start date and time is invalid." });
+      const parsedDeadlineDate =
+        parseDateTime(
+          deadlineDate
+        );
+
+      if (
+        startDate &&
+        !parsedStartDate
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Start date and time is invalid.",
+        });
+
         return;
       }
 
-      if (deadlineDate && !parsedDeadlineDate) {
-        res.status(400).json({ success: false, message: "Deadline date and time is invalid." });
+      if (
+        deadlineDate &&
+        !parsedDeadlineDate
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Deadline date and time is invalid.",
+        });
+
         return;
       }
 
-      if (parsedDeadlineDate && parsedDeadlineDate <= new Date()) {
-        res.status(400).json({ success: false, message: "Deadline date and time must be in the future." });
+      if (
+        parsedDeadlineDate &&
+        parsedDeadlineDate <=
+          new Date()
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Deadline date and time must be in the future.",
+        });
+
         return;
       }
 
-      if (parsedStartDate && parsedDeadlineDate && parsedDeadlineDate <= parsedStartDate) {
-        res.status(400).json({ success: false, message: "Deadline must be after the start date and time." });
+      if (
+        parsedStartDate &&
+        parsedDeadlineDate &&
+        parsedDeadlineDate <=
+          parsedStartDate
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Deadline must be after the start date and time.",
+        });
+
         return;
       }
 
-      let parsedStrictDeadline: Date | null = null;
+      let parsedStrictDeadline:
+        Date | null = null;
 
       if (strictMode) {
         if (
-          !Number.isInteger(strictAttemptChances) ||
+          !Number.isInteger(
+            strictAttemptChances
+          ) ||
           strictAttemptChances! < 1
         ) {
           res.status(400).json({
@@ -521,6 +685,7 @@ export const createExam =
             message:
               "Strict mode attempt chances must be at least 1.",
           });
+
           return;
         }
 
@@ -530,31 +695,49 @@ export const createExam =
             message:
               "Strict mode deadline date is required.",
           });
+
           return;
         }
 
-        parsedStrictDeadline = new Date(
-          `${strictDeadlineDate}T23:59:59.999`
-        );
+        parsedStrictDeadline =
+          new Date(
+            `${strictDeadlineDate}T23:59:59.999`
+          );
 
-        if (Number.isNaN(parsedStrictDeadline.getTime())) {
+        if (
+          Number.isNaN(
+            parsedStrictDeadline.getTime()
+          )
+        ) {
           res.status(400).json({
             success: false,
             message:
               "Strict mode deadline date is invalid.",
           });
+
           return;
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today =
+          new Date();
 
-        if (parsedStrictDeadline < today) {
+        today.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        if (
+          parsedStrictDeadline <
+          today
+        ) {
           res.status(400).json({
             success: false,
             message:
               "Strict mode deadline cannot be in the past.",
           });
+
           return;
         }
       }
@@ -574,10 +757,12 @@ export const createExam =
 
       if (
         mode === "SPECIAL" &&
-        (!Array.isArray(
-          studentIds
-        ) ||
-          studentIds.length === 0)
+        (
+          !Array.isArray(
+            studentIds
+          ) ||
+          studentIds.length === 0
+        )
       ) {
         res.status(400).json({
           success: false,
@@ -602,11 +787,6 @@ export const createExam =
         return;
       }
 
-      /*
-       * Only published question sets
-       * belonging to the instructor's
-       * department can be used.
-       */
       const questionSets =
         await QuestionSet.find({
           _id: {
@@ -632,10 +812,6 @@ export const createExam =
         return;
       }
 
-      /*
-       * Gather every question from all
-       * selected question sets.
-       */
       const allQuestions =
         questionSets.flatMap(
           (set) =>
@@ -663,10 +839,6 @@ export const createExam =
         return;
       }
 
-      /*
-       * Random selection across ALL
-       * selected question sets.
-       */
       const selectedQuestions =
         shuffle(
           allQuestions
@@ -675,10 +847,6 @@ export const createExam =
           questionCount
         );
 
-      /*
-       * Special exam students must
-       * belong to the same department.
-       */
       let selectedStudents:
         Array<{
           _id: mongoose.Types.ObjectId;
@@ -690,7 +858,12 @@ export const createExam =
       if (
         mode === "SPECIAL"
       ) {
-        selectedStudents =
+        const instructorDepartment =
+          normalizeDepartment(
+            instructor.department
+          );
+
+        const permittedStudents =
           await User.find({
             _id: {
               $in: studentIds,
@@ -698,13 +871,36 @@ export const createExam =
 
             role: "STUDENT",
 
-            department:
-              instructor.department,
-
             isPermitted: true,
           }).select(
             "_id name email department"
           );
+
+        selectedStudents =
+          permittedStudents
+            .filter(
+              (student) =>
+                normalizeDepartment(
+                  student.department
+                ) ===
+                instructorDepartment
+            )
+            .map(
+              (student) => ({
+                _id:
+                  student._id,
+
+                name:
+                  student.name,
+
+                email:
+                  student.email,
+
+                department:
+                  student.department ??
+                  "",
+              })
+            );
 
         if (
           selectedStudents.length !==
@@ -713,7 +909,7 @@ export const createExam =
           res.status(400).json({
             success: false,
             message:
-              "One or more selected students do not belong to your department.",
+              "One or more selected students do not belong to your department or are not permitted.",
           });
 
           return;
@@ -726,7 +922,8 @@ export const createExam =
             title.trim(),
 
           description:
-            description?.trim() ?? "",
+            description?.trim() ??
+            "",
 
           questionSetIds,
 
@@ -779,15 +976,12 @@ export const createExam =
 
           status:
             parsedStartDate &&
-            parsedStartDate <= new Date()
+            parsedStartDate <=
+              new Date()
               ? "PUBLISHED"
               : "UNPUBLISHED",
         });
 
-      /*
-       * Store special exam student
-       * assignments in separate collection.
-       */
       if (
         mode === "SPECIAL"
       ) {
@@ -818,15 +1012,31 @@ export const createExam =
 
       let strictExam = null;
 
-      if (strictMode && parsedStrictDeadline) {
-        strictExam = await StrictExam.create({
-          examId: exam._id,
-          questionSetIds,
-          attemptChances: strictAttemptChances!,
-          deadlineDate: parsedStrictDeadline,
-          instructorId: req.user!.userId,
-          durationMinutes: durationMinutes!,
-        });
+      if (
+        strictMode &&
+        parsedStrictDeadline
+      ) {
+        strictExam =
+          await StrictExam.create(
+            {
+              examId:
+                exam._id,
+
+              questionSetIds,
+
+              attemptChances:
+                strictAttemptChances!,
+
+              deadlineDate:
+                parsedStrictDeadline,
+
+              instructorId:
+                req.user!.userId,
+
+              durationMinutes:
+                durationMinutes!,
+            }
+          );
       }
 
       res.status(201).json({
@@ -876,30 +1086,32 @@ export const updateExam =
         return;
       }
 
-     const id = Array.isArray(
-  req.params.id
-)
-  ? req.params.id[0]
-  : req.params.id;
+      const id =
+        Array.isArray(
+          req.params.id
+        )
+          ? req.params.id[0]
+          : req.params.id;
 
-            if (
-            !id ||
-            !mongoose.Types.ObjectId.isValid(
-                id
-            )
-            ) {
-            res.status(400).json({
-                success: false,
-                message:
-                "Invalid exam ID.",
-            });
+      if (
+        !id ||
+        !mongoose.Types.ObjectId.isValid(
+          id
+        )
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Invalid exam ID.",
+        });
 
-            return;
-            }
+        return;
+      }
 
       const existing =
         await Exam.findOne({
           _id: id,
+
           instructorId:
             req.user!.userId,
         });
@@ -935,79 +1147,152 @@ export const updateExam =
         deadlineDate,
       } = body;
 
-      const parsedStartDate = parseDateTime(startDate);
-      const parsedDeadlineDate = parseDateTime(deadlineDate);
+      const parsedStartDate =
+        parseDateTime(startDate);
 
-      if (startDate && !parsedStartDate) {
-        res.status(400).json({ success: false, message: "Start date and time is invalid." });
-        return;
-      }
+      const parsedDeadlineDate =
+        parseDateTime(
+          deadlineDate
+        );
 
-      if (deadlineDate && !parsedDeadlineDate) {
-        res.status(400).json({ success: false, message: "Deadline date and time is invalid." });
-        return;
-      }
-
-      if (parsedDeadlineDate && parsedDeadlineDate <= new Date()) {
-        res.status(400).json({ success: false, message: "Deadline date and time must be in the future." });
-        return;
-      }
-
-      if (parsedStartDate && parsedDeadlineDate && parsedDeadlineDate <= parsedStartDate) {
-        res.status(400).json({ success: false, message: "Deadline must be after the start date and time." });
-        return;
-      }
-
-      if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
+      if (
+        startDate &&
+        !parsedStartDate
+      ) {
         res.status(400).json({
           success: false,
-          message: "Maximum attempts must be at least 1.",
+          message:
+            "Start date and time is invalid.",
         });
+
         return;
       }
 
-      let parsedStrictDeadline: Date | null = null;
+      if (
+        deadlineDate &&
+        !parsedDeadlineDate
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Deadline date and time is invalid.",
+        });
+
+        return;
+      }
+
+      if (
+        parsedDeadlineDate &&
+        parsedDeadlineDate <=
+          new Date()
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Deadline date and time must be in the future.",
+        });
+
+        return;
+      }
+
+      if (
+        parsedStartDate &&
+        parsedDeadlineDate &&
+        parsedDeadlineDate <=
+          parsedStartDate
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Deadline must be after the start date and time.",
+        });
+
+        return;
+      }
+
+      if (
+        !Number.isInteger(
+          maxAttempts
+        ) ||
+        maxAttempts < 1
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Maximum attempts must be at least 1.",
+        });
+
+        return;
+      }
+
+      let parsedStrictDeadline:
+        Date | null = null;
 
       if (strictMode) {
         if (
-          !Number.isInteger(strictAttemptChances) ||
+          !Number.isInteger(
+            strictAttemptChances
+          ) ||
           strictAttemptChances! < 1
         ) {
           res.status(400).json({
             success: false,
-            message: "Strict mode attempt chances must be at least 1.",
+            message:
+              "Strict mode attempt chances must be at least 1.",
           });
+
           return;
         }
 
         if (!strictDeadlineDate) {
           res.status(400).json({
             success: false,
-            message: "Strict mode deadline date is required.",
+            message:
+              "Strict mode deadline date is required.",
           });
+
           return;
         }
 
-        parsedStrictDeadline = new Date(
-          `${strictDeadlineDate}T23:59:59.999`
+        parsedStrictDeadline =
+          new Date(
+            `${strictDeadlineDate}T23:59:59.999`
+          );
+
+        if (
+          Number.isNaN(
+            parsedStrictDeadline.getTime()
+          )
+        ) {
+          res.status(400).json({
+            success: false,
+            message:
+              "Strict mode deadline date is invalid.",
+          });
+
+          return;
+        }
+
+        const today =
+          new Date();
+
+        today.setHours(
+          0,
+          0,
+          0,
+          0
         );
 
-        if (Number.isNaN(parsedStrictDeadline.getTime())) {
+        if (
+          parsedStrictDeadline <
+          today
+        ) {
           res.status(400).json({
             success: false,
-            message: "Strict mode deadline date is invalid.",
+            message:
+              "Strict mode deadline cannot be in the past.",
           });
-          return;
-        }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (parsedStrictDeadline < today) {
-          res.status(400).json({
-            success: false,
-            message: "Strict mode deadline cannot be in the past.",
-          });
           return;
         }
       }
@@ -1129,7 +1414,12 @@ export const updateExam =
       if (
         mode === "SPECIAL"
       ) {
-        selectedStudents =
+        const instructorDepartment =
+          normalizeDepartment(
+            instructor.department
+          );
+
+        const permittedStudents =
           await User.find({
             _id: {
               $in: studentIds,
@@ -1137,13 +1427,36 @@ export const updateExam =
 
             role: "STUDENT",
 
-            department:
-              instructor.department,
-
             isPermitted: true,
           }).select(
             "_id name email department"
           );
+
+        selectedStudents =
+          permittedStudents
+            .filter(
+              (student) =>
+                normalizeDepartment(
+                  student.department
+                ) ===
+                instructorDepartment
+            )
+            .map(
+              (student) => ({
+                _id:
+                  student._id,
+
+                name:
+                  student.name,
+
+                email:
+                  student.email,
+
+                department:
+                  student.department ??
+                  "",
+              })
+            );
 
         if (
           selectedStudents.length !==
@@ -1152,7 +1465,7 @@ export const updateExam =
           res.status(400).json({
             success: false,
             message:
-              "All selected students must belong to your department.",
+              "All selected students must belong to your department and be permitted.",
           });
 
           return;
@@ -1171,7 +1484,8 @@ export const updateExam =
         title.trim();
 
       existing.description =
-        description?.trim() ?? "";
+        description?.trim() ??
+        "";
 
       existing.questionSetIds =
         questionSetIds;
@@ -1218,16 +1532,22 @@ export const updateExam =
       existing.deadlineDate =
         parsedDeadlineDate;
 
-      if (parsedDeadlineDate && parsedDeadlineDate <= new Date()) {
-        existing.status = "EXPIRED";
-      } else if (parsedStartDate && parsedStartDate > new Date()) {
-        existing.status = "UNPUBLISHED";
+      if (
+        parsedDeadlineDate &&
+        parsedDeadlineDate <=
+          new Date()
+      ) {
+        existing.status =
+          "EXPIRED";
+      } else if (
+        parsedStartDate &&
+        parsedStartDate >
+          new Date()
+      ) {
+        existing.status =
+          "UNPUBLISHED";
       }
 
-      /*
-       * Keep current publication
-       * state when editing.
-       */
       await existing.save();
 
       await SpecialExamStudent.deleteMany(
@@ -1267,31 +1587,54 @@ export const updateExam =
 
       let strictExam = null;
 
-      if (strictMode && parsedStrictDeadline) {
-        strictExam = await StrictExam.findOneAndUpdate(
+      if (
+        strictMode &&
+        parsedStrictDeadline
+      ) {
+        strictExam =
+          await StrictExam.findOneAndUpdate(
+            {
+              examId:
+                existing._id,
+
+              instructorId:
+                req.user!.userId,
+            },
+            {
+              examId:
+                existing._id,
+
+              questionSetIds,
+
+              attemptChances:
+                strictAttemptChances!,
+
+              deadlineDate:
+                parsedStrictDeadline,
+
+              instructorId:
+                req.user!.userId,
+
+              durationMinutes:
+                durationMinutes!,
+            },
+            {
+              new: true,
+              upsert: true,
+              setDefaultsOnInsert:
+                true,
+            }
+          );
+      } else {
+        await StrictExam.deleteMany(
           {
-            examId: existing._id,
-            instructorId: req.user!.userId,
-          },
-          {
-            examId: existing._id,
-            questionSetIds,
-            attemptChances: strictAttemptChances!,
-            deadlineDate: parsedStrictDeadline,
-            instructorId: req.user!.userId,
-            durationMinutes: durationMinutes!,
-          },
-          {
-            new: true,
-            upsert: true,
-            setDefaultsOnInsert: true,
+            examId:
+              existing._id,
+
+            instructorId:
+              req.user!.userId,
           }
         );
-      } else {
-        await StrictExam.deleteMany({
-          examId: existing._id,
-          instructorId: req.user!.userId,
-        });
       }
 
       res.status(200).json({
@@ -1338,13 +1681,17 @@ export const deleteExam =
         return;
       }
 
-      const id = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
+      const id =
+        Array.isArray(
+          req.params.id
+        )
+          ? req.params.id[0]
+          : req.params.id;
 
       const exam =
         await Exam.findOneAndDelete({
           _id: id,
+
           instructorId:
             req.user.userId,
         });
@@ -1366,10 +1713,15 @@ export const deleteExam =
         }
       );
 
-      await StrictExam.deleteMany({
-        examId: exam._id,
-        instructorId: req.user!.userId,
-      });
+      await StrictExam.deleteMany(
+        {
+          examId:
+            exam._id,
+
+          instructorId:
+            req.user!.userId,
+        }
+      );
 
       res.status(200).json({
         success: true,
@@ -1403,6 +1755,7 @@ export const publishExam =
       const exam =
         await Exam.findOne({
           _id: req.params.id,
+
           instructorId:
             req.user?.userId,
         });
@@ -1417,33 +1770,49 @@ export const publishExam =
         return;
       }
 
-      const now = new Date();
+      const now =
+        new Date();
 
-      if (exam.deadlineDate && exam.deadlineDate <= now) {
+      if (
+        exam.deadlineDate &&
+        exam.deadlineDate <= now
+      ) {
         res.status(400).json({
           success: false,
-          message: "This exam deadline has already passed. Edit the deadline before publishing it again.",
+          message:
+            "This exam deadline has already passed. Edit the deadline before publishing it again.",
         });
+
         return;
       }
 
-      if (exam.startDate && exam.startDate > now) {
-        exam.status = "UNPUBLISHED";
+      if (
+        exam.startDate &&
+        exam.startDate > now
+      ) {
+        exam.status =
+          "UNPUBLISHED";
       } else {
         if (!exam.startDate) {
-          exam.startDate = now;
+          exam.startDate =
+            now;
         }
-        exam.status = "PUBLISHED";
+
+        exam.status =
+          "PUBLISHED";
       }
 
       await exam.save();
 
       res.status(200).json({
         success: true,
+
         message:
-          exam.status === "PUBLISHED"
+          exam.status ===
+          "PUBLISHED"
             ? "Exam published successfully."
             : "Exam scheduled successfully. It will publish automatically at the configured start date and time.",
+
         exam,
       });
     } catch (error) {
@@ -1473,6 +1842,7 @@ export const unpublishExam =
       const exam =
         await Exam.findOne({
           _id: req.params.id,
+
           instructorId:
             req.user?.userId,
         });
@@ -1490,7 +1860,8 @@ export const unpublishExam =
       exam.status =
         "UNPUBLISHED";
 
-      exam.startDate = null;
+      exam.startDate =
+        null;
 
       await exam.save();
 

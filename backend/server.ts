@@ -13,6 +13,7 @@ import examinationStatusRoutes from "./src/routes/examinationStatusRoutes";
 import studentRequestRoutes from "./src/routes/studentRequestRoutes";
 import instructorDashboardRoutes from "./src/routes/instructorDashboardRoutes";
 import studentPerformanceRoutes from "./src/routes/studentPerformanceRoutes";
+import studentDashboardRoutes from "./src/routes/studentDashboardRoutes";
 
 const app = express();
 
@@ -47,7 +48,7 @@ app.use(
 );
 
 /* =========================================================
-   COOKIE PARSER
+   COOKIES
 ========================================================= */
 
 app.use(
@@ -55,7 +56,7 @@ app.use(
 );
 
 /* =========================================================
-   ROOT
+   HEALTH CHECK
 ========================================================= */
 
 app.get(
@@ -63,6 +64,7 @@ app.get(
   (_req, res) => {
     res.status(200).json({
       success: true,
+
       message:
         "ScoreWell backend is running.",
     });
@@ -106,7 +108,7 @@ app.use(
 );
 
 /* =========================================================
-   EXAMINATION STATUS
+   INSTRUCTOR EXAMINATION STATUS
 ========================================================= */
 
 app.use(
@@ -130,6 +132,15 @@ app.use(
 app.use(
   "/api/student-performance",
   studentPerformanceRoutes
+);
+
+/* =========================================================
+   STUDENT DASHBOARD
+========================================================= */
+
+app.use(
+  "/api/student-dashboard",
+  studentDashboardRoutes
 );
 
 /* =========================================================

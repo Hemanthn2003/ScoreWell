@@ -382,6 +382,7 @@ export function InstructorHome() {
   return (
     <section className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
+
         {/* =================================================
             WELCOME BANNER
         ================================================= */}
@@ -437,6 +438,7 @@ export function InstructorHome() {
                     : ""
                 }
               />
+
               {refreshing
                 ? "Refreshing..."
                 : "Refresh Data"}
@@ -861,6 +863,7 @@ export function InstructorHome() {
         ================================================= */}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
           <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl hover:shadow-slate-200/70">
             <div className="flex items-center justify-between border-b border-slate-100 p-6">
               <div>
@@ -937,6 +940,10 @@ export function InstructorHome() {
             )}
           </section>
 
+          {/* =================================================
+              ALL STUDENTS
+          ================================================= */}
+
           <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl hover:shadow-slate-200/70">
             <div className="flex items-center justify-between border-b border-slate-100 p-6">
               <div>
@@ -966,58 +973,61 @@ export function InstructorHome() {
                 action="Open Students"
               />
             ) : (
-              <div className="divide-y divide-slate-100">
-                {students
-                  .slice(0, 5)
-                  .map(
-                    (student) => (
-                      <Link
-                        key={
-                          student._id
-                        }
-                        to="/instructor/students-examination-status"
-                        className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-orange-100 hover:bg-orange-50/40 hover:shadow-lg hover:shadow-orange-100/70"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-sm font-black text-purple-600">
-                              {student.name
-                                .charAt(
-                                  0
-                                )
-                                .toUpperCase()}
-                            </div>
-
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-bold text-slate-900">
-                                {
-                                  student.name
-                                }
-                              </p>
-
-                              <p className="truncate text-xs text-slate-500">
-                                {
-                                  student.email
-                                }
-                              </p>
-                            </div>
+              <div className="max-h-[520px] overflow-y-auto divide-y divide-slate-100">
+                {students.map(
+                  (student) => (
+                    <Link
+                      key={
+                        student._id
+                      }
+                      to="/instructor/students-examination-status"
+                      className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-orange-100 hover:bg-orange-50/40 hover:shadow-lg hover:shadow-orange-100/70 sm:p-6"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-sm font-black text-purple-600">
+                            {student.name
+                              .charAt(
+                                0
+                              )
+                              .toUpperCase()}
                           </div>
 
-                          <span
-                            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                              student.isPermitted
-                                ? "bg-emerald-50 text-emerald-600"
-                                : "bg-orange-50 text-orange-600"
-                            }`}
-                          >
-                            {student.isPermitted
-                              ? "Permitted"
-                              : "Pending"}
-                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-900">
+                              {
+                                student.name
+                              }
+                            </p>
+
+                            <p className="truncate text-xs text-slate-500">
+                              {
+                                student.email
+                              }
+                            </p>
+
+                            <p className="mt-1 truncate text-[11px] font-medium text-slate-400">
+                              {student.department ??
+                                "Department not set"}
+                            </p>
+                          </div>
                         </div>
-                      </Link>
-                    )
-                  )}
+
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                            student.isPermitted
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-orange-50 text-orange-600"
+                          }`}
+                        >
+                          {student.isPermitted
+                            ? "Permitted"
+                            : "Pending"}
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                )}
               </div>
             )}
           </section>
@@ -1027,7 +1037,7 @@ export function InstructorHome() {
             QUICK ACTIONS
         ================================================= */}
 
-        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl hover:shadow-slate-200/70">
+        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-200/60 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/70">
           <div className="mb-5">
             <h2 className="text-lg font-black text-slate-900">
               Quick Actions
