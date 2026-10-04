@@ -14,6 +14,9 @@ import studentRequestRoutes from "./src/routes/studentRequestRoutes";
 import instructorDashboardRoutes from "./src/routes/instructorDashboardRoutes";
 import studentPerformanceRoutes from "./src/routes/studentPerformanceRoutes";
 import studentDashboardRoutes from "./src/routes/studentDashboardRoutes";
+import studentExamRoutes from "./src/routes/studentExamRoutes";
+import studentExamSubmissionRoutes from "./src/routes/studentExamSubmissionRoutes";
+
 
 const app = express();
 
@@ -141,6 +144,20 @@ app.use(
 app.use(
   "/api/student-dashboard",
   studentDashboardRoutes
+);
+
+/* =========================================================
+   STUDENT EXAMS
+========================================================= */
+
+app.use(
+  "/api/student-exams",
+  studentExamRoutes
+);
+
+app.use(
+  "/api/student-exam-submissions",
+  studentExamSubmissionRoutes
 );
 
 /* =========================================================

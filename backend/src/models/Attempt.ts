@@ -5,6 +5,10 @@ import mongoose, {
   Types,
 } from "mongoose";
 
+/* =========================================================
+   TYPES
+========================================================= */
+
 export type AttemptStatus =
   | "IN_PROGRESS"
   | "SUBMITTED"
@@ -18,14 +22,29 @@ export type AttemptMode =
   | "COMMON"
   | "SPECIAL";
 
+export type AttemptExamType =
+  | "NORMAL"
+  | "STRICT";
+
+/* =========================================================
+   ATTEMPT QUESTION
+========================================================= */
+
 export interface IAttemptQuestion {
   questionId: string;
+
   question: string;
+
   options: string[];
+
   questionType: AttemptQuestionType;
+
   selectedAnswers: string[];
+
   correctAnswers: string[];
+
   isCorrect: boolean;
+
   marksAwarded: number;
 }
 
@@ -45,6 +64,7 @@ const attemptQuestionSchema =
       options: {
         type: [String],
         required: true,
+        default: [],
       },
 
       questionType: {
@@ -84,8 +104,11 @@ const attemptQuestionSchema =
     }
   );
 
-export interface IAttempt
-  extends Document {
+/* =========================================================
+   ATTEMPT
+========================================================= */
+
+export interface IAttempt extends Document {
   studentId: Types.ObjectId;
 
   studentEmail: string;
@@ -104,6 +127,8 @@ export interface IAttempt
 
   mode: AttemptMode;
 
+  examType: AttemptExamType;
+
   attemptNo: number;
 
   startTime: Date;
@@ -111,6 +136,8 @@ export interface IAttempt
   submittedAt?: Date | null;
 
   status: AttemptStatus;
+
+  durationMinutes: number;
 
   questions: IAttemptQuestion[];
 
@@ -126,6 +153,10 @@ export interface IAttempt
 
   timeTakenSeconds: number;
 }
+
+/* =========================================================
+   SCHEMA
+========================================================= */
 
 const attemptSchema =
   new Schema<IAttempt>(
@@ -146,6 +177,7 @@ const attemptSchema =
       studentDepartment: {
         type: String,
         required: true,
+        trim: true,
       },
 
       examId: {
@@ -157,8 +189,16 @@ const attemptSchema =
       examName: {
         type: String,
         required: true,
+        trim: true,
       },
 
+      /*
+       * Kept as singular for compatibility
+       * with your existing Attempt documents.
+       *
+       * The actual questions selected from all
+       * question sets are stored inside questions[].
+       */
       questionSetId: {
         type: String,
         required: true,
@@ -167,6 +207,7 @@ const attemptSchema =
       examDepartment: {
         type: String,
         required: true,
+        trim: true,
       },
 
       instructorId: {
@@ -182,6 +223,20 @@ const attemptSchema =
         ],
         required: true,
         default: "COMMON",
+      },
+
+      /*
+       * NORMAL = regular examination
+       * STRICT = strict examination
+       */
+      examType: {
+        type: String,
+        enum: [
+          "NORMAL",
+          "STRICT",
+        ],
+        required: true,
+        default: "NORMAL",
       },
 
       attemptNo: {
@@ -210,6 +265,23 @@ const attemptSchema =
         ],
         required: true,
         default: "IN_PROGRESS",
+      },
+
+      /*
+       * Duration snapshot for this attempt.
+       *
+       * The timer will always calculate from:
+       *
+       * startTime + durationMinutes
+       *
+       * Therefore page reload will NOT reset
+       * the examination timer.
+       */
+      durationMinutes: {
+        type: Number,
+        required: true,
+        min: 1,
+        default: 1,
       },
 
       questions: {
@@ -260,6 +332,10 @@ const attemptSchema =
       versionKey: false,
     }
   );
+
+/* =========================================================
+   MODEL
+========================================================= */
 
 const Attempt: Model<IAttempt> =
   mongoose.models.Attempt ||

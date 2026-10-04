@@ -14,6 +14,9 @@ import StudentDashboard, {
 } from "./pages/student/StudentDashboard";
 
 import NewExams from "./pages/student/NewExams";
+import ExamTerms from "./pages/student/NewExamComponents/ExamTerms";
+
+import ExamAttempt from "./pages/student/NewExamComponents/ExamAttempt";
 import MyPerformance from "./pages/student/MyPerformance";
 import StudentProfile from "./pages/student/StudentProfile";
 
@@ -59,6 +62,16 @@ function App() {
           <Route
             path="new-exams"
             element={<NewExams />}
+          />
+
+          <Route
+            path="exams/:examId/terms"
+            element={<ExamTerms />}
+          />
+
+          <Route
+            path="exams/:examId/attempt"
+            element={<ExamAttempt />}
           />
 
           <Route
