@@ -1,37 +1,28 @@
 import nodemailer from "nodemailer";
 
-const transporter =
-  nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: Number(
-      process.env.EMAIL_PORT || 587
-    ),
-    secure:
-      Number(
-        process.env.EMAIL_PORT || 587
-      ) === 465,
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT || 587),
+  secure: Number(process.env.EMAIL_PORT || 587) === 465,
 
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 export const sendPasswordResetOtp = async (
   email: string,
-  otp: string
+  otp: string,
 ): Promise<void> => {
-  const from =
-    process.env.EMAIL_FROM ||
-    process.env.EMAIL_USER;
+  const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
   await transporter.sendMail({
     from,
 
     to: email,
 
-    subject:
-      "ScoreWell Password Reset OTP",
+    subject: "ScoreWell Password Reset OTP",
 
     text: `Your ScoreWell password reset OTP is ${otp}. This OTP is valid for 10 minutes. If you did not request a password reset, you can ignore this email.`,
 

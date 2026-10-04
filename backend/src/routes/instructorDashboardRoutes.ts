@@ -1,12 +1,8 @@
 import { Router } from "express";
 
-import {
-  authenticate,
-} from "../middleware/authMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
-import {
-  getInstructorDashboard,
-} from "../controllers/instructorDashboardController";
+import { getInstructorDashboard } from "../controllers/instructorDashboardController";
 
 const router = Router();
 
@@ -20,9 +16,6 @@ router.use(authenticate);
    INSTRUCTOR DASHBOARD
 ===================================================== */
 
-router.get(
-  "/",
-  getInstructorDashboard
-);
+router.get("/", getInstructorDashboard);
 
 export default router;

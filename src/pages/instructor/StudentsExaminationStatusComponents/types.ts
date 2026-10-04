@@ -1,17 +1,9 @@
-export type ExamMode =
-  | "COMMON"
-  | "SPECIAL";
+export type ExamMode = "COMMON" | "SPECIAL";
 
 export type AttemptStatus =
-  | "NOT_ATTEMPTED"
-  | "IN_PROGRESS"
-  | "SUBMITTED"
-  | "AUTO_SUBMITTED";
+  "NOT_ATTEMPTED" | "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
 
-export type StatusTab =
-  | "UNATTEMPTED"
-  | "SPECIAL"
-  | "COMMON";
+export type StatusTab = "UNATTEMPTED" | "SPECIAL" | "COMMON";
 
 export interface StatusStudent {
   studentId: string;
@@ -52,9 +44,7 @@ export interface AttemptQuestion {
   question: string;
   options: string[];
 
-  questionType:
-    | "SINGLE"
-    | "MULTI";
+  questionType: "SINGLE" | "MULTI";
 
   selectedAnswers: string[];
   correctAnswers: string[];
@@ -94,10 +84,7 @@ export interface AttemptDetails {
     startTime: string;
     submittedAt?: string | null;
 
-    status:
-      | "IN_PROGRESS"
-      | "SUBMITTED"
-      | "AUTO_SUBMITTED";
+    status: "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
 
     timeTakenSeconds: number;
 

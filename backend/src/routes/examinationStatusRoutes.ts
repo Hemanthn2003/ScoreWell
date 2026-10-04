@@ -5,9 +5,7 @@ import {
   getAttemptDetails,
 } from "../controllers/examinationStatusController";
 
-import {
-  authenticate,
-} from "../middleware/authMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = Router();
 
@@ -17,18 +15,12 @@ router.use(authenticate);
   GET
   /api/examination-status
 */
-router.get(
-  "/",
-  getInstructorExaminationStatus
-);
+router.get("/", getInstructorExaminationStatus);
 
 /*
   GET
   /api/examination-status/attempt/:id
 */
-router.get(
-  "/attempt/:id",
-  getAttemptDetails
-);
+router.get("/attempt/:id", getAttemptDetails);
 
 export default router;

@@ -1,40 +1,27 @@
-import {
-  Router,
-} from "express";
+import { Router } from "express";
 
-import {
-  authenticate,
-} from "../middleware/authMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 import {
   getMyPerformance,
   getMyAttemptPerformance,
 } from "../controllers/studentPerformanceController";
 
-const router =
-  Router();
+const router = Router();
 
-router.use(
-  authenticate
-);
+router.use(authenticate);
 
 /*
  * Complete performance of
  * the currently logged-in student.
  */
-router.get(
-  "/",
-  getMyPerformance
-);
+router.get("/", getMyPerformance);
 
 /*
  * Detailed performance of
  * one attempt belonging ONLY
  * to the currently logged-in student.
  */
-router.get(
-  "/attempt/:attemptId",
-  getMyAttemptPerformance
-);
+router.get("/attempt/:attemptId", getMyAttemptPerformance);
 
 export default router;

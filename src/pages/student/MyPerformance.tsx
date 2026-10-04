@@ -16,32 +16,25 @@ import type {
   StudentPerformanceResponse,
 } from "./MyPerformanceComponents/types";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 type TabType = "RESULTS" | "UPCOMING";
 
 const MyPerformance = () => {
-  const [data, setData] =
-    useState<StudentPerformanceResponse | null>(null);
+  const [data, setData] = useState<StudentPerformanceResponse | null>(null);
 
-  const [loading, setLoading] =
-    useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [error, setError] =
-    useState<string>("");
+  const [error, setError] = useState<string>("");
 
-  const [activeTab, setActiveTab] =
-    useState<TabType>("RESULTS");
+  const [activeTab, setActiveTab] = useState<TabType>("RESULTS");
 
-  const [selectedExam, setSelectedExam] =
+  const [selectedExam, setSelectedExam] = useState<PerformanceAttempt | null>(
+    null,
+  );
+
+  const [selectedUpcomingExam, setSelectedUpcomingExam] =
     useState<PerformanceAttempt | null>(null);
-
-  const [
-    selectedUpcomingExam,
-    setSelectedUpcomingExam,
-  ] = useState<PerformanceAttempt | null>(null);
 
   useEffect(() => {
     const fetchPerformance = async () => {
@@ -49,32 +42,23 @@ const MyPerformance = () => {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${API_URL}/api/student-performance`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`${API_URL}/api/student-performance`, {
+          method: "GET",
+          credentials: "include",
+        });
 
-        const result =
-          (await response.json()) as StudentPerformanceResponse & {
-            message?: string;
-          };
+        const result = (await response.json()) as StudentPerformanceResponse & {
+          message?: string;
+        };
 
         if (!response.ok) {
-          throw new Error(
-            result.message ||
-              "Failed to load performance."
-          );
+          throw new Error(result.message || "Failed to load performance.");
         }
 
         setData(result);
       } catch (err) {
         const message =
-          err instanceof Error
-            ? err.message
-            : "Failed to load performance.";
+          err instanceof Error ? err.message : "Failed to load performance.";
 
         setError(message);
       } finally {
@@ -94,9 +78,7 @@ const MyPerformance = () => {
     const results = data?.examResults ?? [];
 
     return results.filter(
-      (item) =>
-        item.exam.status === "EXPIRED" ||
-        item.exam.status === "CLOSED"
+      (item) => item.exam.status === "EXPIRED" || item.exam.status === "CLOSED",
     );
   }, [data]);
 
@@ -105,153 +87,106 @@ const MyPerformance = () => {
    * and Statistics sections is calculated
    * ONLY from EXPIRED/CLOSED examinations.
    */
-  const completedOverview =
-    useMemo<PerformanceOverview>(() => {
-      if (completedResults.length === 0) {
-        return {
-          totalExams: 0,
-          totalAttempts: 0,
-          averagePercentage: 0,
-          totalScore: 0,
-          totalMarks: 0,
-          correctAnswers: 0,
-          wrongAnswers: 0,
-          unanswered: 0,
-          completedExams: 0,
-          commonExams: 0,
-          specialExams: 0,
-          strictExams: 0,
-        };
-      }
-
-      const totalScore =
-        completedResults.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.attempt.score || 0
-            ),
-          0
-        );
-
-      const totalMarks =
-        completedResults.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.attempt.totalMarks || 0
-            ),
-          0
-        );
-
-      const correctAnswers =
-        completedResults.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.attempt.correctAnswers ||
-                0
-            ),
-          0
-        );
-
-      const wrongAnswers =
-        completedResults.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.attempt.wrongAnswers || 0
-            ),
-          0
-        );
-
-      const unanswered =
-        completedResults.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.attempt.unanswered || 0
-            ),
-          0
-        );
-
-      const averagePercentage =
-        completedResults.reduce(
-          (sum, item) =>
-            sum +
-            Number(
-              item.attempt.percentage || 0
-            ),
-          0
-        ) / completedResults.length;
-
-      const commonExams =
-        completedResults.filter(
-          (item) =>
-            item.exam.examType === "COMMON"
-        ).length;
-
-      const specialExams =
-        completedResults.filter(
-          (item) =>
-            item.exam.examType === "SPECIAL"
-        ).length;
-
-      const strictExams =
-        completedResults.filter(
-          (item) =>
-            item.exam.examMode === "STRICT"
-        ).length;
-
+  const completedOverview = useMemo<PerformanceOverview>(() => {
+    if (completedResults.length === 0) {
       return {
-        totalExams:
-          completedResults.length,
-
-        totalAttempts:
-          completedResults.length,
-
-        averagePercentage: Number(
-          averagePercentage.toFixed(2)
-        ),
-
-        totalScore,
-
-        totalMarks,
-
-        correctAnswers,
-
-        wrongAnswers,
-
-        unanswered,
-
-        completedExams:
-          completedResults.length,
-
-        commonExams,
-
-        specialExams,
-
-        strictExams,
+        totalExams: 0,
+        totalAttempts: 0,
+        averagePercentage: 0,
+        totalScore: 0,
+        totalMarks: 0,
+        correctAnswers: 0,
+        wrongAnswers: 0,
+        unanswered: 0,
+        completedExams: 0,
+        commonExams: 0,
+        specialExams: 0,
+        strictExams: 0,
       };
-    }, [completedResults]);
+    }
+
+    const totalScore = completedResults.reduce(
+      (sum, item) => sum + Number(item.attempt.score || 0),
+      0,
+    );
+
+    const totalMarks = completedResults.reduce(
+      (sum, item) => sum + Number(item.attempt.totalMarks || 0),
+      0,
+    );
+
+    const correctAnswers = completedResults.reduce(
+      (sum, item) => sum + Number(item.attempt.correctAnswers || 0),
+      0,
+    );
+
+    const wrongAnswers = completedResults.reduce(
+      (sum, item) => sum + Number(item.attempt.wrongAnswers || 0),
+      0,
+    );
+
+    const unanswered = completedResults.reduce(
+      (sum, item) => sum + Number(item.attempt.unanswered || 0),
+      0,
+    );
+
+    const averagePercentage =
+      completedResults.reduce(
+        (sum, item) => sum + Number(item.attempt.percentage || 0),
+        0,
+      ) / completedResults.length;
+
+    const commonExams = completedResults.filter(
+      (item) => item.exam.examType === "COMMON",
+    ).length;
+
+    const specialExams = completedResults.filter(
+      (item) => item.exam.examType === "SPECIAL",
+    ).length;
+
+    const strictExams = completedResults.filter(
+      (item) => item.exam.examMode === "STRICT",
+    ).length;
+
+    return {
+      totalExams: completedResults.length,
+
+      totalAttempts: completedResults.length,
+
+      averagePercentage: Number(averagePercentage.toFixed(2)),
+
+      totalScore,
+
+      totalMarks,
+
+      correctAnswers,
+
+      wrongAnswers,
+
+      unanswered,
+
+      completedExams: completedResults.length,
+
+      commonExams,
+
+      specialExams,
+
+      strictExams,
+    };
+  }, [completedResults]);
 
   /*
    * Published/upcoming examinations are
    * kept completely separate from completed
    * performance.
    */
-  const upcomingResults =
-    data?.upcomingResults ?? [];
+  const upcomingResults = data?.upcomingResults ?? [];
 
-  const handleResultClick = (
-    exam: PerformanceAttempt
-  ) => {
+  const handleResultClick = (exam: PerformanceAttempt) => {
     setSelectedExam(exam);
   };
 
-  const handleUpcomingClick = (
-    exam: PerformanceAttempt
-  ) => {
+  const handleUpcomingClick = (exam: PerformanceAttempt) => {
     setSelectedUpcomingExam(exam);
   };
 
@@ -283,9 +218,7 @@ const MyPerformance = () => {
             Unable to load performance
           </h2>
 
-          <p className="mt-2 text-sm text-gray-500">
-            {error}
-          </p>
+          <p className="mt-2 text-sm text-gray-500">{error}</p>
         </div>
       </div>
     );
@@ -314,9 +247,7 @@ const MyPerformance = () => {
 
           {/* STATISTICS */}
           <div className="mt-6">
-            <PerformanceStats
-              overview={completedOverview}
-            />
+            <PerformanceStats overview={completedOverview} />
           </div>
 
           {/* TABS */}
@@ -324,39 +255,28 @@ const MyPerformance = () => {
             <ResultTabs
               activeTab={activeTab}
               onChange={setActiveTab}
-              resultCount={
-                completedResults.length
-              }
-              upcomingCount={
-                upcomingResults.length
-              }
+              resultCount={completedResults.length}
+              upcomingCount={upcomingResults.length}
             />
           </div>
 
           {/* COMPLETED RESULTS */}
           {activeTab === "RESULTS" && (
             <section className="mt-6">
-              {completedResults.length ===
-              0 ? (
+              {completedResults.length === 0 ? (
                 <EmptyPerformanceState
                   title="No completed examinations"
                   description="Your expired or closed examination results will appear here."
                 />
               ) : (
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {completedResults.map(
-                    (item) => (
-                      <ExamResultCard
-                        key={item._id}
-                        item={item}
-                        onClick={() =>
-                          handleResultClick(
-                            item
-                          )
-                        }
-                      />
-                    )
-                  )}
+                  {completedResults.map((item) => (
+                    <ExamResultCard
+                      key={item._id}
+                      item={item}
+                      onClick={() => handleResultClick(item)}
+                    />
+                  ))}
                 </div>
               )}
             </section>
@@ -365,27 +285,20 @@ const MyPerformance = () => {
           {/* UPCOMING RESULTS */}
           {activeTab === "UPCOMING" && (
             <section className="mt-6">
-              {upcomingResults.length ===
-              0 ? (
+              {upcomingResults.length === 0 ? (
                 <EmptyPerformanceState
                   title="No upcoming examinations"
                   description="Published examinations will appear here when available."
                 />
               ) : (
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {upcomingResults.map(
-                    (item) => (
-                      <UpcomingResultCard
-                        key={item._id}
-                        item={item}
-                        onClick={() =>
-                          handleUpcomingClick(
-                            item
-                          )
-                        }
-                      />
-                    )
-                  )}
+                  {upcomingResults.map((item) => (
+                    <UpcomingResultCard
+                      key={item._id}
+                      item={item}
+                      onClick={() => handleUpcomingClick(item)}
+                    />
+                  ))}
                 </div>
               )}
             </section>
@@ -397,9 +310,7 @@ const MyPerformance = () => {
       {selectedExam && (
         <PerformanceDetailModal
           item={selectedExam}
-          onClose={() =>
-            setSelectedExam(null)
-          }
+          onClose={() => setSelectedExam(null)}
         />
       )}
 
@@ -407,9 +318,7 @@ const MyPerformance = () => {
       {selectedUpcomingExam && (
         <UpcomingPerformanceDetailModal
           item={selectedUpcomingExam}
-          onClose={() =>
-            setSelectedUpcomingExam(null)
-          }
+          onClose={() => setSelectedUpcomingExam(null)}
         />
       )}
     </>

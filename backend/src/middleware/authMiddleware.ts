@@ -1,12 +1,6 @@
-import type {
-  NextFunction,
-  Request,
-  Response,
-} from "express";
+import type { NextFunction, Request, Response } from "express";
 
-import {
-  verifyAccessToken,
-} from "../auth/authUtils";
+import { verifyAccessToken } from "../auth/authUtils";
 
 declare global {
   namespace Express {
@@ -14,9 +8,7 @@ declare global {
       user?: {
         userId: string;
         email: string;
-        role:
-          | "STUDENT"
-          | "INSTRUCTOR";
+        role: "STUDENT" | "INSTRUCTOR";
       };
     }
   }
@@ -25,11 +17,10 @@ declare global {
 export const authenticate = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   try {
-    const accessToken =
-      req.cookies?.scorewell_access_token;
+    const accessToken = req.cookies?.scorewell_access_token;
 
     if (!accessToken) {
       res.status(401).json({
@@ -40,8 +31,7 @@ export const authenticate = (
       return;
     }
 
-    const decoded =
-      verifyAccessToken(accessToken);
+    const decoded = verifyAccessToken(accessToken);
 
     if (!decoded.email) {
       res.status(401).json({
@@ -62,8 +52,7 @@ export const authenticate = (
   } catch (error) {
     res.status(401).json({
       success: false,
-      message:
-        "Access token is invalid or expired.",
+      message: "Access token is invalid or expired.",
     });
   }
 };

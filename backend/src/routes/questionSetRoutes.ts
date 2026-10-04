@@ -1,9 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 
-import {
-  authenticate,
-} from "../middleware/authMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 import {
   getMyQuestionSets,
@@ -29,14 +27,10 @@ const upload = multer({
   fileFilter: (_req, file, callback) => {
     const isPdf =
       file.mimetype === "application/pdf" ||
-      file.originalname
-        .toLowerCase()
-        .endsWith(".pdf");
+      file.originalname.toLowerCase().endsWith(".pdf");
 
     if (!isPdf) {
-      callback(
-        new Error("Only PDF files are supported.")
-      );
+      callback(new Error("Only PDF files are supported."));
       return;
     }
 
@@ -48,72 +42,48 @@ const upload = multer({
    AUTHENTICATION
 ========================================================= */
 
-router.use(
-  authenticate
-);
+router.use(authenticate);
 
 /* =========================================================
    GET MY QUESTION SETS
 ========================================================= */
 
-router.get(
-  "/",
-  getMyQuestionSets
-);
+router.get("/", getMyQuestionSets);
 
 /* =========================================================
    IMPORT QUESTIONS FROM PDF
 ========================================================= */
 
-router.post(
-  "/import-pdf",
-  upload.single("pdf"),
-  importQuestionsFromPdf
-);
+router.post("/import-pdf", upload.single("pdf"), importQuestionsFromPdf);
 
 /* =========================================================
    CREATE
 ========================================================= */
 
-router.post(
-  "/",
-  createQuestionSet
-);
+router.post("/", createQuestionSet);
 
 /* =========================================================
    UPDATE
 ========================================================= */
 
-router.put(
-  "/:id",
-  updateQuestionSet
-);
+router.put("/:id", updateQuestionSet);
 
 /* =========================================================
    DELETE
 ========================================================= */
 
-router.delete(
-  "/:id",
-  deleteQuestionSet
-);
+router.delete("/:id", deleteQuestionSet);
 
 /* =========================================================
    PUBLISH
 ========================================================= */
 
-router.patch(
-  "/:id/publish",
-  publishQuestionSet
-);
+router.patch("/:id/publish", publishQuestionSet);
 
 /* =========================================================
    UNPUBLISH
 ========================================================= */
 
-router.patch(
-  "/:id/unpublish",
-  unpublishQuestionSet
-);
+router.patch("/:id/unpublish", unpublishQuestionSet);
 
 export default router;

@@ -23,12 +23,7 @@ const Modal = ({
     return null;
   }
 
-  const icon =
-    type === "success"
-      ? "✓"
-      : type === "error"
-        ? "!"
-        : "i";
+  const icon = type === "success" ? "✓" : type === "error" ? "!" : "i";
 
   const iconClasses =
     type === "success"
@@ -80,7 +75,6 @@ const Modal = ({
 
         <div className="p-6 sm:p-7">
           <div className="flex flex-col items-center text-center">
-
             {/* ICON */}
             <div
               className={`
@@ -126,11 +120,7 @@ const Modal = ({
             )}
 
             {/* CUSTOM CONTENT */}
-            {children && (
-              <div className="mt-4 w-full">
-                {children}
-              </div>
-            )}
+            {children && <div className="mt-4 w-full">{children}</div>}
 
             {/* CLOSE BUTTON */}
             <button

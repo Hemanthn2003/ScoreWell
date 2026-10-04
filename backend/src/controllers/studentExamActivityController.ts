@@ -7,14 +7,13 @@ import { finalizeStudentAttempt } from "./studentExamSubmissionController";
 
 export const recordStudentExamActivity = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user || req.user.role !== "STUDENT") {
       res.status(403).json({
         success: false,
-        message:
-          "Only students can report examination activity.",
+        message: "Only students can report examination activity.",
       });
       return;
     }
@@ -32,8 +31,7 @@ export const recordStudentExamActivity = async (
     ) {
       res.status(400).json({
         success: false,
-        message:
-          "Invalid examination activity request.",
+        message: "Invalid examination activity request.",
       });
       return;
     }
@@ -53,8 +51,7 @@ export const recordStudentExamActivity = async (
       return;
     }
 
-    const isStrict =
-      attempt.examType === "STRICT";
+    const isStrict = attempt.examType === "STRICT";
 
     let activity = await ExamActivity.findOne({
       attemptId: attempt._id,
@@ -89,7 +86,7 @@ export const recordStudentExamActivity = async (
         new: true,
         upsert: !activity,
         setDefaultsOnInsert: true,
-      }
+      },
     );
 
     if (!activity) {
@@ -107,25 +104,20 @@ export const recordStudentExamActivity = async (
       return;
     }
 
-    if (
-      isStrict ||
-      activity.count >= 3
-    ) {
+    if (isStrict || activity.count >= 3) {
       activity.pausedAt = null;
       await activity.save();
 
-      const submittedAttempt =
-        await finalizeStudentAttempt(
-          attempt._id.toString(),
-          studentId,
-          "AUTO_SUBMITTED"
-        );
+      const submittedAttempt = await finalizeStudentAttempt(
+        attempt._id.toString(),
+        studentId,
+        "AUTO_SUBMITTED",
+      );
 
       res.status(200).json({
         success: true,
         count: activity.count,
-        autoSubmitted:
-          Boolean(submittedAttempt),
+        autoSubmitted: Boolean(submittedAttempt),
       });
       return;
     }
@@ -137,15 +129,11 @@ export const recordStudentExamActivity = async (
       paused: true,
     });
   } catch (error) {
-    console.error(
-      "Student exam activity error:",
-      error
-    );
+    console.error("Student exam activity error:", error);
 
     res.status(500).json({
       success: false,
-      message:
-        "Failed to record examination activity.",
+      message: "Failed to record examination activity.",
     });
   }
 };

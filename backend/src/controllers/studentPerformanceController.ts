@@ -1,16 +1,6 @@
-import type {
-
-  Request,
-
-  Response,
-
-} from "express";
-
-
+import type { Request, Response } from "express";
 
 import mongoose from "mongoose";
-
-
 
 import User from "../models/User";
 
@@ -22,199 +12,111 @@ import SpecialExamStudent from "../models/SpecialExamStudent";
 
 import StrictExam from "../models/StrictExam";
 
-
-
 interface StudentPerformanceAttempt {
+  _id: string;
 
-  _id: string;
+  examId: string;
 
-  examId: string;
+  examName: string;
 
-  examName: string;
+  exam: {
+    id: string;
 
+    title: string;
 
+    description: string;
 
-  exam: {
+    department: string;
 
-    id: string;
+    durationMinutes: number;
 
-    title: string;
+    questionCount: number;
 
-    description: string;
+    marksPerQuestion: number;
 
-    department: string;
+    negativeMarking: {
+      enabled: boolean;
 
+      penalty: number;
+    };
 
+    mode: "COMMON" | "SPECIAL";
 
-    durationMinutes: number;
+    status: "UNPUBLISHED" | "PUBLISHED" | "EXPIRED" | "CLOSED";
 
-    questionCount: number;
+    startDate: string | null;
 
-    marksPerQuestion: number;
+    deadlineDate: string | null;
 
+    examType: "COMMON" | "SPECIAL";
 
+    examMode: "NORMAL" | "STRICT";
 
-    negativeMarking: {
+    strictDeadlineDate: string | null;
 
-      enabled: boolean;
+    strictAttemptChances: number | null;
+  };
 
-      penalty: number;
+  attempt: {
+    attemptNo: number;
 
-    };
+    startTime: string;
 
+    submittedAt: string | null;
 
+    status: "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
 
-    mode: "COMMON" | "SPECIAL";
+    score: number;
 
+    totalMarks: number;
 
+    correctAnswers: number;
 
-    status:
+    wrongAnswers: number;
 
-      | "UNPUBLISHED"
+    unanswered: number;
 
-      | "PUBLISHED"
+    timeTakenSeconds: number;
 
-      | "EXPIRED"
+    percentage: number;
 
-      | "CLOSED";
+    questions: Array<{
+      questionId: string;
 
+      question: string;
 
+      options: string[];
 
-    startDate: string | null;
+      questionType: "SINGLE" | "MULTI";
 
-    deadlineDate: string | null;
+      selectedAnswers: string[];
 
+      correctAnswers: string[];
 
+      isCorrect: boolean;
 
-    examType: "COMMON" | "SPECIAL";
+      marksAwarded: number;
+    }>;
+  };
 
-    examMode: "NORMAL" | "STRICT";
-
-
-
-    strictDeadlineDate: string | null;
-
-    strictAttemptChances: number | null;
-
-  };
-
-
-
-  attempt: {
-
-    attemptNo: number;
-
-
-
-    startTime: string;
-
-    submittedAt: string | null;
-
-
-
-    status:
-
-      | "IN_PROGRESS"
-
-      | "SUBMITTED"
-
-      | "AUTO_SUBMITTED";
-
-
-
-    score: number;
-
-    totalMarks: number;
-
-
-
-    correctAnswers: number;
-
-    wrongAnswers: number;
-
-    unanswered: number;
-
-
-
-    timeTakenSeconds: number;
-
-    percentage: number;
-
-
-
-    questions: Array<{
-
-      questionId: string;
-
-      question: string;
-
-      options: string[];
-
-
-
-      questionType:
-
-        | "SINGLE"
-
-        | "MULTI";
-
-
-
-      selectedAnswers: string[];
-
-      correctAnswers: string[];
-
-
-
-      isCorrect: boolean;
-
-      marksAwarded: number;
-
-    }>;
-
-  };
-
-
-
-  resultReleaseDate: string | null;
-
+  resultReleaseDate: string | null;
 }
 
-
-
 const calculatePercentage = (
+  score: number,
 
-  score: number,
-
-  totalMarks: number
-
+  totalMarks: number,
 ): number => {
+  if (
+    !Number.isFinite(score) ||
+    !Number.isFinite(totalMarks) ||
+    totalMarks <= 0
+  ) {
+    return 0;
+  }
 
-  if (
-
-    !Number.isFinite(score) ||
-
-    !Number.isFinite(totalMarks) ||
-
-    totalMarks <= 0
-
-  ) {
-
-    return 0;
-
-  }
-
-
-
-  return Number(
-
-    ((score / totalMarks) * 100).toFixed(2)
-
-  );
-
+  return Number(((score / totalMarks) * 100).toFixed(2));
 };
-
-
 
 /* =========================================================
 
@@ -222,97 +124,49 @@ const calculatePercentage = (
 
 \========================================================= */
 
-
-
 const syncRelevantExamStatuses = async (
+  exams: Array<{
+    _id: mongoose.Types.ObjectId;
 
-  exams: Array<{
+    status: string;
 
-    _id: mongoose.Types.ObjectId;
+    startDate?: Date | null;
 
-    status: string;
-
-    startDate?: Date | null;
-
-    deadlineDate?: Date | null;
-
-  }>
-
+    deadlineDate?: Date | null;
+  }>,
 ): Promise<void> => {
+  const now = new Date();
 
-  const now = new Date();
+  for (const exam of exams) {
+    let nextStatus = exam.status;
 
+    if (exam.deadlineDate && exam.deadlineDate <= now) {
+      nextStatus = "EXPIRED";
+    } else if (
+      exam.startDate &&
+      exam.startDate <= now &&
+      exam.status === "UNPUBLISHED"
+    ) {
+      nextStatus = "PUBLISHED";
+    }
 
+    if (nextStatus !== exam.status) {
+      await Exam.updateOne(
+        {
+          _id: exam._id,
+        },
 
-  for (const exam of exams) {
+        {
+          $set: {
+            status: nextStatus,
+          },
+        },
+      );
 
-    let nextStatus = exam.status;
-
-
-
-    if (
-
-      exam.deadlineDate &&
-
-      exam.deadlineDate <= now
-
-    ) {
-
-      nextStatus = "EXPIRED";
-
-    } else if (
-
-      exam.startDate &&
-
-      exam.startDate <= now &&
-
-      exam.status === "UNPUBLISHED"
-
-    ) {
-
-      nextStatus = "PUBLISHED";
-
-    }
-
-
-
-    if (
-
-      nextStatus !== exam.status
-
-    ) {
-
-      await Exam.updateOne(
-
-        {
-
-          _id: exam._id,
-
-        },
-
-        {
-
-          $set: {
-
-            status: nextStatus,
-
-          },
-
-        }
-
-      );
-
-
-
-      exam.status = nextStatus;
-
-    }
-
-  }
-
+      exam.status = nextStatus;
+    }
+  }
 };
-
-
 
 /* =========================================================
 
@@ -320,501 +174,216 @@ const syncRelevantExamStatuses = async (
 
 \========================================================= */
 
+export const getMyPerformance = async (
+  req: Request,
 
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
 
-export const getMyPerformance =
+        message: "Authentication required.",
+      });
 
-  async (
+      return;
+    }
 
-    req: Request,
+    if (req.user.role !== "STUDENT") {
+      res.status(403).json({
+        success: false,
 
-    res: Response
+        message: "Only students can access performance.",
+      });
 
-  ): Promise<void> => {
+      return;
+    }
 
-    try {
+    const userId = req.user.userId;
 
-      if (!req.user) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({
+        success: false,
 
-        res.status(401).json({
+        message: "Invalid student ID.",
+      });
 
-          success: false,
-
-          message:
-
-            "Authentication required.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      if (
-
-        req.user.role !== "STUDENT"
-
-      ) {
-
-        res.status(403).json({
-
-          success: false,
-
-          message:
-
-            "Only students can access performance.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      const userId =
-
-        req.user.userId;
-
-
-
-      if (
-
-        !mongoose.Types.ObjectId.isValid(
-
-          userId
-
-        )
-
-      ) {
-
-        res.status(400).json({
-
-          success: false,
-
-          message:
-
-            "Invalid student ID.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /* =====================================================
+      return;
+    } /* =====================================================
 
          CURRENT STUDENT
 
       ===================================================== */
 
+    const student = await User.findOne({
+      _id: userId,
 
+      role: "STUDENT",
 
-      const student =
+      isActive: true,
+    }).select("_id name email department isActive isPermitted");
 
-        await User.findOne({
+    if (!student) {
+      res.status(404).json({
+        success: false,
 
-          _id: userId,
+        message: "Student account not found.",
+      });
 
-          role: "STUDENT",
-
-          isActive: true,
-
-        }).select(
-
-          "_id name email department isActive isPermitted"
-
-        );
-
-
-
-      if (!student) {
-
-        res.status(404).json({
-
-          success: false,
-
-          message:
-
-            "Student account not found.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /* =====================================================
+      return;
+    } /* =====================================================
 
          STUDENT ATTEMPTS
 
       ===================================================== */
 
+    const attempts = await Attempt.find({
+      studentId: student._id,
+    }).sort({
+      startTime: -1,
+    });
 
+    const validAttempts = attempts.filter((attempt) => {
+      const emailMatches =
+        attempt.studentEmail
 
-      const attempts =
+          .toLowerCase()
 
-        await Attempt.find({
+          .trim() ===
+        student.email
 
-          studentId:
+          .toLowerCase()
 
-            student._id,
+          .trim();
 
-        }).sort({
+      const departmentMatches =
+        attempt.studentDepartment.trim() === (student.department ?? "").trim();
 
-          startTime: -1,
-
-        });
-
-
-
-      const validAttempts =
-
-        attempts.filter(
-
-          (attempt) => {
-
-            const emailMatches =
-
-              attempt.studentEmail
-
-                .toLowerCase()
-
-                .trim() ===
-
-              student.email
-
-                .toLowerCase()
-
-                .trim();
-
-
-
-            const departmentMatches =
-
-              attempt.studentDepartment
-
-                .trim() ===
-
-              (
-
-                student.department ??
-
-                ""
-
-              ).trim();
-
-
-
-            return (
-
-              attempt.studentId.toString() ===
-
-                student._id.toString() &&
-
-              emailMatches &&
-
-              departmentMatches
-
-            );
-
-          }
-
-        );
-
-
-
-      /* =====================================================
+      return (
+        attempt.studentId.toString() === student._id.toString() &&
+        emailMatches &&
+        departmentMatches
+      );
+    }); /* =====================================================
 
          NO ATTEMPTS
 
       ===================================================== */
 
+    if (validAttempts.length === 0) {
+      res.status(200).json({
+        success: true,
 
+        student: {
+          id: student._id.toString(),
 
-      if (
+          name: student.name,
 
-        validAttempts.length === 0
+          email: student.email,
 
-      ) {
+          department: student.department ?? "",
+        },
 
-        res.status(200).json({
+        overview: {
+          totalExams: 0,
 
-          success: true,
+          totalAttempts: 0,
 
+          averagePercentage: 0,
 
+          totalScore: 0,
 
-          student: {
+          totalMarks: 0,
 
-            id:
+          correctAnswers: 0,
 
-              student._id.toString(),
+          wrongAnswers: 0,
 
+          unanswered: 0,
 
+          completedExams: 0,
 
-            name:
+          commonExams: 0,
 
-              student.name,
+          specialExams: 0,
 
+          strictExams: 0,
+        },
 
+        examResults: [],
 
-            email:
+        upcomingResults: [],
+      });
 
-              student.email,
-
-
-
-            department:
-
-              student.department ??
-
-              "",
-
-          },
-
-
-
-          overview: {
-
-            totalExams: 0,
-
-            totalAttempts: 0,
-
-            averagePercentage: 0,
-
-            totalScore: 0,
-
-            totalMarks: 0,
-
-            correctAnswers: 0,
-
-            wrongAnswers: 0,
-
-            unanswered: 0,
-
-            completedExams: 0,
-
-            commonExams: 0,
-
-            specialExams: 0,
-
-            strictExams: 0,
-
-          },
-
-
-
-          examResults: [],
-
-          upcomingResults: [],
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /* =====================================================
+      return;
+    } /* =====================================================
 
          RELATED EXAMS
 
       ===================================================== */
 
+    const examIds = validAttempts.map((attempt) => attempt.examId);
 
+    const exams = await Exam.find({
+      _id: {
+        $in: examIds,
+      },
+    });
 
-      const examIds =
+    await syncRelevantExamStatuses(exams);
 
-        validAttempts.map(
+    const examMap = new Map<string, (typeof exams)[number]>();
 
-          (attempt) =>
+    for (const exam of exams) {
+      examMap.set(
+        exam._id.toString(),
 
-            attempt.examId
-
-        );
-
-
-
-      const exams =
-
-        await Exam.find({
-
-          _id: {
-
-            $in: examIds,
-
-          },
-
-        });
-
-
-
-      await syncRelevantExamStatuses(
-
-        exams
-
-      );
-
-
-
-      const examMap =
-
-        new Map<
-
-          string,
-
-          (typeof exams)[number]
-
-        >();
-
-
-
-      for (const exam of exams) {
-
-        examMap.set(
-
-          exam._id.toString(),
-
-          exam
-
-        );
-
-      }
-
-
-
-      /* =====================================================
+        exam,
+      );
+    } /* =====================================================
 
          SPECIAL EXAM ASSIGNMENTS
 
       ===================================================== */
 
+    const specialAssignments = await SpecialExamStudent.find({
+      examId: {
+        $in: examIds,
+      },
 
+      studentId: student._id,
 
-      const specialAssignments =
+      studentEmail: student.email,
 
-        await SpecialExamStudent.find({
+      studentName: student.name,
 
-          examId: {
+      department: student.department,
+    });
 
-            $in: examIds,
-
-          },
-
-
-
-          studentId:
-
-            student._id,
-
-
-
-          studentEmail:
-
-            student.email,
-
-
-
-          studentName:
-
-            student.name,
-
-
-
-          department:
-
-            student.department,
-
-        });
-
-
-
-      const specialExamIds =
-
-        new Set(
-
-          specialAssignments.map(
-
-            (assignment) =>
-
-              assignment.examId.toString()
-
-          )
-
-        );
-
-
-
-      /* =====================================================
+    const specialExamIds = new Set(
+      specialAssignments.map((assignment) => assignment.examId.toString()),
+    ); /* =====================================================
 
          STRICT EXAMS
 
       ===================================================== */
 
+    const strictExams = await StrictExam.find({
+      examId: {
+        $in: examIds,
+      },
+    });
 
+    const strictExamMap = new Map<string, (typeof strictExams)[number]>();
 
-      const strictExams =
+    for (const strictExam of strictExams) {
+      strictExamMap.set(
+        strictExam.examId.toString(),
 
-        await StrictExam.find({
-
-          examId: {
-
-            $in: examIds,
-
-          },
-
-        });
-
-
-
-      const strictExamMap =
-
-        new Map<
-
-          string,
-
-          (typeof strictExams)[number]
-
-        >();
-
-
-
-      for (
-
-        const strictExam of strictExams
-
-      ) {
-
-        strictExamMap.set(
-
-          strictExam.examId.toString(),
-
-          strictExam
-
-        );
-
-      }
-
-
-
-      /* =====================================================
+        strictExam,
+      );
+    } /* =====================================================
 
          SELECT RESULT ATTEMPTS
 
@@ -826,1033 +395,354 @@ export const getMyPerformance =
 
       ===================================================== */
 
+    const attemptsForResults: typeof validAttempts = [];
 
+    const attemptsByExamForResults = new Map<string, typeof validAttempts>();
 
-      const attemptsForResults:
+    for (const attempt of validAttempts) {
+      const examKey = attempt.examId.toString();
 
-        typeof validAttempts = [];
+      const existing = attemptsByExamForResults.get(examKey) ?? [];
 
+      existing.push(attempt);
 
+      attemptsByExamForResults.set(
+        examKey,
 
-      const attemptsByExamForResults =
+        existing,
+      );
+    }
 
-        new Map<
+    for (const [examKey, examAttempts] of attemptsByExamForResults) {
+      const exam = examMap.get(examKey);
 
-          string,
+      if (exam?.status !== "EXPIRED" && exam?.status !== "CLOSED") {
+        attemptsForResults.push(...examAttempts);
 
-          typeof validAttempts
-
-        >();
-
-
-
-      for (
-
-        const attempt of validAttempts
-
-      ) {
-
-        const examKey =
-
-          attempt.examId.toString();
-
-        const existing =
-
-          attemptsByExamForResults.get(
-
-            examKey
-
-          ) ?? [];
-
-
-
-        existing.push(attempt);
-
-        attemptsByExamForResults.set(
-
-          examKey,
-
-          existing
-
-        );
-
+        continue;
       }
 
+      const completedAttempts = examAttempts.filter(
+        (attempt) =>
+          attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED",
+      );
 
+      const highestScoringAttempt = [...completedAttempts].sort(
+        (a, b) =>
+          Number(b.score || 0) - Number(a.score || 0) ||
+          Number(b.attemptNo || 1) - Number(a.attemptNo || 1),
+      )[0];
 
-      for (
-
-        const [examKey, examAttempts] of
-
-          attemptsByExamForResults
-
-      ) {
-
-        const exam =
-
-          examMap.get(examKey);
-
-
-
-        if (
-
-          exam?.status !== "EXPIRED" &&
-
-          exam?.status !== "CLOSED"
-
-        ) {
-
-          attemptsForResults.push(
-
-            ...examAttempts
-
-          );
-
-          continue;
-
-        }
-
-
-
-        const completedAttempts =
-
-          examAttempts.filter(
-
-            (attempt) =>
-
-              attempt.status === "SUBMITTED" ||
-
-              attempt.status === "AUTO_SUBMITTED"
-
-          );
-
-
-
-        const highestScoringAttempt =
-
-          [...completedAttempts].sort(
-
-            (a, b) =>
-
-              Number(b.score || 0) -
-
-                Number(a.score || 0) ||
-
-              Number(b.attemptNo || 1) -
-
-                Number(a.attemptNo || 1)
-
-          )[0];
-
-
-
-        if (highestScoringAttempt) {
-
-          attemptsForResults.push(
-
-            highestScoringAttempt
-
-          );
-
-        }
-
+      if (highestScoringAttempt) {
+        attemptsForResults.push(highestScoringAttempt);
       }
+    }
 
-
-
-      /* =====================================================
+    /* =====================================================
 
          FORMAT ATTEMPTS
 
       ===================================================== */
 
+    const formattedAttempts: StudentPerformanceAttempt[] = [];
 
+    for (const attempt of attemptsForResults) {
+      const exam = examMap.get(attempt.examId.toString());
 
-      const formattedAttempts: StudentPerformanceAttempt[] =
-
-        [];
-
-
-
-      for (
-
-        const attempt of attemptsForResults
-
-      ) {
-
-        const exam =
-
-          examMap.get(
-
-            attempt.examId.toString()
-
-          );
-
-
-
-        if (!exam) {
-
-          continue;
-
-        }
-
-
-
-        /*
+      if (!exam) {
+        continue;
+      } /*
 
          * Department security.
 
          */
 
-        if (
+      if (exam.department !== student.department) {
+        continue;
+      }
 
-          exam.department !==
+      const isSpecial = specialExamIds.has(exam._id.toString());
 
-          student.department
+      const strictExam = strictExamMap.get(exam._id.toString());
 
-        ) {
+      const isStrict = Boolean(strictExam);
 
-          continue;
+      const resultReleaseDate =
+        strictExam?.deadlineDate ?? exam.deadlineDate ?? null;
 
-        }
+      const totalMarks = Number(attempt.totalMarks) || 0;
 
+      const score = Number(attempt.score) || 0;
 
+      const formatted: StudentPerformanceAttempt = {
+        _id: attempt._id.toString(),
 
-        const isSpecial =
+        examId: exam._id.toString(),
 
-          specialExamIds.has(
+        examName: attempt.examName || exam.title,
 
-            exam._id.toString()
+        exam: {
+          id: exam._id.toString(),
 
-          );
+          title: exam.title,
 
+          description: exam.description,
 
+          department: exam.department,
 
-        const strictExam =
+          durationMinutes: exam.durationMinutes,
 
-          strictExamMap.get(
+          questionCount: exam.questionCount,
 
-            exam._id.toString()
+          marksPerQuestion: exam.marksPerQuestion,
 
-          );
+          negativeMarking: {
+            enabled: exam.negativeMarking?.enabled ?? false,
 
+            penalty: exam.negativeMarking?.penalty ?? 0,
+          },
 
+          mode: exam.mode,
 
-        const isStrict =
+          status: exam.status,
 
-          Boolean(strictExam);
+          startDate: exam.startDate ? exam.startDate.toISOString() : null,
 
+          deadlineDate: exam.deadlineDate
+            ? exam.deadlineDate.toISOString()
+            : null,
 
+          examType: isSpecial ? "SPECIAL" : "COMMON",
 
-        const resultReleaseDate =
+          examMode: isStrict ? "STRICT" : "NORMAL",
 
-          strictExam?.deadlineDate ??
+          strictDeadlineDate: strictExam?.deadlineDate
+            ? strictExam.deadlineDate.toISOString()
+            : null,
 
-          exam.deadlineDate ??
+          strictAttemptChances: strictExam?.attemptChances ?? null,
+        },
 
-          null;
+        attempt: {
+          attemptNo: attempt.attemptNo,
 
+          startTime: attempt.startTime.toISOString(),
 
+          submittedAt: attempt.submittedAt
+            ? attempt.submittedAt.toISOString()
+            : null,
 
-        const totalMarks =
+          status: attempt.status,
 
-          Number(
+          score,
 
-            attempt.totalMarks
+          totalMarks,
 
-          ) || 0;
+          correctAnswers: Number(attempt.correctAnswers) || 0,
 
+          wrongAnswers: Number(attempt.wrongAnswers) || 0,
 
+          unanswered: Number(attempt.unanswered) || 0,
 
-        const score =
+          timeTakenSeconds: Number(attempt.timeTakenSeconds) || 0,
 
-          Number(
+          percentage: calculatePercentage(
+            score,
 
-            attempt.score
+            totalMarks,
+          ),
 
-          ) || 0;
+          questions: attempt.questions.map((question) => ({
+            questionId: question.questionId,
 
+            question: question.question,
 
+            options: question.options,
 
-        const formatted: StudentPerformanceAttempt =
+            questionType: question.questionType,
 
-          {
+            selectedAnswers: question.selectedAnswers,
 
-            _id:
+            correctAnswers: question.correctAnswers,
 
-              attempt._id.toString(),
+            isCorrect: question.isCorrect,
 
+            marksAwarded: question.marksAwarded,
+          })),
+        },
 
+        resultReleaseDate: resultReleaseDate
+          ? resultReleaseDate.toISOString()
+          : null,
+      };
 
-            examId:
-
-              exam._id.toString(),
-
-
-
-            examName:
-
-              attempt.examName ||
-
-              exam.title,
-
-
-
-            exam: {
-
-              id:
-
-                exam._id.toString(),
-
-
-
-              title:
-
-                exam.title,
-
-
-
-              description:
-
-                exam.description,
-
-
-
-              department:
-
-                exam.department,
-
-
-
-              durationMinutes:
-
-                exam.durationMinutes,
-
-
-
-              questionCount:
-
-                exam.questionCount,
-
-
-
-              marksPerQuestion:
-
-                exam.marksPerQuestion,
-
-
-
-              negativeMarking: {
-
-                enabled:
-
-                  exam.negativeMarking
-
-                    ?.enabled ??
-
-                  false,
-
-
-
-                penalty:
-
-                  exam.negativeMarking
-
-                    ?.penalty ??
-
-                  0,
-
-              },
-
-
-
-              mode:
-
-                exam.mode,
-
-
-
-              status:
-
-                exam.status,
-
-
-
-              startDate:
-
-                exam.startDate
-
-                  ? exam.startDate.toISOString()
-
-                  : null,
-
-
-
-              deadlineDate:
-
-                exam.deadlineDate
-
-                  ? exam.deadlineDate.toISOString()
-
-                  : null,
-
-
-
-              examType:
-
-                isSpecial
-
-                  ? "SPECIAL"
-
-                  : "COMMON",
-
-
-
-              examMode:
-
-                isStrict
-
-                  ? "STRICT"
-
-                  : "NORMAL",
-
-
-
-              strictDeadlineDate:
-
-                strictExam?.deadlineDate
-
-                  ? strictExam.deadlineDate.toISOString()
-
-                  : null,
-
-
-
-              strictAttemptChances:
-
-                strictExam?.attemptChances ??
-
-                null,
-
-            },
-
-
-
-            attempt: {
-
-              attemptNo:
-
-                attempt.attemptNo,
-
-
-
-              startTime:
-
-                attempt.startTime.toISOString(),
-
-
-
-              submittedAt:
-
-                attempt.submittedAt
-
-                  ? attempt.submittedAt.toISOString()
-
-                  : null,
-
-
-
-              status:
-
-                attempt.status,
-
-
-
-              score,
-
-
-
-              totalMarks,
-
-
-
-              correctAnswers:
-
-                Number(
-
-                  attempt.correctAnswers
-
-                ) || 0,
-
-
-
-              wrongAnswers:
-
-                Number(
-
-                  attempt.wrongAnswers
-
-                ) || 0,
-
-
-
-              unanswered:
-
-                Number(
-
-                  attempt.unanswered
-
-                ) || 0,
-
-
-
-              timeTakenSeconds:
-
-                Number(
-
-                  attempt.timeTakenSeconds
-
-                ) || 0,
-
-
-
-              percentage:
-
-                calculatePercentage(
-
-                  score,
-
-                  totalMarks
-
-                ),
-
-
-
-              questions:
-
-                attempt.questions.map(
-
-                  (
-
-                    question
-
-                  ) => ({
-
-                    questionId:
-
-                      question.questionId,
-
-
-
-                    question:
-
-                      question.question,
-
-
-
-                    options:
-
-                      question.options,
-
-
-
-                    questionType:
-
-                      question.questionType,
-
-
-
-                    selectedAnswers:
-
-                      question.selectedAnswers,
-
-
-
-                    correctAnswers:
-
-                      question.correctAnswers,
-
-
-
-                    isCorrect:
-
-                      question.isCorrect,
-
-
-
-                    marksAwarded:
-
-                      question.marksAwarded,
-
-                  })
-
-                ),
-
-            },
-
-
-
-            resultReleaseDate:
-
-              resultReleaseDate
-
-                ? resultReleaseDate.toISOString()
-
-                : null,
-
-          };
-
-
-
-        formattedAttempts.push(
-
-          formatted
-
-        );
-
-      }
-
-
-
-      /* =====================================================
+      formattedAttempts.push(formatted);
+    } /* =====================================================
 
          SORT
 
       ===================================================== */
 
-
-
-      formattedAttempts.sort(
-
-        (a, b) =>
-
-          new Date(
-
-            b.attempt.startTime
-
-          ).getTime() -
-
-          new Date(
-
-            a.attempt.startTime
-
-          ).getTime()
-
-      );
-
-
-
-      /* =====================================================
+    formattedAttempts.sort(
+      (a, b) =>
+        new Date(b.attempt.startTime).getTime() -
+        new Date(a.attempt.startTime).getTime(),
+    ); /* =====================================================
 
          OVERVIEW
 
       ===================================================== */
 
+    const totalAttempts = formattedAttempts.length;
 
+    const totalScore = formattedAttempts.reduce(
+      (
+        sum,
 
-      const totalAttempts =
+        item,
+      ) => sum + item.attempt.score,
 
-        formattedAttempts.length;
+      0,
+    );
 
+    const totalMarks = formattedAttempts.reduce(
+      (
+        sum,
 
+        item,
+      ) => sum + item.attempt.totalMarks,
 
-      const totalScore =
+      0,
+    );
 
-        formattedAttempts.reduce(
+    const correctAnswers = formattedAttempts.reduce(
+      (
+        sum,
 
-          (
+        item,
+      ) => sum + item.attempt.correctAnswers,
 
-            sum,
+      0,
+    );
 
-            item
+    const wrongAnswers = formattedAttempts.reduce(
+      (
+        sum,
 
-          ) =>
+        item,
+      ) => sum + item.attempt.wrongAnswers,
 
-            sum +
+      0,
+    );
 
-            item.attempt.score,
+    const unanswered = formattedAttempts.reduce(
+      (
+        sum,
 
-          0
+        item,
+      ) => sum + item.attempt.unanswered,
 
-        );
+      0,
+    );
 
+    const averagePercentage =
+      totalMarks > 0 ? Number(((totalScore / totalMarks) * 100).toFixed(2)) : 0;
 
+    const uniqueExamIds = new Set(formattedAttempts.map((item) => item.examId));
 
-      const totalMarks =
+    const commonExams = new Set(
+      formattedAttempts
 
-        formattedAttempts.reduce(
+        .filter((item) => item.exam.examType === "COMMON")
 
-          (
+        .map((item) => item.examId),
+    ).size;
 
-            sum,
+    const specialExams = new Set(
+      formattedAttempts
 
-            item
+        .filter((item) => item.exam.examType === "SPECIAL")
 
-          ) =>
+        .map((item) => item.examId),
+    ).size;
 
-            sum +
+    const strictExamsCount = new Set(
+      formattedAttempts
 
-            item.attempt.totalMarks,
+        .filter((item) => item.exam.examMode === "STRICT")
 
-          0
-
-        );
-
-
-
-      const correctAnswers =
-
-        formattedAttempts.reduce(
-
-          (
-
-            sum,
-
-            item
-
-          ) =>
-
-            sum +
-
-            item.attempt.correctAnswers,
-
-          0
-
-        );
-
-
-
-      const wrongAnswers =
-
-        formattedAttempts.reduce(
-
-          (
-
-            sum,
-
-            item
-
-          ) =>
-
-            sum +
-
-            item.attempt.wrongAnswers,
-
-          0
-
-        );
-
-
-
-      const unanswered =
-
-        formattedAttempts.reduce(
-
-          (
-
-            sum,
-
-            item
-
-          ) =>
-
-            sum +
-
-            item.attempt.unanswered,
-
-          0
-
-        );
-
-
-
-      const averagePercentage =
-
-        totalMarks > 0
-
-          ? Number(
-
-              (
-
-                (totalScore /
-
-                  totalMarks) *
-
-                100
-
-              ).toFixed(2)
-
-            )
-
-          : 0;
-
-
-
-      const uniqueExamIds =
-
-        new Set(
-
-          formattedAttempts.map(
-
-            (item) =>
-
-              item.examId
-
-          )
-
-        );
-
-
-
-      const commonExams =
-
-        new Set(
-
-          formattedAttempts
-
-            .filter(
-
-              (item) =>
-
-                item.exam.examType ===
-
-                "COMMON"
-
-            )
-
-            .map(
-
-              (item) =>
-
-                item.examId
-
-            )
-
-        ).size;
-
-
-
-      const specialExams =
-
-        new Set(
-
-          formattedAttempts
-
-            .filter(
-
-              (item) =>
-
-                item.exam.examType ===
-
-                "SPECIAL"
-
-            )
-
-            .map(
-
-              (item) =>
-
-                item.examId
-
-            )
-
-        ).size;
-
-
-
-      const strictExamsCount =
-
-        new Set(
-
-          formattedAttempts
-
-            .filter(
-
-              (item) =>
-
-                item.exam.examMode ===
-
-                "STRICT"
-
-            )
-
-            .map(
-
-              (item) =>
-
-                item.examId
-
-            )
-
-        ).size;
-
-
-
-      /* =====================================================
+        .map((item) => item.examId),
+    ).size; /* =====================================================
 
          RESULTS
 
       ===================================================== */
 
+    const examResults = formattedAttempts.filter(
+      (item) => item.exam.status === "EXPIRED",
+    );
 
+    const upcomingResults = formattedAttempts.filter(
+      (item) => item.exam.status === "PUBLISHED",
+    );
 
-      const examResults =
+    res.status(200).json({
+      success: true,
 
-        formattedAttempts.filter(
+      student: {
+        id: student._id.toString(),
 
-          (item) =>
+        name: student.name,
 
-            item.exam.status ===
+        email: student.email,
 
-            "EXPIRED"
+        department: student.department ?? "",
+      },
 
-        );
+      overview: {
+        totalExams: uniqueExamIds.size,
 
+        totalAttempts,
 
+        averagePercentage,
 
-      const upcomingResults =
+        totalScore,
 
-        formattedAttempts.filter(
+        totalMarks,
 
-          (item) =>
+        correctAnswers,
 
-            item.exam.status ===
+        wrongAnswers,
 
-            "PUBLISHED"
+        unanswered,
 
-        );
+        completedExams: uniqueExamIds.size,
 
+        commonExams,
 
+        specialExams,
 
-      res.status(200).json({
+        strictExams: strictExamsCount,
+      },
 
-        success: true,
+      examResults,
 
+      upcomingResults,
+    });
+  } catch (error) {
+    console.error(
+      "Get student performance error:",
 
+      error,
+    );
 
-        student: {
+    res.status(500).json({
+      success: false,
 
-          id:
-
-            student._id.toString(),
-
-
-
-          name:
-
-            student.name,
-
-
-
-          email:
-
-            student.email,
-
-
-
-          department:
-
-            student.department ??
-
-            "",
-
-        },
-
-
-
-        overview: {
-
-          totalExams:
-
-            uniqueExamIds.size,
-
-
-
-          totalAttempts,
-
-
-
-          averagePercentage,
-
-
-
-          totalScore,
-
-
-
-          totalMarks,
-
-
-
-          correctAnswers,
-
-
-
-          wrongAnswers,
-
-
-
-          unanswered,
-
-
-
-          completedExams:
-
-            uniqueExamIds.size,
-
-
-
-          commonExams,
-
-
-
-          specialExams,
-
-
-
-          strictExams:
-
-            strictExamsCount,
-
-        },
-
-
-
-        examResults,
-
-
-
-        upcomingResults,
-
-      });
-
-    } catch (error) {
-
-      console.error(
-
-        "Get student performance error:",
-
-        error
-
-      );
-
-
-
-      res.status(500).json({
-
-        success: false,
-
-        message:
-
-          "Failed to load student performance.",
-
-      });
-
-    }
-
-  };
-
-
+      message: "Failed to load student performance.",
+    });
+  }
+};
 
 /* =========================================================
 
@@ -1860,65 +750,31 @@ export const getMyPerformance =
 
 \========================================================= */
 
+export const getMyAttemptPerformance = async (
+  req: Request,
 
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
 
-export const getMyAttemptPerformance =
+        message: "Authentication required.",
+      });
 
-  async (
+      return;
+    }
 
-    req: Request,
+    if (req.user.role !== "STUDENT") {
+      res.status(403).json({
+        success: false,
 
-    res: Response
+        message: "Only students can access performance.",
+      });
 
-  ): Promise<void> => {
-
-    try {
-
-      if (!req.user) {
-
-        res.status(401).json({
-
-          success: false,
-
-          message:
-
-            "Authentication required.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      if (
-
-        req.user.role !== "STUDENT"
-
-      ) {
-
-        res.status(403).json({
-
-          success: false,
-
-          message:
-
-            "Only students can access performance.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /*
+      return;
+    } /*
 
        * Express can type route params as
 
@@ -1932,762 +788,285 @@ export const getMyAttemptPerformance =
 
        */
 
-      const attemptId =
+    const attemptId = Array.isArray(req.params.attemptId)
+      ? req.params.attemptId[0]
+      : req.params.attemptId;
 
-        Array.isArray(
+    if (!attemptId || !mongoose.Types.ObjectId.isValid(attemptId)) {
+      res.status(400).json({
+        success: false,
 
-          req.params.attemptId
+        message: "Invalid attempt ID.",
+      });
 
-        )
-
-          ? req.params.attemptId[0]
-
-          : req.params.attemptId;
-
-
-
-      if (
-
-        !attemptId ||
-
-        !mongoose.Types.ObjectId.isValid(
-
-          attemptId
-
-        )
-
-      ) {
-
-        res.status(400).json({
-
-          success: false,
-
-          message:
-
-            "Invalid attempt ID.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /* =====================================================
+      return;
+    } /* =====================================================
 
          CURRENT STUDENT
 
       ===================================================== */
 
+    const student = await User.findOne({
+      _id: req.user.userId,
 
+      role: "STUDENT",
 
-      const student =
+      isActive: true,
+    }).select("_id name email department");
 
-        await User.findOne({
+    if (!student) {
+      res.status(404).json({
+        success: false,
 
-          _id: req.user.userId,
+        message: "Student account not found.",
+      });
 
-          role: "STUDENT",
-
-          isActive: true,
-
-        }).select(
-
-          "_id name email department"
-
-        );
-
-
-
-      if (!student) {
-
-        res.status(404).json({
-
-          success: false,
-
-          message:
-
-            "Student account not found.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /* =====================================================
+      return;
+    } /* =====================================================
 
          ONLY THIS STUDENT'S ATTEMPT
 
       ===================================================== */
 
+    let attempt = await Attempt.findOne({
+      _id: attemptId,
 
+      studentId: student._id,
 
-      let attempt =
+      studentEmail: student.email,
 
-        await Attempt.findOne({
+      studentDepartment: student.department,
+    });
 
-          _id: attemptId,
+    if (!attempt) {
+      res.status(404).json({
+        success: false,
 
+        message:
+          "This examination result does not belong to the logged-in student.",
+      });
 
-
-          studentId:
-
-            student._id,
-
-
-
-          studentEmail:
-
-            student.email,
-
-
-
-          studentDepartment:
-
-            student.department,
-
-        });
-
-
-
-      if (!attempt) {
-
-        res.status(404).json({
-
-          success: false,
-
-          message:
-
-            "This examination result does not belong to the logged-in student.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /* =====================================================
+      return;
+    } /* =====================================================
 
          LOAD EXAM
 
       ===================================================== */
 
+    const exam = await Exam.findOne({
+      _id: attempt.examId,
 
+      department: student.department,
+    });
 
-      const exam =
+    if (!exam) {
+      res.status(404).json({
+        success: false,
 
-        await Exam.findOne({
+        message: "The examination associated with this attempt was not found.",
+      });
 
-          _id:
-
-            attempt.examId,
-
-
-
-          department:
-
-            student.department,
-
-        });
-
-
-
-      if (!exam) {
-
-        res.status(404).json({
-
-          success: false,
-
-          message:
-
-            "The examination associated with this attempt was not found.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-            /* =====================================================
+      return;
+    } /* =====================================================
 
          USE ONLY HIGHEST SCORE AFTER RESULT RELEASE
 
       ===================================================== */
 
+    if (exam.status === "EXPIRED" || exam.status === "CLOSED") {
+      const completedAttempts = await Attempt.find({
+        examId: exam._id,
 
+        studentId: student._id,
 
-      if (
+        status: {
+          $in: ["SUBMITTED", "AUTO_SUBMITTED"],
+        },
+      }).sort({
+        score: -1,
 
-        exam.status === "EXPIRED" ||
+        attemptNo: -1,
+      });
 
-        exam.status === "CLOSED"
+      const highestScoringAttempt = completedAttempts[0];
 
-      ) {
-
-        const completedAttempts =
-
-          await Attempt.find({
-
-            examId: exam._id,
-
-            studentId: student._id,
-
-            status: {
-
-              $in: [
-
-                "SUBMITTED",
-
-                "AUTO_SUBMITTED",
-
-              ],
-
-            },
-
-          }).sort({
-
-            score: -1,
-
-            attemptNo: -1,
-
-          });
-
-
-
-        const highestScoringAttempt =
-
-          completedAttempts[0];
-
-
-
-        if (highestScoringAttempt) {
-
-          attempt = highestScoringAttempt;
-
-        }
-
+      if (highestScoringAttempt) {
+        attempt = highestScoringAttempt;
       }
+    }
 
-
-
-/* =====================================================
+    /* =====================================================
 
          SPECIAL ASSIGNMENT
 
       ===================================================== */
 
+    const specialAssignment = await SpecialExamStudent.findOne({
+      examId: exam._id,
 
+      studentId: student._id,
 
-      const specialAssignment =
+      studentEmail: student.email,
 
-        await SpecialExamStudent.findOne({
+      studentName: student.name,
 
-          examId:
+      department: student.department,
+    });
 
-            exam._id,
-
-
-
-          studentId:
-
-            student._id,
-
-
-
-          studentEmail:
-
-            student.email,
-
-
-
-          studentName:
-
-            student.name,
-
-
-
-          department:
-
-            student.department,
-
-        });
-
-
-
-      const isSpecial =
-
-        Boolean(
-
-          specialAssignment
-
-        );
-
-
-
-      /* =====================================================
+    const isSpecial =
+      Boolean(
+        specialAssignment,
+      ); /* =====================================================
 
          STRICT EXAM
 
       ===================================================== */
 
+    const strictExam = await StrictExam.findOne({
+      examId: exam._id,
+    });
 
+    const isStrict = Boolean(strictExam);
 
-      const strictExam =
+    if (exam.mode === "SPECIAL" && !specialAssignment) {
+      res.status(403).json({
+        success: false,
 
-        await StrictExam.findOne({
+        message:
+          "This special examination is not assigned to the logged-in student.",
+      });
 
-          examId:
-
-            exam._id,
-
-        });
-
-
-
-      const isStrict =
-
-        Boolean(
-
-          strictExam
-
-        );
-
-
-
-      if (
-
-        exam.mode ===
-
-          "SPECIAL" &&
-
-        !specialAssignment
-
-      ) {
-
-        res.status(403).json({
-
-          success: false,
-
-          message:
-
-            "This special examination is not assigned to the logged-in student.",
-
-        });
-
-
-
-        return;
-
-      }
-
-
-
-      /* =====================================================
+      return;
+    } /* =====================================================
 
          RESPONSE
 
       ===================================================== */
 
+    const totalMarks = Number(attempt.totalMarks) || 0;
 
+    const score = Number(attempt.score) || 0;
 
-      const totalMarks =
+    const releaseDate = strictExam?.deadlineDate ?? exam.deadlineDate ?? null;
 
-        Number(
+    res.status(200).json({
+      success: true,
 
-          attempt.totalMarks
+      student: {
+        id: student._id.toString(),
 
-        ) || 0;
+        name: student.name,
 
+        email: student.email,
 
+        department: student.department ?? "",
+      },
 
-      const score =
+      exam: {
+        id: exam._id.toString(),
 
-        Number(
+        title: exam.title,
 
-          attempt.score
+        description: exam.description,
 
-        ) || 0;
+        department: exam.department,
 
+        durationMinutes: exam.durationMinutes,
 
+        questionCount: exam.questionCount,
 
-      const releaseDate =
+        marksPerQuestion: exam.marksPerQuestion,
 
-        strictExam?.deadlineDate ??
+        negativeMarking: {
+          enabled: exam.negativeMarking?.enabled ?? false,
 
-        exam.deadlineDate ??
+          penalty: exam.negativeMarking?.penalty ?? 0,
+        },
 
-        null;
+        mode: exam.mode,
 
+        status: exam.status,
 
+        startDate: exam.startDate ? exam.startDate.toISOString() : null,
 
-      res.status(200).json({
+        deadlineDate: exam.deadlineDate
+          ? exam.deadlineDate.toISOString()
+          : null,
 
-        success: true,
+        examType: isSpecial ? "SPECIAL" : "COMMON",
 
+        examMode: isStrict ? "STRICT" : "NORMAL",
 
+        strictDeadlineDate: strictExam?.deadlineDate
+          ? strictExam.deadlineDate.toISOString()
+          : null,
 
-        student: {
+        strictAttemptChances: strictExam?.attemptChances ?? null,
 
-          id:
+        resultReleaseDate: releaseDate ? releaseDate.toISOString() : null,
+      },
 
-            student._id.toString(),
+      attempt: {
+        id: attempt._id.toString(),
 
+        attemptNo: attempt.attemptNo,
 
+        startTime: attempt.startTime.toISOString(),
 
-          name:
+        submittedAt: attempt.submittedAt
+          ? attempt.submittedAt.toISOString()
+          : null,
 
-            student.name,
+        status: attempt.status,
 
+        score,
 
+        totalMarks,
 
-          email:
+        correctAnswers: attempt.correctAnswers,
 
-            student.email,
+        wrongAnswers: attempt.wrongAnswers,
 
+        unanswered: attempt.unanswered,
 
+        timeTakenSeconds: attempt.timeTakenSeconds,
 
-          department:
+        percentage: calculatePercentage(
+          score,
 
-            student.department ??
+          totalMarks,
+        ),
 
-            "",
+        questions: attempt.questions.map((question) => ({
+          questionId: question.questionId,
 
-        },
+          question: question.question,
 
+          options: question.options,
 
+          questionType: question.questionType,
 
-        exam: {
+          selectedAnswers: question.selectedAnswers,
 
-          id:
+          correctAnswers: question.correctAnswers,
 
-            exam._id.toString(),
+          isCorrect: question.isCorrect,
 
+          marksAwarded: question.marksAwarded,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Get single student attempt error:",
 
+      error,
+    );
 
-          title:
+    res.status(500).json({
+      success: false,
 
-            exam.title,
-
-
-
-          description:
-
-            exam.description,
-
-
-
-          department:
-
-            exam.department,
-
-
-
-          durationMinutes:
-
-            exam.durationMinutes,
-
-
-
-          questionCount:
-
-            exam.questionCount,
-
-
-
-          marksPerQuestion:
-
-            exam.marksPerQuestion,
-
-
-
-          negativeMarking: {
-
-            enabled:
-
-              exam.negativeMarking
-
-                ?.enabled ??
-
-              false,
-
-
-
-            penalty:
-
-              exam.negativeMarking
-
-                ?.penalty ??
-
-              0,
-
-          },
-
-
-
-          mode:
-
-            exam.mode,
-
-
-
-          status:
-
-            exam.status,
-
-
-
-          startDate:
-
-            exam.startDate
-
-              ? exam.startDate.toISOString()
-
-              : null,
-
-
-
-          deadlineDate:
-
-            exam.deadlineDate
-
-              ? exam.deadlineDate.toISOString()
-
-              : null,
-
-
-
-          examType:
-
-            isSpecial
-
-              ? "SPECIAL"
-
-              : "COMMON",
-
-
-
-          examMode:
-
-            isStrict
-
-              ? "STRICT"
-
-              : "NORMAL",
-
-
-
-          strictDeadlineDate:
-
-            strictExam?.deadlineDate
-
-              ? strictExam.deadlineDate.toISOString()
-
-              : null,
-
-
-
-          strictAttemptChances:
-
-            strictExam?.attemptChances ??
-
-            null,
-
-
-
-          resultReleaseDate:
-
-            releaseDate
-
-              ? releaseDate.toISOString()
-
-              : null,
-
-        },
-
-
-
-        attempt: {
-
-          id:
-
-            attempt._id.toString(),
-
-
-
-          attemptNo:
-
-            attempt.attemptNo,
-
-
-
-          startTime:
-
-            attempt.startTime.toISOString(),
-
-
-
-          submittedAt:
-
-            attempt.submittedAt
-
-              ? attempt.submittedAt.toISOString()
-
-              : null,
-
-
-
-          status:
-
-            attempt.status,
-
-
-
-          score,
-
-
-
-          totalMarks,
-
-
-
-          correctAnswers:
-
-            attempt.correctAnswers,
-
-
-
-          wrongAnswers:
-
-            attempt.wrongAnswers,
-
-
-
-          unanswered:
-
-            attempt.unanswered,
-
-
-
-          timeTakenSeconds:
-
-            attempt.timeTakenSeconds,
-
-
-
-          percentage:
-
-            calculatePercentage(
-
-              score,
-
-              totalMarks
-
-            ),
-
-
-
-          questions:
-
-            attempt.questions.map(
-
-              (
-
-                question
-
-              ) => ({
-
-                questionId:
-
-                  question.questionId,
-
-
-
-                question:
-
-                  question.question,
-
-
-
-                options:
-
-                  question.options,
-
-
-
-                questionType:
-
-                  question.questionType,
-
-
-
-                selectedAnswers:
-
-                  question.selectedAnswers,
-
-
-
-                correctAnswers:
-
-                  question.correctAnswers,
-
-
-
-                isCorrect:
-
-                  question.isCorrect,
-
-
-
-                marksAwarded:
-
-                  question.marksAwarded,
-
-              })
-
-            ),
-
-        },
-
-      });
-
-    } catch (error) {
-
-      console.error(
-
-        "Get single student attempt error:",
-
-        error
-
-      );
-
-
-
-      res.status(500).json({
-
-        success: false,
-
-        message:
-
-          "Failed to load examination performance.",
-
-      });
-
-    }
-
-  };
+      message: "Failed to load examination performance.",
+    });
+  }
+};

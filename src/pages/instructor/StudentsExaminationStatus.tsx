@@ -1,15 +1,5 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import {
-  AlertCircle,
-  Clock3,
-  Loader2,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertCircle, Clock3, Loader2, ShieldCheck, Users } from "lucide-react";
 
 import type {
   AttemptDetails,
@@ -24,31 +14,24 @@ import SectionHeader from "./StudentsExaminationStatusComponents/SectionHeader";
 import IncompleteCard from "./StudentsExaminationStatusComponents/IncompleteCard";
 import EmptyState from "./StudentsExaminationStatusComponents/EmptyState";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const StudentsExaminationStatus = () => {
-  const [data, setData] =
-    useState<ExaminationStatusData | null>(null);
+  const [data, setData] = useState<ExaminationStatusData | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [selectedAttempt, setSelectedAttempt] =
-    useState<AttemptDetails | null>(null);
+  const [selectedAttempt, setSelectedAttempt] = useState<AttemptDetails | null>(
+    null,
+  );
 
-  const [detailLoading, setDetailLoading] =
-    useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
 
-  const [detailError, setDetailError] =
-    useState("");
+  const [detailError, setDetailError] = useState("");
 
-  const [activeTab, setActiveTab] =
-    useState<StatusTab>("UNATTEMPTED");
+  const [activeTab, setActiveTab] = useState<StatusTab>("UNATTEMPTED");
 
   const initialLoadDone = useRef(false);
 
@@ -57,34 +40,25 @@ const StudentsExaminationStatus = () => {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        `${API_URL}/api/examination-status`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${API_URL}/api/examination-status`, {
+        method: "GET",
+        credentials: "include",
+      });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.message ||
-            "Unable to load examination status."
-        );
+        throw new Error(result.message || "Unable to load examination status.");
       }
 
       setData(result.data);
     } catch (err) {
-      console.error(
-        "Examination status error:",
-        err
-      );
+      console.error("Examination status error:", err);
 
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to load examination status."
+          : "Unable to load examination status.",
       );
     } finally {
       setLoading(false);
@@ -100,9 +74,7 @@ const StudentsExaminationStatus = () => {
     void loadStatus();
   }, []);
 
-  const openAttempt = async (
-    attemptId?: string
-  ) => {
+  const openAttempt = async (attemptId?: string) => {
     if (!attemptId) {
       return;
     }
@@ -116,29 +88,21 @@ const StudentsExaminationStatus = () => {
         {
           method: "GET",
           credentials: "include",
-        }
+        },
       );
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.message ||
-            "Unable to load attempt details."
-        );
+        throw new Error(result.message || "Unable to load attempt details.");
       }
 
       setSelectedAttempt(result.data);
     } catch (err) {
-      console.error(
-        "Attempt detail error:",
-        err
-      );
+      console.error("Attempt detail error:", err);
 
       setDetailError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load attempt details."
+        err instanceof Error ? err.message : "Unable to load attempt details.",
       );
     } finally {
       setDetailLoading(false);
@@ -151,10 +115,7 @@ const StudentsExaminationStatus = () => {
         <div className="mx-auto flex max-w-7xl items-center justify-center py-32">
           <div className="text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
-              <Loader2
-                size={28}
-                className="animate-spin"
-              />
+              <Loader2 size={28} className="animate-spin" />
             </div>
 
             <h2 className="mt-5 text-lg font-extrabold text-slate-900">
@@ -183,9 +144,7 @@ const StudentsExaminationStatus = () => {
               Unable to Load Status
             </h2>
 
-            <p className="mt-2 text-sm text-slate-500">
-              {error}
-            </p>
+            <p className="mt-2 text-sm text-slate-500">{error}</p>
 
             <button
               type="button"
@@ -200,20 +159,16 @@ const StudentsExaminationStatus = () => {
     );
   }
 
-  const incomplete =
-    data?.incomplete ?? [];
+  const incomplete = data?.incomplete ?? [];
 
-  const specialResults =
-    data?.privateResults ?? [];
+  const specialResults = data?.privateResults ?? [];
 
-  const commonResults =
-    data?.commonResults ?? [];
+  const commonResults = data?.commonResults ?? [];
 
   return (
     <>
       <div className="min-h-screen bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-
           {/* HEADER */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-800 via-purple-700 to-orange-500 p-6 text-white shadow-lg sm:p-8">
             <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10 blur-2xl" />
@@ -235,10 +190,8 @@ const StudentsExaminationStatus = () => {
                 </h1>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-white/80">
-                  Track untouched examinations,
-                  in-progress attempts, special
-                  examinations and common examination
-                  results.
+                  Track untouched examinations, in-progress attempts, special
+                  examinations and common examination results.
                 </p>
               </div>
 
@@ -255,51 +208,34 @@ const StudentsExaminationStatus = () => {
           {/* TABS */}
           <div className="sticky top-2 z-20 mt-6 rounded-2xl border border-purple-100 bg-white/95 p-2 shadow-lg shadow-purple-100/40 backdrop-blur">
             <div className="grid grid-cols-3 gap-1">
-
               <StatusTabButton
-                active={
-                  activeTab === "UNATTEMPTED"
-                }
-                onClick={() =>
-                  setActiveTab("UNATTEMPTED")
-                }
+                active={activeTab === "UNATTEMPTED"}
+                onClick={() => setActiveTab("UNATTEMPTED")}
                 icon={<Clock3 size={17} />}
                 label="Unattempted"
                 count={incomplete.length}
               />
 
               <StatusTabButton
-                active={
-                  activeTab === "SPECIAL"
-                }
-                onClick={() =>
-                  setActiveTab("SPECIAL")
-                }
-                icon={
-                  <ShieldCheck size={17} />
-                }
+                active={activeTab === "SPECIAL"}
+                onClick={() => setActiveTab("SPECIAL")}
+                icon={<ShieldCheck size={17} />}
                 label="Special Exams"
                 count={specialResults.length}
               />
 
               <StatusTabButton
-                active={
-                  activeTab === "COMMON"
-                }
-                onClick={() =>
-                  setActiveTab("COMMON")
-                }
+                active={activeTab === "COMMON"}
+                onClick={() => setActiveTab("COMMON")}
                 icon={<Users size={17} />}
                 label="Common Exams"
                 count={commonResults.length}
               />
-
             </div>
           </div>
 
           {/* CONTENT */}
           <section className="mt-7">
-
             {activeTab === "UNATTEMPTED" && (
               <>
                 <SectionHeader
@@ -333,9 +269,7 @@ const StudentsExaminationStatus = () => {
                   title="Special Examination Results"
                   description="Completed results from individually assigned examinations."
                   count={specialResults.length}
-                  icon={
-                    <ShieldCheck size={20} />
-                  }
+                  icon={<ShieldCheck size={20} />}
                 />
 
                 {specialResults.length === 0 ? (
@@ -348,15 +282,10 @@ const StudentsExaminationStatus = () => {
                     {specialResults.map((item) => (
                       <ResultCard
                         key={
-                          item.attemptId ??
-                          `${item.examId}-${item.studentId}`
+                          item.attemptId ?? `${item.examId}-${item.studentId}`
                         }
                         item={item}
-                        onClick={() =>
-                          openAttempt(
-                            item.attemptId
-                          )
-                        }
+                        onClick={() => openAttempt(item.attemptId)}
                       />
                     ))}
                   </div>
@@ -383,22 +312,16 @@ const StudentsExaminationStatus = () => {
                     {commonResults.map((item) => (
                       <ResultCard
                         key={
-                          item.attemptId ??
-                          `${item.examId}-${item.studentId}`
+                          item.attemptId ?? `${item.examId}-${item.studentId}`
                         }
                         item={item}
-                        onClick={() =>
-                          openAttempt(
-                            item.attemptId
-                          )
-                        }
+                        onClick={() => openAttempt(item.attemptId)}
                       />
                     ))}
                   </div>
                 )}
               </>
             )}
-
           </section>
         </div>
       </div>
@@ -431,15 +354,11 @@ const StudentsExaminationStatus = () => {
               Unable to Open Result
             </h3>
 
-            <p className="mt-2 text-sm text-slate-500">
-              {detailError}
-            </p>
+            <p className="mt-2 text-sm text-slate-500">{detailError}</p>
 
             <button
               type="button"
-              onClick={() =>
-                setDetailError("")
-              }
+              onClick={() => setDetailError("")}
               className="mt-5 rounded-xl bg-purple-700 px-6 py-3 text-sm font-bold text-white"
             >
               Close
@@ -452,9 +371,7 @@ const StudentsExaminationStatus = () => {
       {selectedAttempt && (
         <DetailModal
           data={selectedAttempt}
-          onClose={() =>
-            setSelectedAttempt(null)
-          }
+          onClose={() => setSelectedAttempt(null)}
         />
       )}
     </>

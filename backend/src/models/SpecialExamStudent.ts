@@ -1,12 +1,6 @@
-import mongoose, {
-  Document,
-  Model,
-  Schema,
-  Types,
-} from "mongoose";
+import mongoose, { Document, Model, Schema, Types } from "mongoose";
 
-export interface ISpecialExamStudent
-  extends Document {
+export interface ISpecialExamStudent extends Document {
   examId: Types.ObjectId;
   studentId: Types.ObjectId;
   studentEmail: string;
@@ -15,51 +9,50 @@ export interface ISpecialExamStudent
   assignedBy: string;
 }
 
-const specialExamStudentSchema =
-  new Schema<ISpecialExamStudent>(
-    {
-      examId: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        ref: "Exam",
-      },
-
-      studentId: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        ref: "User",
-      },
-
-      studentEmail: {
-        type: String,
-        required: true,
-        lowercase: true,
-        trim: true,
-      },
-
-      studentName: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-
-      department: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-
-      assignedBy: {
-        type: String,
-        required: true,
-      },
+const specialExamStudentSchema = new Schema<ISpecialExamStudent>(
+  {
+    examId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "Exam",
     },
-    {
-      collection: "specialExamStudents",
-      timestamps: false,
-      versionKey: false,
-    }
-  );
+
+    studentId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+
+    studentEmail: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    studentName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    department: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    assignedBy: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    collection: "specialExamStudents",
+    timestamps: false,
+    versionKey: false,
+  },
+);
 
 specialExamStudentSchema.index(
   {
@@ -68,7 +61,7 @@ specialExamStudentSchema.index(
   },
   {
     unique: true,
-  }
+  },
 );
 
 const SpecialExamStudent: Model<ISpecialExamStudent> =
@@ -76,7 +69,7 @@ const SpecialExamStudent: Model<ISpecialExamStudent> =
   mongoose.model<ISpecialExamStudent>(
     "SpecialExamStudent",
     specialExamStudentSchema,
-    "specialExamStudents"
+    "specialExamStudents",
   );
 
 export default SpecialExamStudent;

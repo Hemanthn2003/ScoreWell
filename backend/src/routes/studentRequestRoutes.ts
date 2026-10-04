@@ -14,29 +14,14 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get(
-  "/",
-  getPendingStudents
-);
+router.get("/", getPendingStudents);
 
-router.get(
-  "/students",
-  getDepartmentStudents
-);
+router.get("/students", getDepartmentStudents);
 
-router.get(
-  "/students/:id/performance",
-  getStudentPerformance
-);
+router.get("/students/:id/performance", getStudentPerformance);
 
-router.patch(
-  "/:id/accept",
-  acceptStudent
-);
+router.patch("/:id/accept", acceptStudent);
 
-router.patch(
-  "/:id/deny",
-  denyStudent
-);
+router.patch("/:id/deny", denyStudent);
 
 export default router;

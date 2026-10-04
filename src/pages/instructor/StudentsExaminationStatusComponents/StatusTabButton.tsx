@@ -43,9 +43,7 @@ const StatusTabButton = ({
     >
       {icon}
 
-      <span className="truncate">
-        {label}
-      </span>
+      <span className="truncate">{label}</span>
 
       <span
         className={`
@@ -53,11 +51,7 @@ const StatusTabButton = ({
           px-2
           py-0.5
           text-[10px]
-          ${
-            active
-              ? "bg-white/20 text-white"
-              : "bg-slate-100 text-slate-500"
-          }
+          ${active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}
         `}
       >
         {count}

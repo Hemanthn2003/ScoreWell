@@ -1,25 +1,12 @@
-export type ExamStatus =
-  | "UNPUBLISHED"
-  | "PUBLISHED"
-  | "EXPIRED"
-  | "CLOSED";
+export type ExamStatus = "UNPUBLISHED" | "PUBLISHED" | "EXPIRED" | "CLOSED";
 
-export type ExamType =
-  | "COMMON"
-  | "SPECIAL";
+export type ExamType = "COMMON" | "SPECIAL";
 
-export type ExamMode =
-  | "NORMAL"
-  | "STRICT";
+export type ExamMode = "NORMAL" | "STRICT";
 
-export type AttemptStatus =
-  | "IN_PROGRESS"
-  | "SUBMITTED"
-  | "AUTO_SUBMITTED";
+export type AttemptStatus = "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
 
-export type QuestionType =
-  | "SINGLE"
-  | "MULTI";
+export type QuestionType = "SINGLE" | "MULTI";
 
 export interface PerformanceQuestion {
   questionId: string;

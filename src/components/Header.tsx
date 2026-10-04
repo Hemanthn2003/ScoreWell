@@ -17,7 +17,6 @@ import {
 
 import scoreWellLogo from "../assets/scoreWellLogo.png";
 
-
 // =========================================================
 // TYPES
 // =========================================================
@@ -40,15 +39,11 @@ interface MenuItem {
   route: string;
 }
 
-
 // =========================================================
 // API
 // =========================================================
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
-
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // =========================================================
 // INSTRUCTOR MENU
@@ -82,7 +77,6 @@ const instructorMenu: MenuItem[] = [
   },
 ];
 
-
 // =========================================================
 // STUDENT MENU
 // =========================================================
@@ -105,7 +99,6 @@ const studentMenu: MenuItem[] = [
   },
 ];
 
-
 // =========================================================
 // HEADER
 // =========================================================
@@ -113,15 +106,11 @@ const studentMenu: MenuItem[] = [
 const Header = () => {
   const navigate = useNavigate();
 
-  const [isSidebarOpen, setIsSidebarOpen] =
-    useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [user, setUser] =
-    useState<LoggedInUser | null>(null);
+  const [user, setUser] = useState<LoggedInUser | null>(null);
 
-  const [isLoadingUser, setIsLoadingUser] =
-    useState(true);
-
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   // =======================================================
   // FETCH LOGGED-IN USER
@@ -130,31 +119,22 @@ const Header = () => {
   useEffect(() => {
     const fetchLoggedInUser = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/api/auth/me`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Unable to fetch user details."
-          );
+          throw new Error(data.message || "Unable to fetch user details.");
         }
 
         if (data.user) {
           setUser(data.user);
         }
       } catch (error) {
-        console.error(
-          "Failed to fetch logged-in user:",
-          error
-        );
+        console.error("Failed to fetch logged-in user:", error);
       } finally {
         setIsLoadingUser(false);
       }
@@ -163,21 +143,13 @@ const Header = () => {
     fetchLoggedInUser();
   }, []);
 
-
   // =======================================================
   // ROLE BASED MENU
   // =======================================================
 
-  const menuItems =
-    user?.role === "INSTRUCTOR"
-      ? instructorMenu
-      : studentMenu;
+  const menuItems = user?.role === "INSTRUCTOR" ? instructorMenu : studentMenu;
 
-  const roleLabel =
-    user?.role === "INSTRUCTOR"
-      ? "Instructor"
-      : "Student";
-
+  const roleLabel = user?.role === "INSTRUCTOR" ? "Instructor" : "Student";
 
   // =======================================================
   // NORMAL NAVIGATION
@@ -187,7 +159,6 @@ const Header = () => {
     setIsSidebarOpen(false);
     navigate(route);
   };
-
 
   // =======================================================
   // PROFILE NAVIGATION
@@ -207,25 +178,18 @@ const Header = () => {
     }
   };
 
-
   // =======================================================
   // LOGOUT
   // =======================================================
 
   const handleLogout = async () => {
     try {
-      await fetch(
-        `${API_URL}/api/auth/logout`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
     } catch (error) {
-      console.error(
-        "Logout request failed:",
-        error
-      );
+      console.error("Logout request failed:", error);
     } finally {
       setIsSidebarOpen(false);
 
@@ -234,7 +198,6 @@ const Header = () => {
       });
     }
   };
-
 
   // =======================================================
   // UI
@@ -247,7 +210,6 @@ const Header = () => {
       =================================================== */}
 
       <header className="sticky top-0 z-50 w-full">
-
         <div
           className="
             relative
@@ -261,7 +223,6 @@ const Header = () => {
             shadow-[0_8px_25px_rgba(91,33,182,0.16),0_3px_8px_rgba(249,115,22,0.08)]
           "
         >
-
           {/* Purple glow */}
           <div
             className="
@@ -294,16 +255,13 @@ const Header = () => {
 
           {/* Main Header */}
           <div className="relative flex h-[72px] items-center justify-between px-4 sm:px-6 lg:px-8">
-
             {/* =================================================
                 MENU BUTTON
             ================================================= */}
 
             <button
               type="button"
-              onClick={() =>
-                setIsSidebarOpen(true)
-              }
+              onClick={() => setIsSidebarOpen(true)}
               className="
                 group
                 relative
@@ -327,11 +285,8 @@ const Header = () => {
               "
               aria-label="Open navigation menu"
             >
-
               <span className="flex flex-col gap-[5px]">
-
                 <span className="flex items-center gap-[5px]">
-
                   <span
                     className="
                       h-[5px]
@@ -355,11 +310,9 @@ const Header = () => {
                       group-hover:w-6
                     "
                   />
-
                 </span>
 
                 <span className="flex items-center gap-[5px]">
-
                   <span
                     className="
                       h-[5px]
@@ -383,13 +336,9 @@ const Header = () => {
                       group-hover:w-6
                     "
                   />
-
                 </span>
-
               </span>
-
             </button>
-
 
             {/* =================================================
                 LOGO
@@ -412,17 +361,13 @@ const Header = () => {
                 sm:px-4
               "
             >
-
               <img
                 src={scoreWellLogo}
                 alt="ScoreWell"
                 className="h-9 w-auto object-contain sm:h-10"
               />
-
             </div>
-
           </div>
-
 
           {/* =================================================
               GRADIENT BOTTOM ACCENT
@@ -442,11 +387,8 @@ const Header = () => {
               to-orange-500
             "
           />
-
         </div>
-
       </header>
-
 
       {/* =====================================================
           OVERLAY
@@ -461,13 +403,10 @@ const Header = () => {
             bg-purple-950/30
             backdrop-blur-[4px]
           "
-          onClick={() =>
-            setIsSidebarOpen(false)
-          }
+          onClick={() => setIsSidebarOpen(false)}
           aria-hidden="true"
         />
       )}
-
 
       {/* =====================================================
           SIDEBAR
@@ -493,14 +432,9 @@ const Header = () => {
           transition-transform
           duration-300
           ease-out
-          ${
-            isSidebarOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
-          }
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-
         {/* =================================================
             SIDEBAR HEADER
         ================================================= */}
@@ -522,7 +456,6 @@ const Header = () => {
             px-5
           "
         >
-
           {/* Logo */}
           <div
             className="
@@ -544,13 +477,10 @@ const Header = () => {
             />
           </div>
 
-
           {/* Close */}
           <button
             type="button"
-            onClick={() =>
-              setIsSidebarOpen(false)
-            }
+            onClick={() => setIsSidebarOpen(false)}
             className="
               flex
               h-9
@@ -577,7 +507,6 @@ const Header = () => {
             <X size={20} />
           </button>
 
-
           {/* Gradient line */}
           <div
             className="
@@ -592,9 +521,7 @@ const Header = () => {
               to-orange-500
             "
           />
-
         </div>
-
 
         {/* =================================================
             USER INFORMATION
@@ -612,34 +539,20 @@ const Header = () => {
             py-5
           "
         >
-
           {isLoadingUser ? (
-
             <div className="flex items-center gap-3">
-
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-
-                <Loader2
-                  size={20}
-                  className="animate-spin text-purple-700"
-                />
-
+                <Loader2 size={20} className="animate-spin text-purple-700" />
               </div>
 
               <div>
-
                 <div className="h-3 w-28 animate-pulse rounded bg-gray-200" />
 
                 <div className="mt-2 h-2.5 w-36 animate-pulse rounded bg-gray-100" />
-
               </div>
-
             </div>
-
           ) : user ? (
-
             <div className="flex items-center gap-3">
-
               {/* Avatar */}
               <div
                 className="
@@ -661,10 +574,8 @@ const Header = () => {
                 <User size={21} />
               </div>
 
-
               {/* User Details */}
               <div className="min-w-0">
-
                 <p className="truncate text-sm font-bold text-gray-900">
                   {user.name}
                 </p>
@@ -674,7 +585,6 @@ const Header = () => {
                 </p>
 
                 <div className="mt-1.5 flex items-center gap-2">
-
                   <span
                     className="
                       rounded-full
@@ -692,30 +602,19 @@ const Header = () => {
                   >
                     {roleLabel}
                   </span>
-
                 </div>
-
               </div>
-
             </div>
-
           ) : (
-
-            <p className="text-sm text-gray-500">
-              User details unavailable
-            </p>
-
+            <p className="text-sm text-gray-500">User details unavailable</p>
           )}
-
         </div>
-
 
         {/* =================================================
             NAVIGATION
         ================================================= */}
 
         <nav className="flex-1 overflow-y-auto px-4 py-5">
-
           <p
             className="
               mb-4
@@ -730,17 +629,12 @@ const Header = () => {
             Navigation
           </p>
 
-
           <div className="space-y-3">
-
             {menuItems.map((item) => (
-
               <button
                 key={item.route}
                 type="button"
-                onClick={() =>
-                  handleNavigation(item.route)
-                }
+                onClick={() => handleNavigation(item.route)}
                 className="
                   group
                   relative
@@ -774,7 +668,6 @@ const Header = () => {
                   active:scale-[0.98]
                 "
               >
-
                 {/* Left gradient indicator */}
                 <span
                   className="
@@ -792,7 +685,6 @@ const Header = () => {
                     group-hover:translate-x-0
                   "
                 />
-
 
                 {/* Icon */}
                 <span
@@ -822,12 +714,8 @@ const Header = () => {
                   {item.icon}
                 </span>
 
-
                 {/* Label */}
-                <span className="flex-1 leading-5">
-                  {item.label}
-                </span>
-
+                <span className="flex-1 leading-5">{item.label}</span>
 
                 {/* Arrow */}
                 <ChevronRight
@@ -840,20 +728,15 @@ const Header = () => {
                     group-hover:text-orange-500
                   "
                 />
-
               </button>
-
             ))}
-
           </div>
-
 
           {/* =================================================
               PROFILE
           ================================================= */}
 
           <div className="mt-7 border-t border-purple-100 pt-5">
-
             <p
               className="
                 mb-4
@@ -867,7 +750,6 @@ const Header = () => {
             >
               Account
             </p>
-
 
             <button
               type="button"
@@ -902,7 +784,6 @@ const Header = () => {
                 hover:shadow-[0_9px_22px_rgba(91,33,182,0.16)]
               "
             >
-
               <span
                 className="
                   absolute
@@ -919,7 +800,6 @@ const Header = () => {
                   group-hover:translate-x-0
                 "
               />
-
 
               <span
                 className="
@@ -945,11 +825,7 @@ const Header = () => {
                 <User size={19} />
               </span>
 
-
-              <span className="flex-1">
-                Profile Details
-              </span>
-
+              <span className="flex-1">Profile Details</span>
 
               <ChevronRight
                 size={17}
@@ -961,13 +837,9 @@ const Header = () => {
                   group-hover:text-orange-500
                 "
               />
-
             </button>
-
           </div>
-
         </nav>
-
 
         {/* =================================================
             LOGOUT
@@ -986,7 +858,6 @@ const Header = () => {
             py-4
           "
         >
-
           <button
             type="button"
             onClick={handleLogout}
@@ -1021,7 +892,6 @@ const Header = () => {
               active:translate-y-0
             "
           >
-
             <span
               className="
                 absolute
@@ -1038,7 +908,6 @@ const Header = () => {
                 group-hover:translate-x-0
               "
             />
-
 
             <span
               className="
@@ -1060,11 +929,7 @@ const Header = () => {
               <LogOut size={19} />
             </span>
 
-
-            <span className="flex-1">
-              Logout
-            </span>
-
+            <span className="flex-1">Logout</span>
 
             <ChevronRight
               size={17}
@@ -1076,20 +941,15 @@ const Header = () => {
                 group-hover:text-orange-500
               "
             />
-
           </button>
-
 
           <p className="mt-3 text-center text-[10px] font-medium text-gray-400">
             ScoreWell • Examination Platform
           </p>
-
         </div>
-
       </aside>
     </>
   );
 };
-
 
 export default Header;

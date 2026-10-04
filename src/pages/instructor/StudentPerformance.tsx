@@ -1,13 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import {
-  Link,
-  useParams,
-} from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import {
   AlertCircle,
@@ -21,9 +14,7 @@ import {
   User,
 } from "lucide-react";
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 type Student = {
   _id: string;
@@ -67,56 +58,41 @@ type PerformanceResponse = {
   exams?: ExamPerformance[];
 };
 
-const formatDate = (
-  value: string
-) => {
+const formatDate = (value: string) => {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return "—";
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-const formatTime = (
-  value: string
-) => {
+const formatTime = (value: string) => {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return "—";
   }
 
-  return date.toLocaleTimeString(
-    "en-IN",
-    {
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
-const formatDuration = (
-  seconds: number
-) => {
+const formatDuration = (seconds: number) => {
   if (!seconds || seconds < 1) {
     return "—";
   }
 
-  const minutes = Math.floor(
-    seconds / 60
-  );
+  const minutes = Math.floor(seconds / 60);
 
-  const remainingSeconds =
-    seconds % 60;
+  const remainingSeconds = seconds % 60;
 
   return `${minutes}m ${remainingSeconds}s`;
 };
@@ -126,79 +102,59 @@ const StudentPerformance = () => {
     id: string;
   }>();
 
-  const [student, setStudent] =
-    useState<Student | null>(null);
+  const [student, setStudent] = useState<Student | null>(null);
 
-  const [exams, setExams] =
-    useState<ExamPerformance[]>([]);
+  const [exams, setExams] = useState<ExamPerformance[]>([]);
 
   const [performance, setPerformance] =
-    useState<
-      PerformanceResponse["performance"]
-    >(undefined);
+    useState<PerformanceResponse["performance"]>(undefined);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const fetchPerformance =
-    useCallback(async () => {
-      if (!id) {
-        setError("Student ID is missing.");
-        setLoading(false);
-        return;
+  const fetchPerformance = useCallback(async () => {
+    if (!id) {
+      setError("Student ID is missing.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        `${API_URL}/api/student-requests/students/${id}/performance`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      const data: PerformanceResponse = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Unable to load student performance.");
       }
 
-      try {
-        setLoading(true);
-        setError("");
+      setStudent(data.student ?? null);
 
-        const response = await fetch(
-          `${API_URL}/api/student-requests/students/${id}/performance`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+      setPerformance(data.performance);
 
-        const data: PerformanceResponse =
-          await response.json();
+      setExams(data.exams ?? []);
+    } catch (err) {
+      console.error("Student performance error:", err);
 
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data.message ||
-              "Unable to load student performance."
-          );
-        }
-
-        setStudent(
-          data.student ?? null
-        );
-
-        setPerformance(
-          data.performance
-        );
-
-        setExams(
-          data.exams ?? []
-        );
-      } catch (err) {
-        console.error(
-          "Student performance error:",
-          err
-        );
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Unable to load student performance."
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [id]);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load student performance.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     void fetchPerformance();
@@ -209,10 +165,7 @@ const StudentPerformance = () => {
       <section className="flex min-h-[70vh] items-center justify-center px-6">
         <div className="text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-600 text-white shadow-lg shadow-purple-200">
-            <Loader2
-              size={28}
-              className="animate-spin"
-            />
+            <Loader2 size={28} className="animate-spin" />
           </div>
 
           <h1 className="mt-4 text-lg font-black text-slate-900">
@@ -240,8 +193,7 @@ const StudentPerformance = () => {
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            {error ||
-              "Student details were not found."}
+            {error || "Student details were not found."}
           </p>
 
           <Link
@@ -256,13 +208,12 @@ const StudentPerformance = () => {
     );
   }
 
-  const overall =
-    performance ?? {
-      attendedExams: 0,
-      overallScore: 0,
-      overallMarks: 0,
-      overallPercentage: 0,
-    };
+  const overall = performance ?? {
+    attendedExams: 0,
+    overallScore: 0,
+    overallMarks: 0,
+    overallPercentage: 0,
+  };
 
   return (
     <section className="px-4 py-6 sm:px-6 lg:px-8">
@@ -302,10 +253,7 @@ const StudentPerformance = () => {
                     {student.email}
                   </span>
 
-                  <span>
-                    {student.department ||
-                      "Department not set"}
-                  </span>
+                  <span>{student.department || "Department not set"}</span>
                 </div>
               </div>
             </div>
@@ -338,11 +286,7 @@ const StudentPerformance = () => {
           <PerformanceCard
             icon={<ShieldCheck size={22} />}
             label="Account Status"
-            value={
-              student.isPermitted
-                ? "Permitted"
-                : "Pending"
-            }
+            value={student.isPermitted ? "Permitted" : "Pending"}
             className={
               student.isPermitted
                 ? "bg-emerald-50 text-emerald-600"
@@ -365,8 +309,7 @@ const StudentPerformance = () => {
             </div>
 
             <p className="text-sm font-bold text-slate-500">
-              {overall.overallScore} marks earned out of{" "}
-              {overall.overallMarks}
+              {overall.overallScore} marks earned out of {overall.overallMarks}
             </p>
           </div>
 
@@ -375,11 +318,8 @@ const StudentPerformance = () => {
               className="h-full rounded-full bg-gradient-to-r from-purple-600 to-orange-500 transition-all duration-700"
               style={{
                 width: `${Math.min(
-                  Math.max(
-                    overall.overallPercentage,
-                    0
-                  ),
-                  100
+                  Math.max(overall.overallPercentage, 0),
+                  100,
                 )}%`,
               }}
             />
@@ -454,8 +394,7 @@ const StudentPerformance = () => {
                           </span>
 
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-600">
-                            {exam.status ===
-                            "AUTO_SUBMITTED"
+                            {exam.status === "AUTO_SUBMITTED"
                               ? "Auto Submitted"
                               : "Submitted"}
                           </span>
@@ -463,15 +402,8 @@ const StudentPerformance = () => {
 
                         <p className="mt-1 text-xs text-slate-500">
                           Attempt {exam.attemptNo} ·{" "}
-                          {formatDate(
-                            exam.submittedAt ??
-                              exam.startTime
-                          )}{" "}
-                          at{" "}
-                          {formatTime(
-                            exam.submittedAt ??
-                              exam.startTime
-                          )}
+                          {formatDate(exam.submittedAt ?? exam.startTime)} at{" "}
+                          {formatTime(exam.submittedAt ?? exam.startTime)}
                         </p>
                       </div>
                     </div>
@@ -488,16 +420,11 @@ const StudentPerformance = () => {
                         highlight
                       />
 
-                      <ExamMetric
-                        label="Correct"
-                        value={exam.correctAnswers}
-                      />
+                      <ExamMetric label="Correct" value={exam.correctAnswers} />
 
                       <ExamMetric
                         label="Time"
-                        value={formatDuration(
-                          exam.timeTakenSeconds
-                        )}
+                        value={formatDuration(exam.timeTakenSeconds)}
                       />
                     </div>
                   </div>
@@ -553,9 +480,7 @@ const PerformanceCard = ({
       {label}
     </p>
 
-    <p className="mt-1 text-2xl font-black text-slate-900">
-      {value}
-    </p>
+    <p className="mt-1 text-2xl font-black text-slate-900">{value}</p>
   </div>
 );
 
@@ -571,9 +496,7 @@ const ExamMetric = ({
   <div className="rounded-2xl bg-slate-50 p-3 text-center">
     <p
       className={`text-sm font-black ${
-        highlight
-          ? "text-purple-700"
-          : "text-slate-800"
+        highlight ? "text-purple-700" : "text-slate-800"
       }`}
     >
       {value}
@@ -595,11 +518,7 @@ const SmallMetric = ({
   className: string;
 }) => (
   <div className="rounded-xl bg-slate-50 px-3 py-2">
-    <p
-      className={`text-sm font-black ${className}`}
-    >
-      {value}
-    </p>
+    <p className={`text-sm font-black ${className}`}>{value}</p>
 
     <p className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400">
       {label}

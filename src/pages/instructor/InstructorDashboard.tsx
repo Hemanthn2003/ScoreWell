@@ -1,14 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  Link,
-  Outlet,
-} from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 
 import {
   AlertCircle,
@@ -64,10 +56,7 @@ type DashboardExam = {
   marksPerQuestion: number;
   mode: "COMMON" | "SPECIAL";
   maxAttempts: number;
-  status:
-    | "UNPUBLISHED"
-    | "PUBLISHED"
-    | "CLOSED";
+  status: "UNPUBLISHED" | "PUBLISHED" | "CLOSED";
 };
 
 type DashboardQuestionSet = {
@@ -102,10 +91,7 @@ type DashboardAttempt = {
   attemptNo: number;
   startTime: string;
   submittedAt?: string | null;
-  status:
-    | "IN_PROGRESS"
-    | "SUBMITTED"
-    | "AUTO_SUBMITTED";
+  status: "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
   score: number;
   totalMarks: number;
   correctAnswers: number;
@@ -137,41 +123,31 @@ type DashboardResponse = {
    HELPERS
 ===================================================== */
 
-const formatDate = (
-  value: string | Date
-): string => {
+const formatDate = (value: string | Date): string => {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return "—";
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-const formatTime = (
-  value: string | Date
-): string => {
+const formatTime = (value: string | Date): string => {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return "—";
   }
 
-  return date.toLocaleTimeString(
-    "en-IN",
-    {
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 /* =====================================================
@@ -197,102 +173,66 @@ function InstructorDashboard() {
 ===================================================== */
 
 export function InstructorHome() {
-  const [dashboard, setDashboard] =
-    useState<DashboardResponse | null>(
-      null
-    );
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [refreshing, setRefreshing] =
-    useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
   // Prevent the initial dashboard request from being repeated
   // by React StrictMode during development.
   const hasLoadedInitialDashboard = useRef(false);
 
-  const fetchDashboard =
-    useCallback(
-      async (
-        isRefresh = false
-      ) => {
-        try {
-          if (isRefresh) {
-            setRefreshing(true);
-          } else {
-            setLoading(true);
-          }
+  const fetchDashboard = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
 
-          setError("");
+      setError("");
 
-          const response =
-            await fetch(
-              "/api/instructor/dashboard",
-              {
-                method: "GET",
-                credentials: "include",
-                headers: {
-                  Accept:
-                    "application/json",
-                },
-              }
-            );
+      const response = await fetch("/api/instructor/dashboard", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+      });
 
-          const contentType =
-            response.headers.get(
-              "content-type"
-            );
+      const contentType = response.headers.get("content-type");
 
-          if (
-            !contentType?.includes(
-              "application/json"
-            )
-          ) {
-            throw new Error(
-              "The dashboard server returned an invalid response. Make sure the backend is running on port 5000 and the Vite API proxy is configured."
-            );
-          }
+      if (!contentType?.includes("application/json")) {
+        throw new Error(
+          "The dashboard server returned an invalid response. Make sure the backend is running on port 5000 and the Vite API proxy is configured.",
+        );
+      }
 
-          const data =
-            (await response.json()) as DashboardResponse;
+      const data = (await response.json()) as DashboardResponse;
 
-          if (!response.ok) {
-            throw new Error(
-              data.message ??
-                "Unable to load dashboard."
-            );
-          }
+      if (!response.ok) {
+        throw new Error(data.message ?? "Unable to load dashboard.");
+      }
 
-          if (!data.success) {
-            throw new Error(
-              data.message ??
-                "Unable to load dashboard."
-            );
-          }
+      if (!data.success) {
+        throw new Error(data.message ?? "Unable to load dashboard.");
+      }
 
-          setDashboard(data);
-        } catch (err) {
-          console.error(
-            "Dashboard fetch error:",
-            err
-          );
+      setDashboard(data);
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
 
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load dashboard."
-          );
-        } finally {
-          setLoading(false);
-          setRefreshing(false);
-        }
-      },
-      []
-    );
+      setError(
+        err instanceof Error ? err.message : "Unable to load dashboard.",
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (hasLoadedInitialDashboard.current) {
@@ -312,10 +252,7 @@ export function InstructorHome() {
       <section className="flex min-h-[70vh] items-center justify-center px-6">
         <div className="flex flex-col items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-600 text-white shadow-lg shadow-purple-200">
-            <Loader2
-              size={28}
-              className="animate-spin"
-            />
+            <Loader2 size={28} className="animate-spin" />
           </div>
 
           <div className="text-center">
@@ -350,15 +287,12 @@ export function InstructorHome() {
             </h1>
 
             <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              {error ||
-                "No dashboard data was returned."}
+              {error || "No dashboard data was returned."}
             </p>
 
             <button
               type="button"
-              onClick={() =>
-                void fetchDashboard(true)
-              }
+              onClick={() => void fetchDashboard(true)}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-700"
             >
               <RefreshCw size={17} />
@@ -382,7 +316,6 @@ export function InstructorHome() {
   return (
     <section className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
-
         {/* =================================================
             WELCOME BANNER
         ================================================= */}
@@ -400,13 +333,11 @@ export function InstructorHome() {
               </div>
 
               <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-                Welcome back,{" "}
-                {instructor.name}
+                Welcome back, {instructor.name}
               </h1>
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-purple-50 sm:text-base">
-                Manage examinations, question
-                sets, students and performance
+                Manage examinations, question sets, students and performance
                 from one place.
               </p>
 
@@ -416,32 +347,23 @@ export function InstructorHome() {
                 </span>
 
                 <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold">
-                  {instructor.department ??
-                    "Department not set"}
+                  {instructor.department ?? "Department not set"}
                 </span>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() =>
-                void fetchDashboard(true)
-              }
+              onClick={() => void fetchDashboard(true)}
               disabled={refreshing}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-purple-700 shadow-lg transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <RefreshCw
                 size={17}
-                className={
-                  refreshing
-                    ? "animate-spin"
-                    : ""
-                }
+                className={refreshing ? "animate-spin" : ""}
               />
 
-              {refreshing
-                ? "Refreshing..."
-                : "Refresh Data"}
+              {refreshing ? "Refreshing..." : "Refresh Data"}
             </button>
           </div>
         </div>
@@ -455,48 +377,34 @@ export function InstructorHome() {
             title="Total Exams"
             value={statistics.totalExams}
             subtitle="Created by you"
-            icon={
-              <BookOpen size={22} />
-            }
+            icon={<BookOpen size={22} />}
             href="/instructor/create-exam"
             iconClass="bg-purple-50 text-purple-600"
           />
 
           <DashboardStatCard
             title="Question Sets"
-            value={
-              statistics.totalQuestionSets
-            }
+            value={statistics.totalQuestionSets}
             subtitle={`${statistics.totalQuestions} total questions`}
-            icon={
-              <FileQuestion size={22} />
-            }
+            icon={<FileQuestion size={22} />}
             href="/instructor/create-question-set"
             iconClass="bg-orange-50 text-orange-600"
           />
 
           <DashboardStatCard
             title="Students"
-            value={
-              statistics.totalStudents
-            }
+            value={statistics.totalStudents}
             subtitle={`${statistics.permittedStudents} permitted`}
-            icon={
-              <GraduationCap size={22} />
-            }
+            icon={<GraduationCap size={22} />}
             href="/instructor/students-examination-status"
             iconClass="bg-purple-50 text-purple-600"
           />
 
           <DashboardStatCard
             title="Total Attempts"
-            value={
-              statistics.totalAttempts
-            }
+            value={statistics.totalAttempts}
             subtitle={`${statistics.submittedAttempts} submitted`}
-            icon={
-              <BarChart3 size={22} />
-            }
+            icon={<BarChart3 size={22} />}
             href="/instructor/students-examination-status"
             iconClass="bg-orange-50 text-orange-600"
           />
@@ -509,49 +417,37 @@ export function InstructorHome() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <MiniStat
             label="Published"
-            value={
-              statistics.publishedExams
-            }
+            value={statistics.publishedExams}
             href="/instructor/create-exam"
           />
 
           <MiniStat
             label="Unpublished"
-            value={
-              statistics.unpublishedExams
-            }
+            value={statistics.unpublishedExams}
             href="/instructor/create-exam"
           />
 
           <MiniStat
             label="Closed"
-            value={
-              statistics.closedExams
-            }
+            value={statistics.closedExams}
             href="/instructor/create-exam"
           />
 
           <MiniStat
             label="Common"
-            value={
-              statistics.commonExams
-            }
+            value={statistics.commonExams}
             href="/instructor/create-exam"
           />
 
           <MiniStat
             label="Special"
-            value={
-              statistics.specialExams
-            }
+            value={statistics.specialExams}
             href="/instructor/create-exam"
           />
 
           <MiniStat
             label="In Progress"
-            value={
-              statistics.inProgressAttempts
-            }
+            value={statistics.inProgressAttempts}
             href="/instructor/students-examination-status"
           />
         </div>
@@ -573,9 +469,7 @@ export function InstructorHome() {
 
                 <p className="mt-3 text-4xl font-black text-slate-900">
                   {statistics.averageScore}
-                  <span className="text-2xl text-slate-400">
-                    %
-                  </span>
+                  <span className="text-2xl text-slate-400">%</span>
                 </p>
               </div>
 
@@ -589,11 +483,8 @@ export function InstructorHome() {
                 className="h-full rounded-full bg-gradient-to-r from-purple-600 to-orange-500 transition-all"
                 style={{
                   width: `${Math.min(
-                    Math.max(
-                      statistics.averageScore,
-                      0
-                    ),
-                    100
+                    Math.max(statistics.averageScore, 0),
+                    100,
                   )}%`,
                 }}
               />
@@ -615,9 +506,7 @@ export function InstructorHome() {
                 </p>
 
                 <p className="mt-3 text-4xl font-black text-slate-900">
-                  {
-                    statistics.submittedAttempts
-                  }
+                  {statistics.submittedAttempts}
                 </p>
               </div>
 
@@ -642,9 +531,7 @@ export function InstructorHome() {
                 </p>
 
                 <p className="mt-3 text-4xl font-black text-orange-600">
-                  {
-                    statistics.pendingStudentCount
-                  }
+                  {statistics.pendingStudentCount}
                 </p>
               </div>
 
@@ -692,61 +579,44 @@ export function InstructorHome() {
             />
           ) : (
             <div className="divide-y divide-slate-100">
-              {exams
-                .slice(0, 6)
-                .map((exam) => (
-                  <Link
-                    key={exam._id}
-                    to="/instructor/create-exam"
-                    className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-purple-100 hover:bg-purple-50/40 hover:shadow-lg hover:shadow-purple-100/70 sm:p-6"
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="truncate text-base font-bold text-slate-900">
-                            {exam.title}
-                          </h3>
+              {exams.slice(0, 6).map((exam) => (
+                <Link
+                  key={exam._id}
+                  to="/instructor/create-exam"
+                  className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-purple-100 hover:bg-purple-50/40 hover:shadow-lg hover:shadow-purple-100/70 sm:p-6"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-base font-bold text-slate-900">
+                          {exam.title}
+                        </h3>
 
-                          <StatusBadge
-                            status={
-                              exam.status
-                            }
-                          />
+                        <StatusBadge status={exam.status} />
 
-                          <span className="rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-bold text-purple-700">
-                            {exam.mode}
-                          </span>
-                        </div>
-
-                        <p className="mt-2 line-clamp-1 text-sm text-slate-500">
-                          {exam.description ||
-                            "No description provided."}
-                        </p>
+                        <span className="rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-bold text-purple-700">
+                          {exam.mode}
+                        </span>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-5 text-center sm:text-left">
-                        <ExamInfo
-                          label="Questions"
-                          value={
-                            exam.questionCount
-                          }
-                        />
-
-                        <ExamInfo
-                          label="Duration"
-                          value={`${exam.durationMinutes}m`}
-                        />
-
-                        <ExamInfo
-                          label="Attempts"
-                          value={
-                            exam.maxAttempts
-                          }
-                        />
-                      </div>
+                      <p className="mt-2 line-clamp-1 text-sm text-slate-500">
+                        {exam.description || "No description provided."}
+                      </p>
                     </div>
-                  </Link>
-                ))}
+
+                    <div className="grid grid-cols-3 gap-5 text-center sm:text-left">
+                      <ExamInfo label="Questions" value={exam.questionCount} />
+
+                      <ExamInfo
+                        label="Duration"
+                        value={`${exam.durationMinutes}m`}
+                      />
+
+                      <ExamInfo label="Attempts" value={exam.maxAttempts} />
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </section>
@@ -775,8 +645,7 @@ export function InstructorHome() {
             </Link>
           </div>
 
-          {recentAttempts.length ===
-          0 ? (
+          {recentAttempts.length === 0 ? (
             <EmptyState
               title="No attempts yet"
               description="Student examination attempts will appear here."
@@ -785,75 +654,53 @@ export function InstructorHome() {
             />
           ) : (
             <div className="divide-y divide-slate-100">
-              {recentAttempts.map(
-                (attempt) => (
-                  <Link
-                    key={attempt._id}
-                    to="/instructor/students-examination-status"
-                    className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-orange-100 hover:bg-orange-50/40 hover:shadow-lg hover:shadow-orange-100/70 sm:p-6"
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600">
-                          <GraduationCap
-                            size={20}
-                          />
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-slate-900">
-                            {
-                              attempt.studentName
-                            }
-                          </p>
-
-                          <p className="truncate text-xs text-slate-500">
-                            {
-                              attempt.studentEmail
-                            }
-                          </p>
-
-                          <p className="mt-1 truncate text-xs font-semibold text-purple-600">
-                            {
-                              attempt.examName
-                            }
-                          </p>
-                        </div>
+              {recentAttempts.map((attempt) => (
+                <Link
+                  key={attempt._id}
+                  to="/instructor/students-examination-status"
+                  className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-orange-100 hover:bg-orange-50/40 hover:shadow-lg hover:shadow-orange-100/70 sm:p-6"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600">
+                        <GraduationCap size={20} />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
-                        <AttemptInfo
-                          label="Status"
-                          value={
-                            attempt.status
-                          }
-                        />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-900">
+                          {attempt.studentName}
+                        </p>
 
-                        <AttemptInfo
-                          label="Score"
-                          value={`${attempt.score}/${attempt.totalMarks}`}
-                        />
+                        <p className="truncate text-xs text-slate-500">
+                          {attempt.studentEmail}
+                        </p>
 
-                        <AttemptInfo
-                          label="Mode"
-                          value={
-                            attempt.mode
-                          }
-                        />
-
-                        <AttemptInfo
-                          label="Started"
-                          value={`${formatDate(
-                            attempt.startTime
-                          )} ${formatTime(
-                            attempt.startTime
-                          )}`}
-                        />
+                        <p className="mt-1 truncate text-xs font-semibold text-purple-600">
+                          {attempt.examName}
+                        </p>
                       </div>
                     </div>
-                  </Link>
-                )
-              )}
+
+                    <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
+                      <AttemptInfo label="Status" value={attempt.status} />
+
+                      <AttemptInfo
+                        label="Score"
+                        value={`${attempt.score}/${attempt.totalMarks}`}
+                      />
+
+                      <AttemptInfo label="Mode" value={attempt.mode} />
+
+                      <AttemptInfo
+                        label="Started"
+                        value={`${formatDate(attempt.startTime)} ${formatTime(
+                          attempt.startTime,
+                        )}`}
+                      />
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </section>
@@ -863,7 +710,6 @@ export function InstructorHome() {
         ================================================= */}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
           <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl hover:shadow-slate-200/70">
             <div className="flex items-center justify-between border-b border-slate-100 p-6">
               <div>
@@ -884,8 +730,7 @@ export function InstructorHome() {
               </Link>
             </div>
 
-            {questionSets.length ===
-            0 ? (
+            {questionSets.length === 0 ? (
               <EmptyState
                 title="No question sets"
                 description="Create a question set to begin building exams."
@@ -894,48 +739,35 @@ export function InstructorHome() {
               />
             ) : (
               <div className="divide-y divide-slate-100">
-                {questionSets
-                  .slice(0, 5)
-                  .map(
-                    (questionSet) => (
-                      <Link
-                        key={
-                          questionSet._id
-                        }
-                        to="/instructor/create-question-set"
-                        className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-purple-100 hover:bg-purple-50/40 hover:shadow-lg hover:shadow-purple-100/70"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-slate-900">
-                              {
-                                questionSet.questionSetName
-                              }
-                            </p>
+                {questionSets.slice(0, 5).map((questionSet) => (
+                  <Link
+                    key={questionSet._id}
+                    to="/instructor/create-question-set"
+                    className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-purple-100 hover:bg-purple-50/40 hover:shadow-lg hover:shadow-purple-100/70"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-900">
+                          {questionSet.questionSetName}
+                        </p>
 
-                            <p className="mt-1 text-xs text-slate-500">
-                              {
-                                questionSet.department
-                              }
-                            </p>
-                          </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {questionSet.department}
+                        </p>
+                      </div>
 
-                          <div className="shrink-0 rounded-xl bg-orange-50 px-3 py-2 text-center">
-                            <p className="text-lg font-black text-orange-600">
-                              {
-                                questionSet.questions
-                                  .length
-                              }
-                            </p>
+                      <div className="shrink-0 rounded-xl bg-orange-50 px-3 py-2 text-center">
+                        <p className="text-lg font-black text-orange-600">
+                          {questionSet.questions.length}
+                        </p>
 
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-orange-500">
-                              Questions
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                    )
-                  )}
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-orange-500">
+                          Questions
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </section>
@@ -947,9 +779,7 @@ export function InstructorHome() {
           <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl hover:shadow-slate-200/70">
             <div className="flex items-center justify-between border-b border-slate-100 p-6">
               <div>
-                <h2 className="text-lg font-black text-slate-900">
-                  Students
-                </h2>
+                <h2 className="text-lg font-black text-slate-900">Students</h2>
 
                 <p className="mt-1 text-sm text-slate-500">
                   Students in your department.
@@ -964,8 +794,7 @@ export function InstructorHome() {
               </Link>
             </div>
 
-            {students.length ===
-            0 ? (
+            {students.length === 0 ? (
               <EmptyState
                 title="No students found"
                 description="Students belonging to your department will appear here."
@@ -974,60 +803,45 @@ export function InstructorHome() {
               />
             ) : (
               <div className="max-h-[520px] overflow-y-auto divide-y divide-slate-100">
-                {students.map(
-                  (student) => (
-                    <Link
-                      key={
-                        student._id
-                      }
-                      to="/instructor/students-examination-status"
-                      className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-orange-100 hover:bg-orange-50/40 hover:shadow-lg hover:shadow-orange-100/70 sm:p-6"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-sm font-black text-purple-600">
-                            {student.name
-                              .charAt(
-                                0
-                              )
-                              .toUpperCase()}
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-slate-900">
-                              {
-                                student.name
-                              }
-                            </p>
-
-                            <p className="truncate text-xs text-slate-500">
-                              {
-                                student.email
-                              }
-                            </p>
-
-                            <p className="mt-1 truncate text-[11px] font-medium text-slate-400">
-                              {student.department ??
-                                "Department not set"}
-                            </p>
-                          </div>
+                {students.map((student) => (
+                  <Link
+                    key={student._id}
+                    to="/instructor/students-examination-status"
+                    className="block rounded-2xl border border-transparent p-5 shadow-sm shadow-slate-100/70 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-orange-100 hover:bg-orange-50/40 hover:shadow-lg hover:shadow-orange-100/70 sm:p-6"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-sm font-black text-purple-600">
+                          {student.name.charAt(0).toUpperCase()}
                         </div>
 
-                        <span
-                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                            student.isPermitted
-                              ? "bg-emerald-50 text-emerald-600"
-                              : "bg-orange-50 text-orange-600"
-                          }`}
-                        >
-                          {student.isPermitted
-                            ? "Permitted"
-                            : "Pending"}
-                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-900">
+                            {student.name}
+                          </p>
+
+                          <p className="truncate text-xs text-slate-500">
+                            {student.email}
+                          </p>
+
+                          <p className="mt-1 truncate text-[11px] font-medium text-slate-400">
+                            {student.department ?? "Department not set"}
+                          </p>
+                        </div>
                       </div>
-                    </Link>
-                  )
-                )}
+
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                          student.isPermitted
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-orange-50 text-orange-600"
+                        }`}
+                      >
+                        {student.isPermitted ? "Permitted" : "Pending"}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </section>
@@ -1039,9 +853,7 @@ export function InstructorHome() {
 
         <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-200/60 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/70">
           <div className="mb-5">
-            <h2 className="text-lg font-black text-slate-900">
-              Quick Actions
-            </h2>
+            <h2 className="text-lg font-black text-slate-900">Quick Actions</h2>
 
             <p className="mt-1 text-sm text-slate-500">
               Jump directly to the existing management sections.
@@ -1051,42 +863,31 @@ export function InstructorHome() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <QuickAction
               href="/instructor/create-exam"
-              icon={
-                <BookOpen size={21} />
-              }
+              icon={<BookOpen size={21} />}
               title="Create Exam"
               description="Build and publish examinations"
             />
 
             <QuickAction
               href="/instructor/create-question-set"
-              icon={
-                <FileQuestion size={21} />
-              }
+              icon={<FileQuestion size={21} />}
               title="Question Sets"
               description="Create and manage questions"
             />
 
             <QuickAction
               href="/instructor/students-examination-status"
-              icon={
-                <BarChart3 size={21} />
-              }
+              icon={<BarChart3 size={21} />}
               title="Exam Status"
               description="Track student examination activity"
             />
 
             <QuickAction
               href="/instructor/newly-requested-student"
-              icon={
-                <Users size={21} />
-              }
+              icon={<Users size={21} />}
               title="Student Requests"
               description={`${statistics.pendingStudentCount} pending request${
-                statistics.pendingStudentCount ===
-                1
-                  ? ""
-                  : "s"
+                statistics.pendingStudentCount === 1 ? "" : "s"
               }`}
             />
           </div>
@@ -1101,15 +902,12 @@ export function InstructorHome() {
             <Clock3 size={15} />
 
             <span>
-              Dashboard data is loaded directly from
-              your ScoreWell backend.
+              Dashboard data is loaded directly from your ScoreWell backend.
             </span>
           </div>
 
           <span className="font-bold">
-            Department:{" "}
-            {instructor.department ??
-              "Not configured"}
+            Department: {instructor.department ?? "Not configured"}
           </span>
         </div>
       </div>
@@ -1143,9 +941,7 @@ function DashboardStatCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-slate-500">
-            {title}
-          </p>
+          <p className="text-sm font-semibold text-slate-500">{title}</p>
 
           <p className="mt-2 text-3xl font-black tracking-tight text-slate-900">
             {value}
@@ -1184,9 +980,7 @@ function MiniStat({
       to={href}
       className="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-md shadow-slate-200/50 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-purple-100 hover:shadow-xl hover:shadow-purple-200/50"
     >
-      <p className="text-2xl font-black text-slate-900">
-        {value}
-      </p>
+      <p className="text-2xl font-black text-slate-900">{value}</p>
 
       <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
         {label}
@@ -1202,10 +996,7 @@ function MiniStat({
 function StatusBadge({
   status,
 }: {
-  status:
-    | "UNPUBLISHED"
-    | "PUBLISHED"
-    | "CLOSED";
+  status: "UNPUBLISHED" | "PUBLISHED" | "CLOSED";
 }) {
   const classes =
     status === "PUBLISHED"
@@ -1227,18 +1018,10 @@ function StatusBadge({
    EXAM INFO
 ===================================================== */
 
-function ExamInfo({
-  label,
-  value,
-}: {
-  label: string;
-  value: number | string;
-}) {
+function ExamInfo({ label, value }: { label: string; value: number | string }) {
   return (
     <div>
-      <p className="text-sm font-black text-slate-800">
-        {value}
-      </p>
+      <p className="text-sm font-black text-slate-800">{value}</p>
 
       <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
         {label}
@@ -1251,13 +1034,7 @@ function ExamInfo({
    ATTEMPT INFO
 ===================================================== */
 
-function AttemptInfo({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function AttemptInfo({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="max-w-[130px] truncate text-xs font-bold text-slate-800">
@@ -1296,13 +1073,9 @@ function QuickAction({
       </div>
 
       <div className="min-w-0">
-        <p className="text-sm font-bold text-slate-900">
-          {title}
-        </p>
+        <p className="text-sm font-bold text-slate-900">{title}</p>
 
-        <p className="mt-0.5 text-xs text-slate-500">
-          {description}
-        </p>
+        <p className="mt-0.5 text-xs text-slate-500">{description}</p>
       </div>
     </Link>
   );
@@ -1329,9 +1102,7 @@ function EmptyState({
         <FileQuestion size={22} />
       </div>
 
-      <h3 className="mt-4 text-sm font-bold text-slate-900">
-        {title}
-      </h3>
+      <h3 className="mt-4 text-sm font-bold text-slate-900">{title}</h3>
 
       <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">
         {description}

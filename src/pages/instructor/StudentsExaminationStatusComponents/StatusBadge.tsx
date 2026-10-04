@@ -1,20 +1,12 @@
-import {
-  AlertCircle,
-  CheckCircle2,
-  Clock3,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3 } from "lucide-react";
 
-import type {
-  AttemptStatus,
-} from "./types";
+import type { AttemptStatus } from "./types";
 
 interface StatusBadgeProps {
   status: AttemptStatus;
 }
 
-const StatusBadge = ({
-  status,
-}: StatusBadgeProps) => {
+const StatusBadge = ({ status }: StatusBadgeProps) => {
   if (status === "SUBMITTED") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">

@@ -9,7 +9,7 @@ export const emptyQuestion = (): import("./types").Question => ({
 
 export const formatCountdown = (
   deadline?: string | null,
-  nowMs = Date.now()
+  nowMs = Date.now(),
 ): string => {
   if (!deadline) return "No deadline set";
 

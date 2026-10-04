@@ -7,9 +7,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import type {
-  PerformanceOverview,
-} from "./types";
+import type { PerformanceOverview } from "./types";
 
 import MetricCard from "./MetricCard";
 
@@ -17,9 +15,7 @@ interface PerformanceStatsProps {
   overview: PerformanceOverview;
 }
 
-const PerformanceStats = ({
-  overview,
-}: PerformanceStatsProps) => {
+const PerformanceStats = ({ overview }: PerformanceStatsProps) => {
   return (
     <section>
       <div className="mb-4">
@@ -33,103 +29,61 @@ const PerformanceStats = ({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
         <MetricCard
-          icon={
-            <CheckCircle2
-              size={20}
-            />
-          }
+          icon={<CheckCircle2 size={20} />}
           label="Correct Answers"
-          value={
-            overview.correctAnswers
-          }
+          value={overview.correctAnswers}
           description="Correctly answered questions"
         />
 
         <MetricCard
-          icon={
-            <XCircle size={20} />
-          }
+          icon={<XCircle size={20} />}
           label="Wrong Answers"
-          value={
-            overview.wrongAnswers
-          }
+          value={overview.wrongAnswers}
           description="Incorrectly answered questions"
         />
 
         <MetricCard
-          icon={
-            <CircleAlert
-              size={20}
-            />
-          }
+          icon={<CircleAlert size={20} />}
           label="Unanswered"
-          value={
-            overview.unanswered
-          }
+          value={overview.unanswered}
           description="Questions left unanswered"
         />
 
         <MetricCard
-          icon={
-            <Clock3 size={20} />
-          }
+          icon={<Clock3 size={20} />}
           label="Completed Exams"
-          value={
-            overview.completedExams
-          }
+          value={overview.completedExams}
           description="Examinations attempted"
         />
 
         <MetricCard
-          icon={
-            <Users size={20} />
-          }
+          icon={<Users size={20} />}
           label="Common Exams"
-          value={
-            overview.commonExams
-          }
+          value={overview.commonExams}
           description="Common examination attempts"
         />
 
         <MetricCard
-          icon={
-            <ShieldCheck
-              size={20}
-            />
-          }
+          icon={<ShieldCheck size={20} />}
           label="Special Exams"
-          value={
-            overview.specialExams
-          }
+          value={overview.specialExams}
           description="Special examination attempts"
         />
 
         <MetricCard
-          icon={
-            <ShieldCheck
-              size={20}
-            />
-          }
+          icon={<ShieldCheck size={20} />}
           label="Strict Exams"
-          value={
-            overview.strictExams
-          }
+          value={overview.strictExams}
           description="Strict examination attempts"
         />
 
         <MetricCard
-          icon={
-            <Clock3 size={20} />
-          }
+          icon={<Clock3 size={20} />}
           label="Total Attempts"
-          value={
-            overview.totalAttempts
-          }
+          value={overview.totalAttempts}
           description="All recorded attempts"
         />
-
       </div>
     </section>
   );

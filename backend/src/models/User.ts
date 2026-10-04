@@ -1,12 +1,6 @@
-import mongoose, {
-  Document,
-  Model,
-  Schema,
-} from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
-export type UserRole =
-  | "STUDENT"
-  | "INSTRUCTOR";
+export type UserRole = "STUDENT" | "INSTRUCTOR";
 
 export interface IUser extends Document {
   name: string;
@@ -41,10 +35,7 @@ const userSchema = new Schema<IUser>(
 
     role: {
       type: String,
-      enum: [
-        "STUDENT",
-        "INSTRUCTOR",
-      ],
+      enum: ["STUDENT", "INSTRUCTOR"],
       required: true,
     },
 
@@ -58,24 +49,19 @@ const userSchema = new Schema<IUser>(
       default: true,
     },
 
-        isPermitted: {
-        type: Boolean,
-        required: false,
-        },
+    isPermitted: {
+      type: Boolean,
+      required: false,
+    },
   },
   {
     collection: "user",
     timestamps: false,
     versionKey: false,
-  }
+  },
 );
 
 const User: Model<IUser> =
-  mongoose.models.User ||
-  mongoose.model<IUser>(
-    "User",
-    userSchema,
-    "user"
-  );
+  mongoose.models.User || mongoose.model<IUser>("User", userSchema, "user");
 
 export default User;

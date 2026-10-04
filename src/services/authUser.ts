@@ -8,9 +8,7 @@ export type ScoreWellUser = {
   isPermitted?: boolean;
 };
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 let userCache: ScoreWellUser | null = null;
 let userRequest: Promise<ScoreWellUser> | null = null;
@@ -31,9 +29,7 @@ export const getCurrentUser = async (): Promise<ScoreWellUser> => {
       const data = await response.json();
 
       if (!response.ok || !data.user) {
-        throw new Error(
-          data.message || "Unable to fetch logged-in user."
-        );
+        throw new Error(data.message || "Unable to fetch logged-in user.");
       }
 
       userCache = data.user as ScoreWellUser;

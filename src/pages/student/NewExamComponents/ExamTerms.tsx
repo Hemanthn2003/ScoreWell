@@ -12,10 +12,7 @@ const ExamTerms = () => {
       return;
     }
 
-    sessionStorage.setItem(
-      `scorewell-exam-access-${examId}`,
-      "1"
-    );
+    sessionStorage.setItem(`scorewell-exam-access-${examId}`, "1");
 
     navigate(`/student/exams/${examId}/attempt`);
   };
@@ -37,8 +34,8 @@ const ExamTerms = () => {
           </h1>
 
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-            Please read the following examination rules carefully
-            before starting your examination.
+            Please read the following examination rules carefully before
+            starting your examination.
           </p>
         </div>
 
@@ -49,8 +46,8 @@ const ExamTerms = () => {
             </h2>
 
             <p className="mt-1 text-sm text-purple-100">
-              Your examination will begin immediately after you
-              agree and continue.
+              Your examination will begin immediately after you agree and
+              continue.
             </p>
           </div>
 
@@ -60,12 +57,10 @@ const ExamTerms = () => {
                 1
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">
-                  Attempt Limit
-                </h3>
+                <h3 className="font-bold text-slate-800">Attempt Limit</h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  You must complete the examination within the
-                  allowed number of attempts assigned to you.
+                  You must complete the examination within the allowed number of
+                  attempts assigned to you.
                 </p>
               </div>
             </div>
@@ -75,13 +70,11 @@ const ExamTerms = () => {
                 2
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">
-                  Examination Timer
-                </h3>
+                <h3 className="font-bold text-slate-800">Examination Timer</h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  The examination timer starts when your attempt
-                  begins. The examination may be automatically
-                  submitted when the allotted time expires.
+                  The examination timer starts when your attempt begins. The
+                  examination may be automatically submitted when the allotted
+                  time expires.
                 </p>
               </div>
             </div>
@@ -91,13 +84,10 @@ const ExamTerms = () => {
                 3
               </div>
               <div>
-                <h3 className="font-bold text-slate-800">
-                  No Cheating
-                </h3>
+                <h3 className="font-bold text-slate-800">No Cheating</h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Any attempt to use unauthorized assistance,
-                  communicate with others, or manipulate the
-                  examination process is prohibited.
+                  Any attempt to use unauthorized assistance, communicate with
+                  others, or manipulate the examination process is prohibited.
                 </p>
               </div>
             </div>
@@ -111,10 +101,9 @@ const ExamTerms = () => {
                   Browser & Tab Activity
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Do not switch browser tabs, leave the examination
-                  page, or use unauthorized browser activity during
-                  the examination. Such activity may result in
-                  automatic submission.
+                  Do not switch browser tabs, leave the examination page, or use
+                  unauthorized browser activity during the examination. Such
+                  activity may result in automatic submission.
                 </p>
               </div>
             </div>
@@ -128,9 +117,9 @@ const ExamTerms = () => {
                   Stable Internet Connection
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Make sure you have a stable internet connection
-                  before starting. Avoid refreshing or closing the
-                  examination page unnecessarily.
+                  Make sure you have a stable internet connection before
+                  starting. Avoid refreshing or closing the examination page
+                  unnecessarily.
                 </p>
               </div>
             </div>
@@ -144,9 +133,9 @@ const ExamTerms = () => {
                   Malicious Behaviour
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Repeated suspicious browser activity or attempts
-                  to interfere with the examination may cause the
-                  attempt to be submitted automatically.
+                  Repeated suspicious browser activity or attempts to interfere
+                  with the examination may cause the attempt to be submitted
+                  automatically.
                 </p>
               </div>
             </div>
@@ -157,24 +146,20 @@ const ExamTerms = () => {
               <input
                 type="checkbox"
                 checked={agreed}
-                onChange={(event) =>
-                  setAgreed(event.target.checked)
-                }
+                onChange={(event) => setAgreed(event.target.checked)}
                 className="mt-1 h-5 w-5 cursor-pointer rounded border-purple-300 text-purple-600 focus:ring-purple-500"
               />
 
               <span className="text-sm leading-6 text-slate-600">
-                I have read and understood the examination rules
-                and agree to follow all the terms and conditions.
+                I have read and understood the examination rules and agree to
+                follow all the terms and conditions.
               </span>
             </label>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() =>
-                  navigate("/student/new-exams")
-                }
+                onClick={() => navigate("/student/new-exams")}
                 className="rounded-xl border border-purple-200 bg-white px-6 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-50"
               >
                 Go Back

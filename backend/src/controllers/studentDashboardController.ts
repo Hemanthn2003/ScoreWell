@@ -1,16 +1,6 @@
-import type {
-
-  Request,
-
-  Response,
-
-} from "express";
-
-
+import type { Request, Response } from "express";
 
 import mongoose from "mongoose";
-
-
 
 import User from "../models/User";
 
@@ -22,227 +12,127 @@ import SpecialExamStudent from "../models/SpecialExamStudent";
 
 import StrictExam from "../models/StrictExam";
 
+type ExamStatus = "UNPUBLISHED" | "PUBLISHED" | "EXPIRED" | "CLOSED";
 
+type ExamMode = "COMMON" | "SPECIAL";
 
-type ExamStatus =
-
-  | "UNPUBLISHED"
-
-  | "PUBLISHED"
-
-  | "EXPIRED"
-
-  | "CLOSED";
-
-
-
-type ExamMode =
-
-  | "COMMON"
-
-  | "SPECIAL";
-
-
-
-type AttemptStatus =
-
-  | "IN_PROGRESS"
-
-  | "SUBMITTED"
-
-  | "AUTO_SUBMITTED";
-
-
+type AttemptStatus = "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
 
 interface DashboardExam {
+  id: string;
 
-  id: string;
+  title: string;
 
-  title: string;
+  description: string;
 
-  description: string;
+  department: string;
 
-  department: string;
+  durationMinutes: number;
 
+  questionCount: number;
 
+  marksPerQuestion: number;
 
-  durationMinutes: number;
+  negativeMarking: {
+    enabled: boolean;
 
-  questionCount: number;
+    penalty: number;
+  };
 
-  marksPerQuestion: number;
+  mode: ExamMode;
 
+  status: ExamStatus;
 
+  startDate: string | null;
 
-  negativeMarking: {
+  deadlineDate: string | null;
 
-    enabled: boolean;
+  strictMode: boolean;
 
-    penalty: number;
+  strictDeadlineDate: string | null;
 
-  };
+  strictAttemptChances: number | null;
 
+  maxAttempts: number;
 
+  attemptsUsed: number;
 
-  mode: ExamMode;
+  attemptsRemaining: number;
 
+  eligibility: "COMMON" | "SPECIAL";
 
-
-  status: ExamStatus;
-
-
-
-  startDate: string | null;
-
-  deadlineDate: string | null;
-
-
-
-  strictMode: boolean;
-
-  strictDeadlineDate: string | null;
-
-  strictAttemptChances: number | null;
-
-
-
-  maxAttempts: number;
-
-
-
-  attemptsUsed: number;
-
-  attemptsRemaining: number;
-
-
-
-  eligibility:
-
-    | "COMMON"
-
-    | "SPECIAL";
-
-
-
-  canAttempt: boolean;
-
+  canAttempt: boolean;
 }
-
-
 
 interface DashboardAttempt {
+  id: string;
 
-  id: string;
+  examId: string;
 
+  examName: string;
 
+  department: string;
 
-  examId: string;
+  mode: ExamMode;
 
-  examName: string;
+  status: AttemptStatus;
 
+  attemptNo: number;
 
+  startTime: string;
 
-  department: string;
+  submittedAt: string | null;
 
+  timeTakenSeconds: number;
 
+  score: number | null;
 
-  mode: ExamMode;
+  totalMarks: number | null;
 
+  percentage: number | null;
 
+  resultAvailable: boolean;
 
-  status: AttemptStatus;
-
-
-
-  attemptNo: number;
-
-
-
-  startTime: string;
-
-  submittedAt: string | null;
-
-
-
-  timeTakenSeconds: number;
-
-
-
-  score: number | null;
-
-  totalMarks: number | null;
-
-  percentage: number | null;
-
-
-
-  resultAvailable: boolean;
-
-
-
-  examStatus: ExamStatus;
-
+  examStatus: ExamStatus;
 }
-
-
 
 interface StudentDashboardResponse {
+  success: boolean;
 
-  success: boolean;
+  student: {
+    id: string;
 
+    name: string;
 
+    email: string;
 
-  student: {
+    department: string;
+  };
 
-    id: string;
+  statistics: {
+    availableExams: number;
 
-    name: string;
+    completedExams: number;
 
-    email: string;
+    missedExams: number;
 
-    department: string;
+    pendingExams: number;
+  };
 
-  };
+  averageScore: {
+    percentage: number;
 
+    score: number;
 
+    totalMarks: number;
 
-  statistics: {
+    examsCounted: number;
+  };
 
-    availableExams: number;
+  availableExams: DashboardExam[];
 
-    completedExams: number;
-
-    missedExams: number;
-
-    pendingExams: number;
-
-  };
-
-
-
-  averageScore: {
-
-    percentage: number;
-
-    score: number;
-
-    totalMarks: number;
-
-    examsCounted: number;
-
-  };
-
-
-
-  availableExams: DashboardExam[];
-
-
-
-  recentAttempts: DashboardAttempt[];
-
+  recentAttempts: DashboardAttempt[];
 }
-
-
 
 /* =========================================================
 
@@ -250,75 +140,45 @@ interface StudentDashboardResponse {
 
 \========================================================= */
 
-
-
 const syncExamStatuses = async (): Promise<void> => {
+  const now = new Date();
 
-  const now = new Date();
+  await Exam.updateMany(
+    {
+      status: "UNPUBLISHED",
 
+      startDate: {
+        $ne: null,
 
+        $lte: now,
+      },
+    },
 
-  await Exam.updateMany(
+    {
+      $set: {
+        status: "PUBLISHED",
+      },
+    },
+  );
 
-    {
+  await Exam.updateMany(
+    {
+      status: "PUBLISHED",
 
-      status: "UNPUBLISHED",
+      deadlineDate: {
+        $ne: null,
 
-      startDate: {
+        $lte: now,
+      },
+    },
 
-        $ne: null,
-
-        $lte: now,
-
-      },
-
-    },
-
-    {
-
-      $set: {
-
-        status: "PUBLISHED",
-
-      },
-
-    }
-
-  );
-
-
-
-  await Exam.updateMany(
-
-    {
-
-      status: "PUBLISHED",
-
-      deadlineDate: {
-
-        $ne: null,
-
-        $lte: now,
-
-      },
-
-    },
-
-    {
-
-      $set: {
-
-        status: "EXPIRED",
-
-      },
-
-    }
-
-  );
-
+    {
+      $set: {
+        status: "EXPIRED",
+      },
+    },
+  );
 };
-
-
 
 /* =========================================================
 
@@ -326,43 +186,23 @@ const syncExamStatuses = async (): Promise<void> => {
 
 \========================================================= */
 
+const getStudent = async (req: Request) => {
+  if (!req.user) {
+    return null;
+  }
 
+  if (req.user.role !== "STUDENT") {
+    return null;
+  }
 
-const getStudent = async (
+  return User.findOne({
+    _id: req.user.userId,
 
-  req: Request
+    role: "STUDENT",
 
-) => {
-
-  if (!req.user) {
-
-    return null;
-
-  }
-
-
-
-  if (req.user.role !== "STUDENT") {
-
-    return null;
-
-  }
-
-
-
-  return User.findOne({
-
-    _id: req.user.userId,
-
-    role: "STUDENT",
-
-    isActive: true,
-
-  }).lean();
-
+    isActive: true,
+  }).lean();
 };
-
-
 
 /* =========================================================
 
@@ -370,89 +210,43 @@ const getStudent = async (
 
 \========================================================= */
 
-
-
 export const getStudentDashboard = async (
+  req: Request,
 
-  req: Request,
-
-  res: Response
-
+  res: Response,
 ): Promise<void> => {
+  try {
+    if (!req.user || req.user.role !== "STUDENT") {
+      res.status(403).json({
+        success: false,
 
-  try {
+        message: "Student access required.",
+      });
 
-    if (
+      return;
+    }
 
-      !req.user ||
+    const student = await getStudent(req);
 
-      req.user.role !== "STUDENT"
+    if (!student) {
+      res.status(404).json({
+        success: false,
 
-    ) {
+        message: "Student account was not found.",
+      });
 
-      res.status(403).json({
+      return;
+    }
 
-        success: false,
+    if (!student.department) {
+      res.status(400).json({
+        success: false,
 
-        message:
+        message: "Student department is not configured.",
+      });
 
-          "Student access required.",
-
-      });
-
-
-
-      return;
-
-    }
-
-
-
-    const student = await getStudent(req);
-
-
-
-    if (!student) {
-
-      res.status(404).json({
-
-        success: false,
-
-        message:
-
-          "Student account was not found.",
-
-      });
-
-
-
-      return;
-
-    }
-
-
-
-    if (!student.department) {
-
-      res.status(400).json({
-
-        success: false,
-
-        message:
-
-          "Student department is not configured.",
-
-      });
-
-
-
-      return;
-
-    }
-
-
-
-    /*
+      return;
+    } /*
 
      * Synchronize scheduled exam statuses
 
@@ -460,27 +254,12 @@ export const getStudentDashboard = async (
 
      */
 
-    await syncExamStatuses();
+    await syncExamStatuses();
 
+    const studentId = new mongoose.Types.ObjectId(student._id);
 
-
-    const studentId =
-
-      new mongoose.Types.ObjectId(
-
-        student._id
-
-      );
-
-
-
-    const department =
-
-      student.department;
-
-
-
-    /* =====================================================
+    const department =
+      student.department; /* =====================================================
 
        GET ALL RELEVANT EXAMS
 
@@ -500,389 +279,173 @@ export const getStudentDashboard = async (
 
     ===================================================== */
 
+    const exams = await Exam.find({
+      department,
 
+      status: {
+        $in: ["PUBLISHED", "EXPIRED", "CLOSED"],
+      },
+    })
 
-    const exams = await Exam.find({
+      .sort({
+        deadlineDate: 1,
 
-      department,
+        _id: -1,
+      })
 
-      status: {
+      .lean();
 
-        $in: [
+    if (exams.length === 0) {
+      const emptyResponse: StudentDashboardResponse = {
+        success: true,
 
-          "PUBLISHED",
+        student: {
+          id: student._id.toString(),
 
-          "EXPIRED",
+          name: student.name,
 
-          "CLOSED",
+          email: student.email,
 
-        ],
+          department,
+        },
 
-      },
+        statistics: {
+          availableExams: 0,
 
-    })
+          completedExams: 0,
 
-      .sort({
+          missedExams: 0,
 
-        deadlineDate: 1,
+          pendingExams: 0,
+        },
 
-        _id: -1,
+        averageScore: {
+          percentage: 0,
 
-      })
+          score: 0,
 
-      .lean();
+          totalMarks: 0,
 
+          examsCounted: 0,
+        },
 
+        availableExams: [],
 
-    if (exams.length === 0) {
+        recentAttempts: [],
+      };
 
-      const emptyResponse:
+      res.status(200).json(emptyResponse);
 
-        StudentDashboardResponse = {
+      return;
+    }
 
-        success: true,
-
-
-
-        student: {
-
-          id: student._id.toString(),
-
-          name: student.name,
-
-          email: student.email,
-
-          department,
-
-        },
-
-
-
-        statistics: {
-
-          availableExams: 0,
-
-          completedExams: 0,
-
-          missedExams: 0,
-
-          pendingExams: 0,
-
-        },
-
-
-
-        averageScore: {
-
-          percentage: 0,
-
-          score: 0,
-
-          totalMarks: 0,
-
-          examsCounted: 0,
-
-        },
-
-
-
-        availableExams: [],
-
-        recentAttempts: [],
-
-      };
-
-
-
-      res.status(200).json(
-
-        emptyResponse
-
-      );
-
-
-
-      return;
-
-    }
-
-
-
-    const examIds = exams.map(
-
-      (exam) => exam._id
-
-    );
-
-
-
-    /* =====================================================
+    const examIds = exams.map(
+      (exam) => exam._id,
+    ); /* =====================================================
 
        SPECIAL ASSIGNMENTS
 
     ===================================================== */
 
+    const specialAssignments = await SpecialExamStudent.find({
+      examId: {
+        $in: examIds,
+      },
 
+      studentId: studentId,
+    }).lean();
 
-    const specialAssignments =
-
-      await SpecialExamStudent.find({
-
-        examId: {
-
-          $in: examIds,
-
-        },
-
-
-
-        studentId: studentId,
-
-      }).lean();
-
-
-
-    const specialExamIds =
-
-      new Set(
-
-        specialAssignments.map(
-
-          (assignment) =>
-
-            assignment.examId.toString()
-
-        )
-
-      );
-
-
-
-    /* =====================================================
+    const specialExamIds = new Set(
+      specialAssignments.map((assignment) => assignment.examId.toString()),
+    ); /* =====================================================
 
        STRICT EXAMS
 
     ===================================================== */
 
+    const strictExams = await StrictExam.find({
+      examId: {
+        $in: examIds,
+      },
+    }).lean();
 
+    const strictExamMap = new Map<string, (typeof strictExams)[number]>();
 
-    const strictExams =
+    for (const strictExam of strictExams) {
+      strictExamMap.set(
+        strictExam.examId.toString(),
 
-      await StrictExam.find({
-
-        examId: {
-
-          $in: examIds,
-
-        },
-
-      }).lean();
-
-
-
-    const strictExamMap =
-
-      new Map<
-
-        string,
-
-        (typeof strictExams)[number]
-
-      >();
-
-
-
-    for (const strictExam of strictExams) {
-
-      strictExamMap.set(
-
-        strictExam.examId.toString(),
-
-        strictExam
-
-      );
-
-    }
-
-
-
-    /* =====================================================
+        strictExam,
+      );
+    } /* =====================================================
 
        STUDENT ATTEMPTS
 
     ===================================================== */
 
+    const attempts = await Attempt.find({
+      studentId: studentId,
 
+      examId: {
+        $in: examIds,
+      },
+    })
 
-    const attempts =
+      .sort({
+        startTime: -1,
+      })
 
-      await Attempt.find({
-
-        studentId: studentId,
-
-        examId: {
-
-          $in: examIds,
-
-        },
-
-      })
-
-        .sort({
-
-          startTime: -1,
-
-        })
-
-        .lean();
-
-
-
-    /*
+      .lean(); /*
 
      * Group attempts by exam.
 
      */
 
-    const attemptsByExam =
+    const attemptsByExam = new Map<string, typeof attempts>();
 
-      new Map<
+    for (const attempt of attempts) {
+      const examKey = attempt.examId.toString();
 
-        string,
+      const existing = attemptsByExam.get(examKey) ?? [];
 
-        typeof attempts
+      existing.push(attempt);
 
-      >();
+      attemptsByExam.set(
+        examKey,
 
-
-
-    for (const attempt of attempts) {
-
-      const examKey =
-
-        attempt.examId.toString();
-
-
-
-      const existing =
-
-        attemptsByExam.get(
-
-          examKey
-
-        ) ?? [];
-
-
-
-      existing.push(attempt);
-
-
-
-      attemptsByExam.set(
-
-        examKey,
-
-        existing
-
-      );
-
-    }
-
-
-
-    /* =====================================================
+        existing,
+      );
+    } /* =====================================================
 
        ELIGIBILITY
 
     ===================================================== */
 
+    const isEligible = (
+      exam: (typeof exams)[number],
+    ): "COMMON" | "SPECIAL" | null => {
+      if (exam.department !== department) {
+        return null;
+      }
 
+      if (exam.mode === "SPECIAL") {
+        return specialExamIds.has(exam._id.toString()) ? "SPECIAL" : null;
+      }
 
-    const isEligible = (
-
-      exam: (typeof exams)[number]
-
-    ):
-
-      | "COMMON"
-
-      | "SPECIAL"
-
-      | null => {
-
-      if (
-
-        exam.department !==
-
-        department
-
-      ) {
-
-        return null;
-
-      }
-
-
-
-      if (
-
-        exam.mode === "SPECIAL"
-
-      ) {
-
-        return specialExamIds.has(
-
-          exam._id.toString()
-
-        )
-
-          ? "SPECIAL"
-
-          : null;
-
-      }
-
-
-
-      return "COMMON";
-
-    };
-
-
-
-    /* =====================================================
+      return "COMMON";
+    }; /* =====================================================
 
        DASHBOARD ARRAYS
 
     ===================================================== */
 
+    const availableExams: DashboardExam[] = [];
 
+    const completedExamKeys = new Set<string>();
 
-    const availableExams:
+    const missedExamKeys = new Set<string>();
 
-      DashboardExam[] = [];
-
-
-
-    const completedExamKeys =
-
-      new Set<string>();
-
-
-
-    const missedExamKeys =
-
-      new Set<string>();
-
-
-
-    const pendingExamKeys =
-
-      new Set<string>();
-
-
-
-    /*
+    const pendingExamKeys = new Set<string>(); /*
 
      * Only completed EXPIRED/CLOSED
 
@@ -890,85 +453,33 @@ export const getStudentDashboard = async (
 
      */
 
-    const completedAttemptsForAnalytics:
-
-      typeof attempts = [];
-
-
-
-    /* =====================================================
+    const completedAttemptsForAnalytics: typeof attempts =
+      []; /* =====================================================
 
        PROCESS EVERY ELIGIBLE EXAM
 
     ===================================================== */
 
+    for (const exam of exams) {
+      const examKey = exam._id.toString();
 
+      const eligibility = isEligible(exam);
 
-    for (const exam of exams) {
+      if (!eligibility) {
+        continue;
+      }
 
-      const examKey =
+      const examAttempts = attemptsByExam.get(examKey) ?? [];
 
-        exam._id.toString();
+      const strictExam = strictExamMap.get(examKey);
 
+      const attemptsUsed = examAttempts.length;
 
+      const attemptsRemaining = Math.max(
+        0,
 
-      const eligibility =
-
-        isEligible(exam);
-
-
-
-      if (!eligibility) {
-
-        continue;
-
-      }
-
-
-
-      const examAttempts =
-
-        attemptsByExam.get(
-
-          examKey
-
-        ) ?? [];
-
-
-
-      const strictExam =
-
-        strictExamMap.get(
-
-          examKey
-
-        );
-
-
-
-      const attemptsUsed =
-
-        examAttempts.length;
-
-
-
-      const attemptsRemaining =
-
-        Math.max(
-
-          0,
-
-          Number(
-
-            exam.maxAttempts || 1
-
-          ) - attemptsUsed
-
-        );
-
-
-
-      /*
+        Number(exam.maxAttempts || 1) - attemptsUsed,
+      ); /*
 
        * A completed attempt means:
 
@@ -976,25 +487,10 @@ export const getStudentDashboard = async (
 
        */
 
-      const completedAttempts =
-
-        examAttempts.filter(
-
-          (attempt) =>
-
-            attempt.status ===
-
-              "SUBMITTED" ||
-
-            attempt.status ===
-
-              "AUTO_SUBMITTED"
-
-        );
-
-
-
-      /*
+      const completedAttempts = examAttempts.filter(
+        (attempt) =>
+          attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED",
+      ); /*
 
        * Available means:
 
@@ -1012,231 +508,80 @@ export const getStudentDashboard = async (
 
        */
 
-      let strictDeadlinePassed =
+      let strictDeadlinePassed = false;
 
-        false;
+      if (strictExam?.deadlineDate) {
+        strictDeadlinePassed =
+          new Date(strictExam.deadlineDate).getTime() <= Date.now();
+      }
 
+      const canAttempt =
+        exam.status === "PUBLISHED" &&
+        attemptsRemaining > 0 &&
+        !strictDeadlinePassed;
 
+      if (canAttempt) {
+        availableExams.push({
+          id: examKey,
 
-      if (
+          title: exam.title,
 
-        strictExam?.deadlineDate
+          description: exam.description ?? "",
 
-      ) {
+          department: exam.department,
 
-        strictDeadlinePassed =
+          durationMinutes: exam.durationMinutes,
 
-          new Date(
+          questionCount: exam.questionCount,
 
-            strictExam.deadlineDate
+          marksPerQuestion: exam.marksPerQuestion,
 
-          ).getTime() <=
+          negativeMarking: {
+            enabled: Boolean(exam.negativeMarking?.enabled),
 
-          Date.now();
+            penalty: Number(exam.negativeMarking?.penalty ?? 0),
+          },
 
-      }
+          mode: exam.mode,
 
+          status: exam.status,
 
+          startDate: exam.startDate
+            ? new Date(exam.startDate).toISOString()
+            : null,
 
-      const canAttempt =
+          deadlineDate: exam.deadlineDate
+            ? new Date(exam.deadlineDate).toISOString()
+            : null,
 
-        exam.status ===
+          strictMode: Boolean(strictExam),
 
-          "PUBLISHED" &&
+          strictDeadlineDate: strictExam?.deadlineDate
+            ? new Date(strictExam.deadlineDate).toISOString()
+            : null,
 
-        attemptsRemaining > 0 &&
+          strictAttemptChances: strictExam
+            ? Number(strictExam.attemptChances)
+            : null,
 
-        !strictDeadlinePassed;
+          maxAttempts: Number(exam.maxAttempts || 1),
 
+          attemptsUsed,
 
+          attemptsRemaining,
 
-      if (canAttempt) {
+          eligibility,
 
-        availableExams.push({
-
-          id: examKey,
-
-
-
-          title: exam.title,
-
-
-
-          description:
-
-            exam.description ?? "",
-
-
-
-          department:
-
-            exam.department,
-
-
-
-          durationMinutes:
-
-            exam.durationMinutes,
-
-
-
-          questionCount:
-
-            exam.questionCount,
-
-
-
-          marksPerQuestion:
-
-            exam.marksPerQuestion,
-
-
-
-          negativeMarking: {
-
-            enabled:
-
-              Boolean(
-
-                exam.negativeMarking
-
-                  ?.enabled
-
-              ),
-
-
-
-            penalty:
-
-              Number(
-
-                exam.negativeMarking
-
-                  ?.penalty ?? 0
-
-              ),
-
-          },
-
-
-
-          mode: exam.mode,
-
-
-
-          status: exam.status,
-
-
-
-          startDate:
-
-            exam.startDate
-
-              ? new Date(
-
-                  exam.startDate
-
-                ).toISOString()
-
-              : null,
-
-
-
-          deadlineDate:
-
-            exam.deadlineDate
-
-              ? new Date(
-
-                  exam.deadlineDate
-
-                ).toISOString()
-
-              : null,
-
-
-
-          strictMode:
-
-            Boolean(strictExam),
-
-
-
-          strictDeadlineDate:
-
-            strictExam?.deadlineDate
-
-              ? new Date(
-
-                  strictExam.deadlineDate
-
-                ).toISOString()
-
-              : null,
-
-
-
-          strictAttemptChances:
-
-            strictExam
-
-              ? Number(
-
-                  strictExam.attemptChances
-
-                )
-
-              : null,
-
-
-
-          maxAttempts:
-
-            Number(
-
-              exam.maxAttempts || 1
-
-            ),
-
-
-
-          attemptsUsed,
-
-
-
-          attemptsRemaining,
-
-
-
-          eligibility,
-
-
-
-          canAttempt: true,
-
-        });
-
-      }
-
-
-
-      /* =================================================
+          canAttempt: true,
+        });
+      } /* =================================================
 
          PUBLISHED EXAM
 
       ================================================= */
 
-
-
-      if (
-
-        exam.status ===
-
-        "PUBLISHED"
-
-      ) {
-
-        /*
+      if (exam.status === "PUBLISHED") {
+        /*
 
          * Pending means:
 
@@ -1246,67 +591,26 @@ export const getStudentDashboard = async (
 
          */
 
-        if (
+        if (examAttempts.length === 0) {
+          pendingExamKeys.add(examKey);
+        }
 
-          examAttempts.length === 0
-
-        ) {
-
-          pendingExamKeys.add(
-
-            examKey
-
-          );
-
-        }
-
-
-
-        continue;
-
-      }
-
-
-
-      /* =================================================
+        continue;
+      } /* =================================================
 
          EXPIRED / CLOSED
 
       ================================================= */
 
-
-
-      if (
-
-        exam.status === "EXPIRED" ||
-
-        exam.status === "CLOSED"
-
-      ) {
-
-        /*
+      if (exam.status === "EXPIRED" || exam.status === "CLOSED") {
+        /*
 
          * Student completed this exam.
 
          */
 
-        if (
-
-          completedAttempts.length >
-
-          0
-
-        ) {
-
-          completedExamKeys.add(
-
-            examKey
-
-          );
-
-
-
-          /*
+        if (completedAttempts.length > 0) {
+          completedExamKeys.add(examKey); /*
 
            * ONLY expired/closed
 
@@ -1316,37 +620,17 @@ export const getStudentDashboard = async (
 
            */
 
-          const highestScoringAttempt =
-
-            [...completedAttempts].sort(
-
-              (a, b) =>
-
-                Number(b.score || 0) -
-
-                  Number(a.score || 0) ||
-
-                Number(b.attemptNo || 1) -
-
-                  Number(a.attemptNo || 1)
-
-            )[0];
-
-
+          const highestScoringAttempt = [...completedAttempts].sort(
+            (a, b) =>
+              Number(b.score || 0) - Number(a.score || 0) ||
+              Number(b.attemptNo || 1) - Number(a.attemptNo || 1),
+          )[0];
 
           if (highestScoringAttempt) {
-
-            completedAttemptsForAnalytics.push(
-
-              highestScoringAttempt
-
-            );
-
+            completedAttemptsForAnalytics.push(highestScoringAttempt);
           }
-
-        } else {
-
-          /*
+        } else {
+          /*
 
            * No attempt at all means
 
@@ -1354,93 +638,31 @@ export const getStudentDashboard = async (
 
            */
 
-          if (
-
-            examAttempts.length ===
-
-            0
-
-          ) {
-
-            missedExamKeys.add(
-
-              examKey
-
-            );
-
-          }
-
-        }
-
-      }
-
-    }
-
-
-
-    /* =====================================================
+          if (examAttempts.length === 0) {
+            missedExamKeys.add(examKey);
+          }
+        }
+      }
+    } /* =====================================================
 
        AVERAGE SCORE
 
     ===================================================== */
 
+    let totalScore = 0;
 
+    let totalMarks = 0;
 
-    let totalScore = 0;
+    for (const attempt of completedAttemptsForAnalytics) {
+      totalScore += Number(attempt.score || 0);
 
-    let totalMarks = 0;
+      totalMarks += Number(attempt.totalMarks || 0);
+    }
 
-
-
-    for (
-
-      const attempt of
-
-        completedAttemptsForAnalytics
-
-    ) {
-
-      totalScore += Number(
-
-        attempt.score || 0
-
-      );
-
-
-
-      totalMarks += Number(
-
-        attempt.totalMarks || 0
-
-      );
-
-    }
-
-
-
-    const averagePercentage =
-
-      totalMarks > 0
-
-        ? Number(
-
-            (
-
-              (totalScore /
-
-                totalMarks) *
-
-              100
-
-            ).toFixed(2)
-
-          )
-
-        : 0;
-
-
-
-    /* =====================================================
+    const averagePercentage =
+      totalMarks > 0
+        ? Number(((totalScore / totalMarks) * 100).toFixed(2))
+        : 0; /* =====================================================
 
        RECENT ATTEMPTS
 
@@ -1456,484 +678,155 @@ export const getStudentDashboard = async (
 
     ===================================================== */
 
+    const examMap = new Map<string, (typeof exams)[number]>();
 
+    for (const exam of exams) {
+      examMap.set(
+        exam._id.toString(),
 
-    const examMap =
+        exam,
+      );
+    }
 
-      new Map<
+    const attemptsForRecent = attempts.filter((attempt) => {
+      const exam = examMap.get(attempt.examId.toString());
 
-        string,
+      if (exam?.status !== "EXPIRED" && exam?.status !== "CLOSED") {
+        return true;
+      }
 
-        (typeof exams)[number]
+      const completedAttemptsForExam = attempts.filter(
+        (item) =>
+          item.examId.toString() === attempt.examId.toString() &&
+          (item.status === "SUBMITTED" || item.status === "AUTO_SUBMITTED"),
+      );
 
-      >();
+      const highestScoringAttempt = [...completedAttemptsForExam].sort(
+        (a, b) =>
+          Number(b.score || 0) - Number(a.score || 0) ||
+          Number(b.attemptNo || 1) - Number(a.attemptNo || 1),
+      )[0];
 
+      return highestScoringAttempt?._id.toString() === attempt._id.toString();
+    });
 
+    const recentAttempts: DashboardAttempt[] = attemptsForRecent
 
-    for (const exam of exams) {
+      .sort((a, b) => {
+        const aTime = new Date(a.startTime).getTime();
 
-      examMap.set(
+        const bTime = new Date(b.startTime).getTime();
 
-        exam._id.toString(),
+        return bTime - aTime;
+      })
 
-        exam
+      .slice(0, 12)
 
-      );
+      .map((attempt) => {
+        const exam = examMap.get(attempt.examId.toString());
 
-    }
+        const resultAvailable =
+          exam?.status === "EXPIRED" || exam?.status === "CLOSED";
 
+        return {
+          id: attempt._id.toString(),
 
+          examId: attempt.examId.toString(),
 
-    const attemptsForRecent =
+          examName: attempt.examName || exam?.title || "Examination",
 
-      attempts.filter((attempt) => {
+          department:
+            exam?.department || attempt.studentDepartment || department,
 
-        const exam =
+          mode: exam?.mode || attempt.mode,
 
-          examMap.get(
+          status: attempt.status,
 
-            attempt.examId.toString()
+          attemptNo: Number(attempt.attemptNo || 1),
 
-          );
+          startTime: new Date(attempt.startTime).toISOString(),
 
+          submittedAt: attempt.submittedAt
+            ? new Date(attempt.submittedAt).toISOString()
+            : null,
 
+          timeTakenSeconds: Number(attempt.timeTakenSeconds || 0),
 
-        if (
+          score: resultAvailable ? Number(attempt.score || 0) : null,
 
-          exam?.status !== "EXPIRED" &&
+          totalMarks: resultAvailable ? Number(attempt.totalMarks || 0) : null,
 
-          exam?.status !== "CLOSED"
+          percentage:
+            resultAvailable && Number(attempt.totalMarks || 0) > 0
+              ? Number(
+                  (
+                    (Number(attempt.score || 0) /
+                      Number(attempt.totalMarks || 0)) *
+                    100
+                  ).toFixed(2),
+                )
+              : null,
 
-        ) {
+          resultAvailable,
 
-          return true;
-
-        }
-
-
-
-        const completedAttemptsForExam =
-
-          attempts.filter(
-
-            (item) =>
-
-              item.examId.toString() ===
-
-                attempt.examId.toString() &&
-
-              (item.status === "SUBMITTED" ||
-
-                item.status === "AUTO_SUBMITTED")
-
-          );
-
-
-
-        const highestScoringAttempt =
-
-          [...completedAttemptsForExam].sort(
-
-            (a, b) =>
-
-              Number(b.score || 0) -
-
-                Number(a.score || 0) ||
-
-              Number(b.attemptNo || 1) -
-
-                Number(a.attemptNo || 1)
-
-          )[0];
-
-
-
-        return (
-
-          highestScoringAttempt?._id.toString() ===
-
-          attempt._id.toString()
-
-        );
-
-      });
-
-
-
-    const recentAttempts:
-
-      DashboardAttempt[] =
-
-      attemptsForRecent
-
-        .sort((a, b) => {
-
-          const aTime =
-
-            new Date(
-
-              a.startTime
-
-            ).getTime();
-
-
-
-          const bTime =
-
-            new Date(
-
-              b.startTime
-
-            ).getTime();
-
-
-
-          return bTime - aTime;
-
-        })
-
-        .slice(0, 12)
-
-        .map((attempt) => {
-
-          const exam =
-
-            examMap.get(
-
-              attempt.examId.toString()
-
-            );
-
-
-
-          const resultAvailable =
-
-            exam?.status ===
-
-              "EXPIRED" ||
-
-            exam?.status ===
-
-              "CLOSED";
-
-
-
-          return {
-
-            id: attempt._id.toString(),
-
-
-
-            examId:
-
-              attempt.examId.toString(),
-
-
-
-            examName:
-
-              attempt.examName ||
-
-              exam?.title ||
-
-              "Examination",
-
-
-
-            department:
-
-              exam?.department ||
-
-              attempt.studentDepartment ||
-
-              department,
-
-
-
-            mode:
-
-              exam?.mode ||
-
-              attempt.mode,
-
-
-
-            status:
-
-              attempt.status,
-
-
-
-            attemptNo:
-
-              Number(
-
-                attempt.attemptNo || 1
-
-              ),
-
-
-
-            startTime:
-
-              new Date(
-
-                attempt.startTime
-
-              ).toISOString(),
-
-
-
-            submittedAt:
-
-              attempt.submittedAt
-
-                ? new Date(
-
-                    attempt.submittedAt
-
-                  ).toISOString()
-
-                : null,
-
-
-
-            timeTakenSeconds:
-
-              Number(
-
-                attempt.timeTakenSeconds ||
-
-                  0
-
-              ),
-
-
-
-            score:
-
-              resultAvailable
-
-                ? Number(
-
-                    attempt.score || 0
-
-                  )
-
-                : null,
-
-
-
-            totalMarks:
-
-              resultAvailable
-
-                ? Number(
-
-                    attempt.totalMarks ||
-
-                      0
-
-                  )
-
-                : null,
-
-
-
-            percentage:
-
-              resultAvailable &&
-
-              Number(
-
-                attempt.totalMarks || 0
-
-              ) > 0
-
-                ? Number(
-
-                    (
-
-                      (Number(
-
-                        attempt.score ||
-
-                          0
-
-                      ) /
-
-                        Number(
-
-                          attempt.totalMarks ||
-
-                            0
-
-                        )) *
-
-                      100
-
-                    ).toFixed(2)
-
-                  )
-
-                : null,
-
-
-
-            resultAvailable,
-
-
-
-            examStatus:
-
-              exam?.status ||
-
-              "PUBLISHED",
-
-          };
-
-        });
-
-
-
-    /* =====================================================
+          examStatus: exam?.status || "PUBLISHED",
+        };
+      }); /* =====================================================
 
        RESPONSE
 
     ===================================================== */
 
+    const response: StudentDashboardResponse = {
+      success: true,
 
+      student: {
+        id: student._id.toString(),
 
-    const response:
+        name: student.name,
 
-      StudentDashboardResponse = {
+        email: student.email,
 
-      success: true,
+        department,
+      },
 
+      statistics: {
+        availableExams: availableExams.length,
 
+        completedExams: completedExamKeys.size,
 
-      student: {
+        missedExams: missedExamKeys.size,
 
-        id: student._id.toString(),
+        pendingExams: pendingExamKeys.size,
+      },
 
+      averageScore: {
+        percentage: averagePercentage,
 
+        score: Number(totalScore.toFixed(2)),
 
-        name: student.name,
+        totalMarks: Number(totalMarks.toFixed(2)),
 
+        examsCounted: completedAttemptsForAnalytics.length,
+      },
 
+      availableExams,
 
-        email: student.email,
+      recentAttempts,
+    };
 
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(
+      "Student dashboard error:",
 
+      error,
+    );
 
-        department,
+    res.status(500).json({
+      success: false,
 
-      },
-
-
-
-      statistics: {
-
-        availableExams:
-
-          availableExams.length,
-
-
-
-        completedExams:
-
-          completedExamKeys.size,
-
-
-
-        missedExams:
-
-          missedExamKeys.size,
-
-
-
-        pendingExams:
-
-          pendingExamKeys.size,
-
-      },
-
-
-
-      averageScore: {
-
-        percentage:
-
-          averagePercentage,
-
-
-
-        score:
-
-          Number(
-
-            totalScore.toFixed(2)
-
-          ),
-
-
-
-        totalMarks:
-
-          Number(
-
-            totalMarks.toFixed(2)
-
-          ),
-
-
-
-        examsCounted:
-
-          completedAttemptsForAnalytics.length,
-
-      },
-
-
-
-      availableExams,
-
-
-
-      recentAttempts,
-
-    };
-
-
-
-    res.status(200).json(
-
-      response
-
-    );
-
-  } catch (error) {
-
-    console.error(
-
-      "Student dashboard error:",
-
-      error
-
-    );
-
-
-
-    res.status(500).json({
-
-      success: false,
-
-      message:
-
-        "Failed to load student dashboard.",
-
-    });
-
-  }
-
+      message: "Failed to load student dashboard.",
+    });
+  }
 };

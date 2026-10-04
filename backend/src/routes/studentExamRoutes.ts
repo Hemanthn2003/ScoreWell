@@ -1,8 +1,6 @@
 import { Router } from "express";
 
-import {
-  authenticate,
-} from "../middleware/authMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 import {
   getAvailableStudentExams,
@@ -13,14 +11,8 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get(
-  "/",
-  getAvailableStudentExams
-);
+router.get("/", getAvailableStudentExams);
 
-router.post(
-  "/:examId/start",
-  startStudentExam
-);
+router.post("/:examId/start", startStudentExam);
 
 export default router;

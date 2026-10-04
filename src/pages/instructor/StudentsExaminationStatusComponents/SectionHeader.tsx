@@ -1,6 +1,4 @@
-import type {
-  ReactNode,
-} from "react";
+import type { ReactNode } from "react";
 
 interface SectionHeaderProps {
   title: string;
@@ -23,21 +21,14 @@ const SectionHeader = ({
         </div>
 
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900">
-            {title}
-          </h2>
+          <h2 className="text-xl font-extrabold text-slate-900">{title}</h2>
 
-          <p className="mt-1 text-sm text-slate-500">
-            {description}
-          </p>
+          <p className="mt-1 text-sm text-slate-500">{description}</p>
         </div>
       </div>
 
       <span className="w-fit rounded-full bg-purple-50 px-4 py-2 text-xs font-extrabold text-purple-700">
-        {count}{" "}
-        {count === 1
-          ? "Student"
-          : "Students"}
+        {count} {count === 1 ? "Student" : "Students"}
       </span>
     </div>
   );

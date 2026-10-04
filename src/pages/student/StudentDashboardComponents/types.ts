@@ -1,21 +1,10 @@
-export type ExamStatus =
-  | "UNPUBLISHED"
-  | "PUBLISHED"
-  | "EXPIRED"
-  | "CLOSED";
+export type ExamStatus = "UNPUBLISHED" | "PUBLISHED" | "EXPIRED" | "CLOSED";
 
-export type ExamMode =
-  | "COMMON"
-  | "SPECIAL";
+export type ExamMode = "COMMON" | "SPECIAL";
 
-export type ExamType =
-  | "NORMAL"
-  | "STRICT";
+export type ExamType = "NORMAL" | "STRICT";
 
-export type AttemptStatus =
-  | "IN_PROGRESS"
-  | "SUBMITTED"
-  | "AUTO_SUBMITTED";
+export type AttemptStatus = "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
 
 export type DashboardExam = {
   _id: string;

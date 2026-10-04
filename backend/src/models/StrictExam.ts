@@ -1,9 +1,4 @@
-import mongoose, {
-  Document,
-  Model,
-  Schema,
-  Types,
-} from "mongoose";
+import mongoose, { Document, Model, Schema, Types } from "mongoose";
 
 export interface IStrictExam extends Document {
   examId: Types.ObjectId;
@@ -50,15 +45,11 @@ const strictExamSchema = new Schema<IStrictExam>(
     collection: "strictExam",
     timestamps: false,
     versionKey: false,
-  }
+  },
 );
 
 const StrictExam: Model<IStrictExam> =
   mongoose.models.StrictExam ||
-  mongoose.model<IStrictExam>(
-    "StrictExam",
-    strictExamSchema,
-    "strictExam"
-  );
+  mongoose.model<IStrictExam>("StrictExam", strictExamSchema, "strictExam");
 
 export default StrictExam;

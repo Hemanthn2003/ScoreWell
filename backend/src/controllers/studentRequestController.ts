@@ -1,17 +1,11 @@
-import type {
-  Request,
-  Response,
-} from "express";
+import type { Request, Response } from "express";
 
 import mongoose from "mongoose";
 
 import User from "../models/User";
 import Attempt from "../models/Attempt";
 
-const requireInstructor = (
-  req: Request,
-  res: Response
-): boolean => {
+const requireInstructor = (req: Request, res: Response): boolean => {
   if (!req.user) {
     res.status(401).json({
       success: false,
@@ -24,8 +18,7 @@ const requireInstructor = (
   if (req.user.role !== "INSTRUCTOR") {
     res.status(403).json({
       success: false,
-      message:
-        "Only instructors can manage student accounts.",
+      message: "Only instructors can manage student accounts.",
     });
 
     return false;
@@ -34,13 +27,10 @@ const requireInstructor = (
   return true;
 };
 
-const getInstructor = async (
-  req: Request,
-  res: Response
-) => {
-  const instructor = await User.findById(
-    req.user!.userId
-  ).select("_id role department");
+const getInstructor = async (req: Request, res: Response) => {
+  const instructor = await User.findById(req.user!.userId).select(
+    "_id role department",
+  );
 
   if (!instructor) {
     res.status(404).json({
@@ -54,8 +44,7 @@ const getInstructor = async (
   if (!instructor.department) {
     res.status(400).json({
       success: false,
-      message:
-        "Instructor department is not configured.",
+      message: "Instructor department is not configured.",
     });
 
     return null;
@@ -70,7 +59,7 @@ const getInstructor = async (
  */
 export const getPendingStudents = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!requireInstructor(req, res)) return;
@@ -83,9 +72,7 @@ export const getPendingStudents = async (
       isPermitted: false,
       department: instructor.department,
     })
-      .select(
-        "_id name email role department isActive isPermitted"
-      )
+      .select("_id name email role department isActive isPermitted")
       .sort({ name: 1 })
       .lean();
 
@@ -94,15 +81,11 @@ export const getPendingStudents = async (
       students,
     });
   } catch (error) {
-    console.error(
-      "Get pending students error:",
-      error
-    );
+    console.error("Get pending students error:", error);
 
     res.status(500).json({
       success: false,
-      message:
-        "Unable to retrieve pending student requests.",
+      message: "Unable to retrieve pending student requests.",
     });
   }
 };
@@ -114,7 +97,7 @@ export const getPendingStudents = async (
  */
 export const getDepartmentStudents = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!requireInstructor(req, res)) return;
@@ -126,15 +109,11 @@ export const getDepartmentStudents = async (
       role: "STUDENT",
       department: instructor.department,
     })
-      .select(
-        "_id name email role department isActive isPermitted"
-      )
+      .select("_id name email role department isActive isPermitted")
       .sort({ name: 1 })
       .lean();
 
-    const studentIds = students.map(
-      (student) => student._id
-    );
+    const studentIds = students.map((student) => student._id);
 
     const attempts =
       studentIds.length > 0
@@ -143,14 +122,11 @@ export const getDepartmentStudents = async (
               $in: studentIds,
             },
             status: {
-              $in: [
-                "SUBMITTED",
-                "AUTO_SUBMITTED",
-              ],
+              $in: ["SUBMITTED", "AUTO_SUBMITTED"],
             },
           })
             .select(
-              "_id studentId examId examName mode score totalMarks status attemptNo submittedAt startTime"
+              "_id studentId examId examName mode score totalMarks status attemptNo submittedAt startTime",
             )
             .sort({
               submittedAt: -1,
@@ -164,101 +140,77 @@ export const getDepartmentStudents = async (
      * student + exam. This prevents multiple attempts
      * for the same exam from inflating overall results.
      */
-    const latestAttemptByStudentExam =
-      new Map<string, (typeof attempts)[number]>();
+    const latestAttemptByStudentExam = new Map<
+      string,
+      (typeof attempts)[number]
+    >();
 
     for (const attempt of attempts) {
       const key = `${attempt.studentId.toString()}-${attempt.examId.toString()}`;
 
       if (!latestAttemptByStudentExam.has(key)) {
-        latestAttemptByStudentExam.set(
-          key,
-          attempt
-        );
+        latestAttemptByStudentExam.set(key, attempt);
       }
     }
 
-    const performanceByStudent =
-      new Map<
-        string,
-        {
-          attendedExams: number;
-          totalScore: number;
-          totalMarks: number;
-          averagePercentage: number;
-        }
-      >();
+    const performanceByStudent = new Map<
+      string,
+      {
+        attendedExams: number;
+        totalScore: number;
+        totalMarks: number;
+        averagePercentage: number;
+      }
+    >();
 
     for (const student of students) {
-      performanceByStudent.set(
-        student._id.toString(),
-        {
-          attendedExams: 0,
-          totalScore: 0,
-          totalMarks: 0,
-          averagePercentage: 0,
-        }
-      );
+      performanceByStudent.set(student._id.toString(), {
+        attendedExams: 0,
+        totalScore: 0,
+        totalMarks: 0,
+        averagePercentage: 0,
+      });
     }
 
     for (const attempt of latestAttemptByStudentExam.values()) {
-      const studentKey =
-        attempt.studentId.toString();
+      const studentKey = attempt.studentId.toString();
 
-      const performance =
-        performanceByStudent.get(
-          studentKey
-        );
+      const performance = performanceByStudent.get(studentKey);
 
       if (!performance) continue;
 
       performance.attendedExams += 1;
-      performance.totalScore +=
-        Number(attempt.score) || 0;
-      performance.totalMarks +=
-        Number(attempt.totalMarks) || 0;
+      performance.totalScore += Number(attempt.score) || 0;
+      performance.totalMarks += Number(attempt.totalMarks) || 0;
     }
 
-    const formattedStudents =
-      students.map((student) => {
-        const performance =
-          performanceByStudent.get(
-            student._id.toString()
-          ) ?? {
-            attendedExams: 0,
-            totalScore: 0,
-            totalMarks: 0,
-            averagePercentage: 0,
-          };
+    const formattedStudents = students.map((student) => {
+      const performance = performanceByStudent.get(student._id.toString()) ?? {
+        attendedExams: 0,
+        totalScore: 0,
+        totalMarks: 0,
+        averagePercentage: 0,
+      };
 
-        performance.averagePercentage =
-          performance.totalMarks > 0
-            ? Math.round(
-                (performance.totalScore /
-                  performance.totalMarks) *
-                  100
-              )
-            : 0;
+      performance.averagePercentage =
+        performance.totalMarks > 0
+          ? Math.round((performance.totalScore / performance.totalMarks) * 100)
+          : 0;
 
-        return {
-          _id: student._id.toString(),
-          name: student.name,
-          email: student.email,
-          role: student.role,
-          department: student.department,
-          isActive: student.isActive,
-          isPermitted:
-            student.isPermitted ?? false,
-          attendedExams:
-            performance.attendedExams,
-          totalScore:
-            performance.totalScore,
-          totalMarks:
-            performance.totalMarks,
-          averagePercentage:
-            performance.averagePercentage,
-        };
-      });
+      return {
+        _id: student._id.toString(),
+        name: student.name,
+        email: student.email,
+        role: student.role,
+        department: student.department,
+        isActive: student.isActive,
+        isPermitted: student.isPermitted ?? false,
+        attendedExams: performance.attendedExams,
+        totalScore: performance.totalScore,
+        totalMarks: performance.totalMarks,
+        averagePercentage: performance.averagePercentage,
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -266,15 +218,11 @@ export const getDepartmentStudents = async (
       students: formattedStudents,
     });
   } catch (error) {
-    console.error(
-      "Get department students error:",
-      error
-    );
+    console.error("Get department students error:", error);
 
     res.status(500).json({
       success: false,
-      message:
-        "Unable to retrieve department students.",
+      message: "Unable to retrieve department students.",
     });
   }
 };
@@ -285,7 +233,7 @@ export const getDepartmentStudents = async (
  */
 export const getStudentPerformance = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!requireInstructor(req, res)) return;
@@ -293,9 +241,7 @@ export const getStudentPerformance = async (
     const instructor = await getInstructor(req, res);
     if (!instructor) return;
 
-    const id = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
@@ -311,16 +257,13 @@ export const getStudentPerformance = async (
       role: "STUDENT",
       department: instructor.department,
     })
-      .select(
-        "_id name email role department isActive isPermitted"
-      )
+      .select("_id name email role department isActive isPermitted")
       .lean();
 
     if (!student) {
       res.status(404).json({
         success: false,
-        message:
-          "Student was not found in your department.",
+        message: "Student was not found in your department.",
       });
 
       return;
@@ -329,14 +272,11 @@ export const getStudentPerformance = async (
     const attempts = await Attempt.find({
       studentId: student._id,
       status: {
-        $in: [
-          "SUBMITTED",
-          "AUTO_SUBMITTED",
-        ],
+        $in: ["SUBMITTED", "AUTO_SUBMITTED"],
       },
     })
       .select(
-        "_id studentId examId examName examDepartment instructorId mode attemptNo startTime submittedAt status score totalMarks correctAnswers wrongAnswers unanswered timeTakenSeconds"
+        "_id studentId examId examName examDepartment instructorId mode attemptNo startTime submittedAt status score totalMarks correctAnswers wrongAnswers unanswered timeTakenSeconds",
       )
       .sort({
         submittedAt: -1,
@@ -350,76 +290,50 @@ export const getStudentPerformance = async (
      * the latest completed attempt represents that exam
      * in the overall performance.
      */
-    const latestByExam =
-      new Map<string, (typeof attempts)[number]>();
+    const latestByExam = new Map<string, (typeof attempts)[number]>();
 
     for (const attempt of attempts) {
-      const examKey =
-        attempt.examId.toString();
+      const examKey = attempt.examId.toString();
 
       if (!latestByExam.has(examKey)) {
-        latestByExam.set(
-          examKey,
-          attempt
-        );
+        latestByExam.set(examKey, attempt);
       }
     }
 
-    const exams = Array.from(
-      latestByExam.values()
-    ).map((attempt) => ({
+    const exams = Array.from(latestByExam.values()).map((attempt) => ({
       _id: attempt._id.toString(),
       examId: attempt.examId.toString(),
       examName: attempt.examName,
-      examDepartment:
-        attempt.examDepartment,
+      examDepartment: attempt.examDepartment,
       mode: attempt.mode,
       attemptNo: attempt.attemptNo,
       startTime: attempt.startTime,
-      submittedAt:
-        attempt.submittedAt,
+      submittedAt: attempt.submittedAt,
       status: attempt.status,
       score: attempt.score,
       totalMarks: attempt.totalMarks,
       percentage:
         attempt.totalMarks > 0
-          ? Math.round(
-              (attempt.score /
-                attempt.totalMarks) *
-                100
-            )
+          ? Math.round((attempt.score / attempt.totalMarks) * 100)
           : 0,
-      correctAnswers:
-        attempt.correctAnswers,
-      wrongAnswers:
-        attempt.wrongAnswers,
-      unanswered:
-        attempt.unanswered,
-      timeTakenSeconds:
-        attempt.timeTakenSeconds,
+      correctAnswers: attempt.correctAnswers,
+      wrongAnswers: attempt.wrongAnswers,
+      unanswered: attempt.unanswered,
+      timeTakenSeconds: attempt.timeTakenSeconds,
     }));
 
     const overallScore = exams.reduce(
-      (total, exam) =>
-        total + (Number(exam.score) || 0),
-      0
+      (total, exam) => total + (Number(exam.score) || 0),
+      0,
     );
 
     const overallMarks = exams.reduce(
-      (total, exam) =>
-        total +
-        (Number(exam.totalMarks) || 0),
-      0
+      (total, exam) => total + (Number(exam.totalMarks) || 0),
+      0,
     );
 
     const overallPercentage =
-      overallMarks > 0
-        ? Math.round(
-            (overallScore /
-              overallMarks) *
-              100
-          )
-        : 0;
+      overallMarks > 0 ? Math.round((overallScore / overallMarks) * 100) : 0;
 
     res.status(200).json({
       success: true,
@@ -430,8 +344,7 @@ export const getStudentPerformance = async (
         role: student.role,
         department: student.department,
         isActive: student.isActive,
-        isPermitted:
-          student.isPermitted ?? false,
+        isPermitted: student.isPermitted ?? false,
       },
       performance: {
         attendedExams: exams.length,
@@ -442,15 +355,11 @@ export const getStudentPerformance = async (
       exams,
     });
   } catch (error) {
-    console.error(
-      "Get student performance error:",
-      error
-    );
+    console.error("Get student performance error:", error);
 
     res.status(500).json({
       success: false,
-      message:
-        "Unable to retrieve student performance.",
+      message: "Unable to retrieve student performance.",
     });
   }
 };
@@ -460,7 +369,7 @@ export const getStudentPerformance = async (
  */
 export const acceptStudent = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!requireInstructor(req, res)) return;
@@ -468,9 +377,7 @@ export const acceptStudent = async (
     const instructor = await getInstructor(req, res);
     if (!instructor) return;
 
-    const id = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
@@ -481,26 +388,22 @@ export const acceptStudent = async (
       return;
     }
 
-    const student =
-      await User.findOneAndUpdate(
-        {
-          _id: id,
-          role: "STUDENT",
-          isPermitted: false,
-          department:
-            instructor.department,
+    const student = await User.findOneAndUpdate(
+      {
+        _id: id,
+        role: "STUDENT",
+        isPermitted: false,
+        department: instructor.department,
+      },
+      {
+        $set: {
+          isPermitted: true,
         },
-        {
-          $set: {
-            isPermitted: true,
-          },
-        },
-        {
-          new: true,
-        }
-      ).select(
-        "_id name email role department isActive isPermitted"
-      );
+      },
+      {
+        new: true,
+      },
+    ).select("_id name email role department isActive isPermitted");
 
     if (!student) {
       res.status(404).json({
@@ -514,20 +417,15 @@ export const acceptStudent = async (
 
     res.status(200).json({
       success: true,
-      message:
-        "Student account accepted successfully.",
+      message: "Student account accepted successfully.",
       student,
     });
   } catch (error) {
-    console.error(
-      "Accept student error:",
-      error
-    );
+    console.error("Accept student error:", error);
 
     res.status(500).json({
       success: false,
-      message:
-        "Unable to accept student account.",
+      message: "Unable to accept student account.",
     });
   }
 };
@@ -537,7 +435,7 @@ export const acceptStudent = async (
  */
 export const denyStudent = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!requireInstructor(req, res)) return;
@@ -545,9 +443,7 @@ export const denyStudent = async (
     const instructor = await getInstructor(req, res);
     if (!instructor) return;
 
-    const id = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
@@ -558,16 +454,12 @@ export const denyStudent = async (
       return;
     }
 
-    const student =
-      await User.findOneAndDelete({
-        _id: id,
-        role: "STUDENT",
-        isPermitted: false,
-        department:
-          instructor.department,
-      }).select(
-        "_id name email role department isActive isPermitted"
-      );
+    const student = await User.findOneAndDelete({
+      _id: id,
+      role: "STUDENT",
+      isPermitted: false,
+      department: instructor.department,
+    }).select("_id name email role department isActive isPermitted");
 
     if (!student) {
       res.status(404).json({
@@ -581,20 +473,15 @@ export const denyStudent = async (
 
     res.status(200).json({
       success: true,
-      message:
-        "Student request denied and account deleted successfully.",
+      message: "Student request denied and account deleted successfully.",
       student,
     });
   } catch (error) {
-    console.error(
-      "Deny student error:",
-      error
-    );
+    console.error("Deny student error:", error);
 
     res.status(500).json({
       success: false,
-      message:
-        "Unable to deny student request.",
+      message: "Unable to deny student request.",
     });
   }
 };

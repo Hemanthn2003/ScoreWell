@@ -11,19 +11,11 @@ import {
   XCircle,
 } from "lucide-react";
 
-import type {
-  ReactNode,
-} from "react";
+import type { ReactNode } from "react";
 
-import type {
-  AttemptDetails,
-  AttemptQuestion,
-} from "./types";
+import type { AttemptDetails, AttemptQuestion } from "./types";
 
-import {
-  formatDateTime,
-  formatDuration,
-} from "./helpers";
+import { formatDateTime, formatDuration } from "./helpers";
 
 import PercentageCircle from "./PercentageCircle";
 import StatusBadge from "./StatusBadge";
@@ -33,16 +25,8 @@ interface DetailModalProps {
   onClose: () => void;
 }
 
-const DetailModal = ({
-  data,
-  onClose,
-}: DetailModalProps) => {
-  const {
-    student,
-    exam,
-    attempt,
-    questions,
-  } = data;
+const DetailModal = ({ data, onClose }: DetailModalProps) => {
+  const { student, exam, attempt, questions } = data;
 
   return (
     <div
@@ -51,11 +35,8 @@ const DetailModal = ({
     >
       <div
         className="relative flex h-[95vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
-        onClick={(event) =>
-          event.stopPropagation()
-        }
+        onClick={(event) => event.stopPropagation()}
       >
-
         {/* HEADER */}
         <div className="shrink-0 border-b border-purple-100 bg-gradient-to-r from-purple-700 via-purple-600 to-orange-400 px-5 py-5 text-white sm:px-7">
           <div className="flex items-start justify-between gap-4">
@@ -73,8 +54,7 @@ const DetailModal = ({
               </h2>
 
               <p className="mt-1 text-sm text-white/80">
-                {student.name} •{" "}
-                {student.email}
+                {student.name} • {student.email}
               </p>
             </div>
 
@@ -90,7 +70,6 @@ const DetailModal = ({
 
         {/* BODY */}
         <div className="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-7">
-
           {/* TOP INFORMATION */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <DetailStat
@@ -102,41 +81,27 @@ const DetailModal = ({
             <DetailStat
               icon={<ShieldCheck size={17} />}
               label="Exam Mode"
-              value={
-                exam.mode === "SPECIAL"
-                  ? "Private / Special"
-                  : "Common"
-              }
+              value={exam.mode === "SPECIAL" ? "Private / Special" : "Common"}
             />
 
             <DetailStat
-              icon={
-                <CalendarDays size={17} />
-              }
+              icon={<CalendarDays size={17} />}
               label="Attended"
-              value={formatDateTime(
-                attempt.startTime
-              )}
+              value={formatDateTime(attempt.startTime)}
             />
 
             <DetailStat
               icon={<Clock3 size={17} />}
               label="Time Taken"
-              value={formatDuration(
-                attempt.timeTakenSeconds
-              )}
+              value={formatDuration(attempt.timeTakenSeconds)}
             />
           </div>
 
           {/* RESULT SUMMARY */}
           <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_auto]">
-
             <div className="rounded-3xl border border-purple-100 bg-white p-5 shadow-sm sm:p-6">
-
               <div className="flex flex-wrap items-center gap-3">
-                <StatusBadge
-                  status={attempt.status}
-                />
+                <StatusBadge status={attempt.status} />
 
                 <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
                   Attempt {attempt.attemptNo}
@@ -144,73 +109,36 @@ const DetailModal = ({
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <MetricBox
-                  label="Questions"
-                  value={exam.questionCount}
-                />
+                <MetricBox label="Questions" value={exam.questionCount} />
 
-                <MetricBox
-                  label="Answered"
-                  value={
-                    attempt.answeredCount
-                  }
-                />
+                <MetricBox label="Answered" value={attempt.answeredCount} />
 
-                <MetricBox
-                  label="Correct"
-                  value={
-                    attempt.correctAnswers
-                  }
-                />
+                <MetricBox label="Correct" value={attempt.correctAnswers} />
 
-                <MetricBox
-                  label="Wrong"
-                  value={
-                    attempt.wrongAnswers
-                  }
-                />
+                <MetricBox label="Wrong" value={attempt.wrongAnswers} />
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <MetricBox
-                  label="Unanswered"
-                  value={
-                    attempt.unanswered
-                  }
-                />
+                <MetricBox label="Unanswered" value={attempt.unanswered} />
 
-                <MetricBox
-                  label="Total Marks"
-                  value={
-                    attempt.totalMarks
-                  }
-                />
+                <MetricBox label="Total Marks" value={attempt.totalMarks} />
 
                 <MetricBox
                   label="Secured"
-                  value={
-                    attempt.securedMarks
-                  }
+                  value={attempt.securedMarks}
                   highlight
                 />
 
                 <MetricBox
                   label="Percentage"
-                  value={`${attempt.percentage.toFixed(
-                    1
-                  )}%`}
+                  value={`${attempt.percentage.toFixed(1)}%`}
                   highlight
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-center rounded-3xl border border-purple-100 bg-white p-5 shadow-sm">
-              <PercentageCircle
-                percentage={
-                  attempt.percentage
-                }
-                size={150}
-              />
+              <PercentageCircle percentage={attempt.percentage} size={150} />
             </div>
           </div>
 
@@ -221,41 +149,28 @@ const DetailModal = ({
             </h3>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
               <DetailStat
-                icon={
-                  <BookOpen size={17} />
-                }
+                icon={<BookOpen size={17} />}
                 label="Department"
                 value={exam.department}
               />
 
               <DetailStat
-                icon={
-                  <Clock3 size={17} />
-                }
+                icon={<Clock3 size={17} />}
                 label="Exam Duration"
                 value={`${exam.durationMinutes} minutes`}
               />
 
               <DetailStat
-                icon={
-                  <Percent size={17} />
-                }
+                icon={<Percent size={17} />}
                 label="Marks / Question"
-                value={String(
-                  exam.marksPerQuestion
-                )}
+                value={String(exam.marksPerQuestion)}
               />
 
               <DetailStat
-                icon={
-                  <CalendarDays size={17} />
-                }
+                icon={<CalendarDays size={17} />}
                 label="Submitted"
-                value={formatDateTime(
-                  attempt.submittedAt
-                )}
+                value={formatDateTime(attempt.submittedAt)}
               />
             </div>
 
@@ -271,15 +186,10 @@ const DetailModal = ({
                     Negative Marking
                   </p>
 
-                  {exam.negativeMarking
-                    .enabled ? (
+                  {exam.negativeMarking.enabled ? (
                     <p className="mt-1 text-sm text-orange-700">
-                      Enabled —{" "}
-                      {
-                        exam.negativeMarking
-                          .penalty
-                      }{" "}
-                      marks are deducted for an incorrect answer.
+                      Enabled — {exam.negativeMarking.penalty} marks are
+                      deducted for an incorrect answer.
                     </p>
                   ) : (
                     <p className="mt-1 text-sm text-orange-700">
@@ -310,20 +220,15 @@ const DetailModal = ({
             </div>
 
             <div className="space-y-4">
-              {questions.map(
-                (question, index) => (
-                  <QuestionReview
-                    key={
-                      question.questionId
-                    }
-                    question={question}
-                    number={index + 1}
-                  />
-                )
-              )}
+              {questions.map((question, index) => (
+                <QuestionReview
+                  key={question.questionId}
+                  question={question}
+                  number={index + 1}
+                />
+              ))}
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -373,9 +278,7 @@ const MetricBox = ({
 
       <p
         className={`mt-1 text-sm font-extrabold ${
-          highlight
-            ? "text-purple-700"
-            : "text-slate-800"
+          highlight ? "text-purple-700" : "text-slate-800"
         }`}
       >
         {value}
@@ -391,11 +294,9 @@ const QuestionReview = ({
   question: AttemptQuestion;
   number: number;
 }) => {
-  const unanswered =
-    question.selectedAnswers.length === 0;
+  const unanswered = question.selectedAnswers.length === 0;
 
-  const correct =
-    question.isCorrect;
+  const correct = question.isCorrect;
 
   return (
     <div
@@ -409,8 +310,8 @@ const QuestionReview = ({
           unanswered
             ? "border-slate-200"
             : correct
-            ? "border-emerald-200"
-            : "border-red-200"
+              ? "border-emerald-200"
+              : "border-red-200"
         }
       `}
     >
@@ -428,8 +329,8 @@ const QuestionReview = ({
             unanswered
               ? "border-slate-100 bg-slate-50"
               : correct
-              ? "border-emerald-100 bg-emerald-50/60"
-              : "border-red-100 bg-red-50/60"
+                ? "border-emerald-100 bg-emerald-50/60"
+                : "border-red-100 bg-red-50/60"
           }
         `}
       >
@@ -448,8 +349,8 @@ const QuestionReview = ({
                 unanswered
                   ? "bg-slate-200 text-slate-600"
                   : correct
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-red-100 text-red-700"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-red-100 text-red-700"
               }
             `}
           >
@@ -457,8 +358,7 @@ const QuestionReview = ({
           </div>
 
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            {question.questionType ===
-            "MULTI"
+            {question.questionType === "MULTI"
               ? "Multiple Choice"
               : "Single Choice"}
           </span>
@@ -489,14 +389,10 @@ const QuestionReview = ({
         </p>
 
         <div className="mt-5 space-y-2">
-          {question.options.map(
-            (option, optionIndex) => {
-              const selected =
-                question.selectedAnswers.includes(
-                  option
-                );
+          {question.options.map((option, optionIndex) => {
+            const selected = question.selectedAnswers.includes(option);
 
-              /*
+            /*
                 IMPORTANT:
                 Only the student's selected
                 option receives a result color.
@@ -504,84 +400,67 @@ const QuestionReview = ({
                 Correct but unselected options
                 remain neutral.
               */
-              const selectedIsCorrect =
-                selected &&
-                question.correctAnswers.includes(
-                  option
-                );
+            const selectedIsCorrect =
+              selected && question.correctAnswers.includes(option);
 
-              let containerStyle =
-                "border-slate-200 bg-white text-slate-600";
+            let containerStyle = "border-slate-200 bg-white text-slate-600";
 
-              let letterStyle =
-                "bg-slate-100 text-slate-500";
+            let letterStyle = "bg-slate-100 text-slate-500";
 
-              if (selected) {
-                if (selectedIsCorrect) {
-                  containerStyle =
-                    "border-emerald-300 bg-emerald-50 text-emerald-800";
+            if (selected) {
+              if (selectedIsCorrect) {
+                containerStyle =
+                  "border-emerald-300 bg-emerald-50 text-emerald-800";
 
-                  letterStyle =
-                    "bg-emerald-100 text-emerald-700";
-                } else {
-                  containerStyle =
-                    "border-red-300 bg-red-50 text-red-800";
+                letterStyle = "bg-emerald-100 text-emerald-700";
+              } else {
+                containerStyle = "border-red-300 bg-red-50 text-red-800";
 
-                  letterStyle =
-                    "bg-red-100 text-red-700";
-                }
+                letterStyle = "bg-red-100 text-red-700";
               }
+            }
 
-              return (
-                <div
-                  key={`${question.questionId}-${optionIndex}`}
-                  className={`rounded-xl border p-3 transition ${containerStyle}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${letterStyle}`}
-                    >
-                      {String.fromCharCode(
-                        65 + optionIndex
-                      )}
-                    </span>
+            return (
+              <div
+                key={`${question.questionId}-${optionIndex}`}
+                className={`rounded-xl border p-3 transition ${containerStyle}`}
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${letterStyle}`}
+                  >
+                    {String.fromCharCode(65 + optionIndex)}
+                  </span>
 
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">
-                        {option}
-                      </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">{option}</p>
 
-                      {selected && (
-                        <div className="mt-1 flex items-center gap-1.5">
-                          {selectedIsCorrect ? (
-                            <>
-                              <CheckCircle2
-                                size={12}
-                              />
+                    {selected && (
+                      <div className="mt-1 flex items-center gap-1.5">
+                        {selectedIsCorrect ? (
+                          <>
+                            <CheckCircle2 size={12} />
 
-                              <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                                Student Answer • Correct
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle
-                                size={12}
-                              />
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                              Student Answer • Correct
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle size={12} />
 
-                              <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                                Student Answer • Wrong
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                              Student Answer • Wrong
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            }
-          )}
+              </div>
+            );
+          })}
         </div>
 
         {/* MARKS */}
@@ -598,8 +477,8 @@ const QuestionReview = ({
                 question.marksAwarded > 0
                   ? "text-emerald-600"
                   : question.marksAwarded < 0
-                  ? "text-red-600"
-                  : "text-slate-700"
+                    ? "text-red-600"
+                    : "text-slate-700"
               }
             `}
           >

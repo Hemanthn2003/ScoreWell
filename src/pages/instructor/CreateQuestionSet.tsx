@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 import CreateQuestionSetCard from "./CreateQuestionSetComponents/CreateQuestionSetCard";
 import QuestionSetEditor from "./CreateQuestionSetComponents/QuestionSetEditor";
@@ -22,9 +16,7 @@ import type {
    API
 ========================================================= */
 
-const API_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 /* =========================================================
    COMPONENT
@@ -35,75 +27,61 @@ const CreateQuestionSet = () => {
      USER
   ======================================================= */
 
-  const [user, setUser] =
-    useState<LoggedInUser | null>(null);
+  const [user, setUser] = useState<LoggedInUser | null>(null);
 
   /* =======================================================
      QUESTION SETS
   ======================================================= */
 
-  const [questionSets, setQuestionSets] =
-    useState<QuestionSet[]>([]);
+  const [questionSets, setQuestionSets] = useState<QuestionSet[]>([]);
 
-  const [isLoadingSets, setIsLoadingSets] =
-    useState(true);
+  const [isLoadingSets, setIsLoadingSets] = useState(true);
 
   /* =======================================================
      CREATE/EDIT MODE
   ======================================================= */
 
-  const [isEditorOpen, setIsEditorOpen] =
-    useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  const [editingSetId, setEditingSetId] =
-    useState<string | null>(null);
+  const [editingSetId, setEditingSetId] = useState<string | null>(null);
 
-  const [questionSetName, setQuestionSetName] =
-    useState("");
+  const [questionSetName, setQuestionSetName] = useState("");
 
   /* =======================================================
      QUESTIONS
   ======================================================= */
 
-  const [questions, setQuestions] =
-    useState<Question[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
 
-  const [currentQuestion, setCurrentQuestion] =
-    useState<Question>(
-      createEmptyQuestion()
-    );
+  const [currentQuestion, setCurrentQuestion] = useState<Question>(
+    createEmptyQuestion(),
+  );
 
-  const [editingQuestionIndex, setEditingQuestionIndex] =
-    useState<number | null>(null);
+  const [editingQuestionIndex, setEditingQuestionIndex] = useState<
+    number | null
+  >(null);
 
   /* =======================================================
      UI
   ======================================================= */
 
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [actionId, setActionId] =
-    useState<string | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
-  const [expandedSetId, setExpandedSetId] =
-    useState<string | null>(null);
+  const [expandedSetId, setExpandedSetId] = useState<string | null>(null);
 
   /* =======================================================
      PDF IMPORT
   ======================================================= */
 
-  const [isImportingPdf, setIsImportingPdf] =
-    useState(false);
+  const [isImportingPdf, setIsImportingPdf] = useState(false);
 
-  const pdfInputRef =
-    useRef<HTMLInputElement | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
 
   // React StrictMode runs mount effects twice in development.
   // These guards keep each initial API request to one call.
@@ -123,38 +101,24 @@ const CreateQuestionSet = () => {
 
     const loadUser = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/api/auth/me`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: "include",
+        });
 
-        const data =
-          await response.json();
+        const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(
-            data.message ||
-              "Unable to load instructor."
-          );
+          throw new Error(data.message || "Unable to load instructor.");
         }
 
-        if (
-          data.user.role !==
-          "INSTRUCTOR"
-        ) {
-          throw new Error(
-            "Only instructors can access this page."
-          );
+        if (data.user.role !== "INSTRUCTOR") {
+          throw new Error("Only instructors can access this page.");
         }
 
         setUser(data.user);
       } catch (err) {
         setError(
-          err instanceof Error
-            ? err.message
-            : "Unable to load instructor."
+          err instanceof Error ? err.message : "Unable to load instructor.",
         );
       }
     };
@@ -171,32 +135,21 @@ const CreateQuestionSet = () => {
       setIsLoadingSets(true);
       setError("");
 
-      const response = await fetch(
-        `${API_URL}/api/question-sets`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${API_URL}/api/question-sets`, {
+        method: "GET",
+        credentials: "include",
+      });
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Unable to load question sets."
-        );
+        throw new Error(data.message || "Unable to load question sets.");
       }
 
-      setQuestionSets(
-        data.questionSets || []
-      );
+      setQuestionSets(data.questionSets || []);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load question sets."
+        err instanceof Error ? err.message : "Unable to load question sets.",
       );
     } finally {
       setIsLoadingSets(false);
@@ -217,19 +170,13 @@ const CreateQuestionSet = () => {
   ======================================================= */
 
   const draftSets = useMemo(
-    () =>
-      questionSets.filter(
-        (item) => !item.isActive
-      ),
-    [questionSets]
+    () => questionSets.filter((item) => !item.isActive),
+    [questionSets],
   );
 
   const publishedSets = useMemo(
-    () =>
-      questionSets.filter(
-        (item) => item.isActive
-      ),
-    [questionSets]
+    () => questionSets.filter((item) => item.isActive),
+    [questionSets],
   );
 
   /* =======================================================
@@ -241,9 +188,7 @@ const CreateQuestionSet = () => {
     setEditingSetId(null);
     setQuestionSetName("");
     setQuestions([]);
-    setCurrentQuestion(
-      createEmptyQuestion()
-    );
+    setCurrentQuestion(createEmptyQuestion());
     setEditingQuestionIndex(null);
     setError("");
   };
@@ -256,9 +201,7 @@ const CreateQuestionSet = () => {
     setEditingSetId(null);
     setQuestionSetName("");
     setQuestions([]);
-    setCurrentQuestion(
-      createEmptyQuestion()
-    );
+    setCurrentQuestion(createEmptyQuestion());
     setEditingQuestionIndex(null);
     setError("");
     setSuccess("");
@@ -269,34 +212,20 @@ const CreateQuestionSet = () => {
      OPEN EXISTING QUESTION SET
   ======================================================= */
 
-  const handleEditSet = (
-    questionSet: QuestionSet
-  ) => {
-    setEditingSetId(
-      questionSet._id
-    );
+  const handleEditSet = (questionSet: QuestionSet) => {
+    setEditingSetId(questionSet._id);
 
-    setQuestionSetName(
-      questionSet.questionSetName
-    );
+    setQuestionSetName(questionSet.questionSetName);
 
     setQuestions(
-      questionSet.questions.map(
-        (question) => ({
-          ...question,
-          options: [
-            ...question.options,
-          ],
-          answer: [
-            ...question.answer,
-          ],
-        })
-      )
+      questionSet.questions.map((question) => ({
+        ...question,
+        options: [...question.options],
+        answer: [...question.answer],
+      })),
     );
 
-    setCurrentQuestion(
-      createEmptyQuestion()
-    );
+    setCurrentQuestion(createEmptyQuestion());
 
     setEditingQuestionIndex(null);
     setError("");
@@ -313,51 +242,35 @@ const CreateQuestionSet = () => {
      QUESTION TEXT
   ======================================================= */
 
-  const handleQuestionChange = (
-    value: string
-  ) => {
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
-        question: value,
-      })
-    );
+  const handleQuestionChange = (value: string) => {
+    setCurrentQuestion((previous) => ({
+      ...previous,
+      question: value,
+    }));
   };
 
   /* =======================================================
      OPTION CHANGE
   ======================================================= */
 
-  const handleOptionChange = (
-    index: number,
-    value: string
-  ) => {
-    setCurrentQuestion(
-      (previous) => {
-        const oldOption =
-          previous.options[index];
+  const handleOptionChange = (index: number, value: string) => {
+    setCurrentQuestion((previous) => {
+      const oldOption = previous.options[index];
 
-        const options = [
-          ...previous.options,
-        ];
+      const options = [...previous.options];
 
-        options[index] = value;
+      options[index] = value;
 
-        const answer =
-          previous.answer.map(
-            (item) =>
-              item === oldOption
-                ? value
-                : item
-          );
+      const answer = previous.answer.map((item) =>
+        item === oldOption ? value : item,
+      );
 
-        return {
-          ...previous,
-          options,
-          answer,
-        };
-      }
-    );
+      return {
+        ...previous,
+        options,
+        answer,
+      };
+    });
   };
 
   /* =======================================================
@@ -365,156 +278,98 @@ const CreateQuestionSet = () => {
   ======================================================= */
 
   const handleAddOption = () => {
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
-        options: [
-          ...previous.options,
-          "",
-        ],
-      })
-    );
+    setCurrentQuestion((previous) => ({
+      ...previous,
+      options: [...previous.options, ""],
+    }));
   };
 
   /* =======================================================
      REMOVE OPTION
   ======================================================= */
 
-  const handleRemoveOption = (
-    index: number
-  ) => {
-    if (
-      currentQuestion.options
-        .length <= 2
-    ) {
+  const handleRemoveOption = (index: number) => {
+    if (currentQuestion.options.length <= 2) {
       return;
     }
 
-    const removedOption =
-      currentQuestion.options[index];
+    const removedOption = currentQuestion.options[index];
 
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
-        options:
-          previous.options.filter(
-            (_, optionIndex) =>
-              optionIndex !== index
-          ),
-        answer:
-          previous.answer.filter(
-            (answer) =>
-              answer !== removedOption
-          ),
-      })
-    );
+    setCurrentQuestion((previous) => ({
+      ...previous,
+      options: previous.options.filter(
+        (_, optionIndex) => optionIndex !== index,
+      ),
+      answer: previous.answer.filter((answer) => answer !== removedOption),
+    }));
   };
 
   /* =======================================================
      QUESTION TYPE
   ======================================================= */
 
-  const handleQuestionTypeChange = (
-    type: QuestionType
-  ) => {
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
-        questionType: type,
-        answer:
-          type === "SINGLE"
-            ? previous.answer.slice(
-                0,
-                1
-              )
-            : previous.answer,
-      })
-    );
+  const handleQuestionTypeChange = (type: QuestionType) => {
+    setCurrentQuestion((previous) => ({
+      ...previous,
+      questionType: type,
+      answer: type === "SINGLE" ? previous.answer.slice(0, 1) : previous.answer,
+    }));
   };
 
   /* =======================================================
      ANSWER SELECTION
   ======================================================= */
 
-  const handleAnswerChange = (
-    option: string
-  ) => {
-    setCurrentQuestion(
-      (previous) => {
-        if (
-          previous.questionType ===
-          "SINGLE"
-        ) {
-          return {
-            ...previous,
-            answer: [option],
-          };
-        }
-
-        const alreadySelected =
-          previous.answer.includes(
-            option
-          );
-
+  const handleAnswerChange = (option: string) => {
+    setCurrentQuestion((previous) => {
+      if (previous.questionType === "SINGLE") {
         return {
           ...previous,
-          answer: alreadySelected
-            ? previous.answer.filter(
-                (answer) =>
-                  answer !== option
-              )
-            : [
-                ...previous.answer,
-                option,
-              ],
+          answer: [option],
         };
       }
-    );
+
+      const alreadySelected = previous.answer.includes(option);
+
+      return {
+        ...previous,
+        answer: alreadySelected
+          ? previous.answer.filter((answer) => answer !== option)
+          : [...previous.answer, option],
+      };
+    });
   };
 
   /* =======================================================
      VALIDATE CURRENT QUESTION
   ======================================================= */
 
-  const validateCurrentQuestion =
-    (): string | null => {
-      if (
-        !currentQuestion.question.trim()
-      ) {
-        return "Please enter the question.";
-      }
+  const validateCurrentQuestion = (): string | null => {
+    if (!currentQuestion.question.trim()) {
+      return "Please enter the question.";
+    }
 
-      const validOptions =
-        currentQuestion.options
-          .map((option) =>
-            option.trim()
-          )
-          .filter(Boolean);
+    const validOptions = currentQuestion.options
+      .map((option) => option.trim())
+      .filter(Boolean);
 
-      if (
-        validOptions.length < 2
-      ) {
-        return "Add at least 2 options.";
-      }
+    if (validOptions.length < 2) {
+      return "Add at least 2 options.";
+    }
 
-      if (
-        currentQuestion.answer.length ===
-        0
-      ) {
-        return "Select at least one correct answer.";
-      }
+    if (currentQuestion.answer.length === 0) {
+      return "Select at least one correct answer.";
+    }
 
-      if (
-        currentQuestion.questionType ===
-          "SINGLE" &&
-        currentQuestion.answer
-          .length !== 1
-      ) {
-        return "A single-answer question must have exactly one correct answer.";
-      }
+    if (
+      currentQuestion.questionType === "SINGLE" &&
+      currentQuestion.answer.length !== 1
+    ) {
+      return "A single-answer question must have exactly one correct answer.";
+    }
 
-      return null;
-    };
+    return null;
+  };
 
   /* =======================================================
      SAVE QUESTION TO LOCAL EDITOR
@@ -523,8 +378,7 @@ const CreateQuestionSet = () => {
   const handleAddNextQuestion = () => {
     setError("");
 
-    const validation =
-      validateCurrentQuestion();
+    const validation = validateCurrentQuestion();
 
     if (validation) {
       setError(validation);
@@ -533,53 +387,33 @@ const CreateQuestionSet = () => {
 
     const cleanedQuestion: Question = {
       ...currentQuestion,
-      question:
-        currentQuestion.question.trim(),
-      options:
-        currentQuestion.options
-          .map((option) =>
-            option.trim()
-          )
-          .filter(Boolean),
-      answer:
-        currentQuestion.answer,
+      question: currentQuestion.question.trim(),
+      options: currentQuestion.options
+        .map((option) => option.trim())
+        .filter(Boolean),
+      answer: currentQuestion.answer,
     };
 
-    if (
-      editingQuestionIndex !== null
-    ) {
-      setQuestions(
-        (previous) =>
-          previous.map(
-            (question, index) =>
-              index ===
-              editingQuestionIndex
-                ? {
-                    ...cleanedQuestion,
-                    _id:
-                      question._id,
-                  }
-                : question
-          )
+    if (editingQuestionIndex !== null) {
+      setQuestions((previous) =>
+        previous.map((question, index) =>
+          index === editingQuestionIndex
+            ? {
+                ...cleanedQuestion,
+                _id: question._id,
+              }
+            : question,
+        ),
       );
 
       setEditingQuestionIndex(null);
     } else {
-      setQuestions(
-        (previous) => [
-          ...previous,
-          cleanedQuestion,
-        ]
-      );
+      setQuestions((previous) => [...previous, cleanedQuestion]);
     }
 
-    setCurrentQuestion(
-      createEmptyQuestion()
-    );
+    setCurrentQuestion(createEmptyQuestion());
 
-    setSuccess(
-      "Question added successfully."
-    );
+    setSuccess("Question added successfully.");
 
     setTimeout(() => {
       setSuccess("");
@@ -590,25 +424,16 @@ const CreateQuestionSet = () => {
      EDIT QUESTION
   ======================================================= */
 
-  const handleEditQuestion = (
-    index: number
-  ) => {
-    const question =
-      questions[index];
+  const handleEditQuestion = (index: number) => {
+    const question = questions[index];
 
     setCurrentQuestion({
       ...question,
-      options: [
-        ...question.options,
-      ],
-      answer: [
-        ...question.answer,
-      ],
+      options: [...question.options],
+      answer: [...question.answer],
     });
 
-    setEditingQuestionIndex(
-      index
-    );
+    setEditingQuestionIndex(index);
 
     setError("");
 
@@ -622,27 +447,15 @@ const CreateQuestionSet = () => {
      DELETE QUESTION
   ======================================================= */
 
-  const handleDeleteQuestion = (
-    index: number
-  ) => {
-    setQuestions(
-      (previous) =>
-        previous.filter(
-          (_, questionIndex) =>
-            questionIndex !== index
-        )
+  const handleDeleteQuestion = (index: number) => {
+    setQuestions((previous) =>
+      previous.filter((_, questionIndex) => questionIndex !== index),
     );
 
-    if (
-      editingQuestionIndex === index
-    ) {
-      setCurrentQuestion(
-        createEmptyQuestion()
-      );
+    if (editingQuestionIndex === index) {
+      setCurrentQuestion(createEmptyQuestion());
 
-      setEditingQuestionIndex(
-        null
-      );
+      setEditingQuestionIndex(null);
     }
   };
 
@@ -650,9 +463,7 @@ const CreateQuestionSet = () => {
      IMPORT QUESTIONS FROM PDF
   ======================================================= */
 
-  const handlePdfImport = async (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePdfImport = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     // Allow selecting the same PDF again later.
@@ -680,66 +491,50 @@ const CreateQuestionSet = () => {
       const formData = new FormData();
       formData.append("pdf", file);
 
-      const response = await fetch(
-        `${API_URL}/api/question-sets/import-pdf`,
-        {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${API_URL}/api/question-sets/import-pdf`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Unable to read questions from the PDF."
+          data.message || "Unable to read questions from the PDF.",
         );
       }
 
-      const importedQuestions: Question[] =
-        (data.questions || []).map(
-          (question: Question) => ({
-            question: question.question || "",
-            options: Array.isArray(question.options)
-              ? question.options
-              : [],
-            questionType:
-              question.questionType === "MULTI"
-                ? "MULTI"
-                : "SINGLE",
-            answer: Array.isArray(question.answer)
-              ? question.answer
-              : [],
-          })
-        );
+      const importedQuestions: Question[] = (data.questions || []).map(
+        (question: Question) => ({
+          question: question.question || "",
+          options: Array.isArray(question.options) ? question.options : [],
+          questionType: question.questionType === "MULTI" ? "MULTI" : "SINGLE",
+          answer: Array.isArray(question.answer) ? question.answer : [],
+        }),
+      );
 
       if (importedQuestions.length === 0) {
         throw new Error(
-          "No questions could be detected. Make sure the PDF follows the supported question format."
+          "No questions could be detected. Make sure the PDF follows the supported question format.",
         );
       }
 
-      setQuestions((previous) => [
-        ...previous,
-        ...importedQuestions,
-      ]);
+      setQuestions((previous) => [...previous, ...importedQuestions]);
 
       const warningText =
-        Array.isArray(data.warnings) &&
-        data.warnings.length > 0
+        Array.isArray(data.warnings) && data.warnings.length > 0
           ? ` ${data.warnings.length} question(s) need review before saving.`
           : "";
 
       setSuccess(
-        `${importedQuestions.length} question(s) imported successfully.${warningText}`
+        `${importedQuestions.length} question(s) imported successfully.${warningText}`,
       );
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Unable to import PDF questions."
+          : "Unable to import PDF questions.",
       );
     } finally {
       setIsImportingPdf(false);
@@ -754,9 +549,7 @@ const CreateQuestionSet = () => {
     setError("");
     setSuccess("");
 
-    let finalQuestions = [
-      ...questions,
-    ];
+    let finalQuestions = [...questions];
 
     /*
       If the instructor has filled the current
@@ -766,109 +559,75 @@ const CreateQuestionSet = () => {
 
     const hasCurrentQuestion =
       currentQuestion.question.trim() ||
-      currentQuestion.options.some(
-        (option) => option.trim()
-      );
+      currentQuestion.options.some((option) => option.trim());
 
     if (hasCurrentQuestion) {
-      const validation =
-        validateCurrentQuestion();
+      const validation = validateCurrentQuestion();
 
       if (validation) {
         setError(validation);
         return;
       }
 
-      const cleanedQuestion: Question =
-        {
-          ...currentQuestion,
-          question:
-            currentQuestion.question.trim(),
-          options:
-            currentQuestion.options
-              .map((option) =>
-                option.trim()
-              )
-              .filter(Boolean),
-          answer:
-            currentQuestion.answer,
-        };
+      const cleanedQuestion: Question = {
+        ...currentQuestion,
+        question: currentQuestion.question.trim(),
+        options: currentQuestion.options
+          .map((option) => option.trim())
+          .filter(Boolean),
+        answer: currentQuestion.answer,
+      };
 
-      if (
-        editingQuestionIndex !== null
-      ) {
-        finalQuestions =
-          finalQuestions.map(
-            (question, index) =>
-              index ===
-              editingQuestionIndex
-                ? {
-                    ...cleanedQuestion,
-                    _id:
-                      question._id,
-                  }
-                : question
-          );
+      if (editingQuestionIndex !== null) {
+        finalQuestions = finalQuestions.map((question, index) =>
+          index === editingQuestionIndex
+            ? {
+                ...cleanedQuestion,
+                _id: question._id,
+              }
+            : question,
+        );
       } else {
-        finalQuestions = [
-          ...finalQuestions,
-          cleanedQuestion,
-        ];
+        finalQuestions = [...finalQuestions, cleanedQuestion];
       }
     }
 
     if (!questionSetName.trim()) {
-      setError(
-        "Please enter a question set name."
-      );
+      setError("Please enter a question set name.");
       return;
     }
 
-    if (
-      finalQuestions.length === 0
-    ) {
-      setError(
-        "Add at least one question."
-      );
+    if (finalQuestions.length === 0) {
+      setError("Add at least one question.");
       return;
     }
 
     try {
       setIsSaving(true);
 
-      const isEditing =
-        Boolean(editingSetId);
+      const isEditing = Boolean(editingSetId);
 
       const response = await fetch(
         isEditing
           ? `${API_URL}/api/question-sets/${editingSetId}`
           : `${API_URL}/api/question-sets`,
         {
-          method: isEditing
-            ? "PUT"
-            : "POST",
+          method: isEditing ? "PUT" : "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           credentials: "include",
           body: JSON.stringify({
-            questionSetName:
-              questionSetName.trim(),
-            questions:
-              finalQuestions,
+            questionSetName: questionSetName.trim(),
+            questions: finalQuestions,
           }),
-        }
+        },
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Unable to save question set."
-        );
+        throw new Error(data.message || "Unable to save question set.");
       }
 
       await loadQuestionSets();
@@ -876,7 +635,7 @@ const CreateQuestionSet = () => {
       setSuccess(
         isEditing
           ? "Question set updated successfully."
-          : "Question set saved successfully."
+          : "Question set saved successfully.",
       );
 
       resetEditor();
@@ -886,9 +645,7 @@ const CreateQuestionSet = () => {
       }, 2200);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to save question set."
+        err instanceof Error ? err.message : "Unable to save question set.",
       );
     } finally {
       setIsSaving(false);
@@ -899,13 +656,10 @@ const CreateQuestionSet = () => {
      DELETE SET
   ======================================================= */
 
-  const handleDeleteSet = async (
-    id: string
-  ) => {
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this question set?"
-      );
+  const handleDeleteSet = async (id: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this question set?",
+    );
 
     if (!confirmed) {
       return;
@@ -915,41 +669,23 @@ const CreateQuestionSet = () => {
       setActionId(id);
       setError("");
 
-      const response =
-        await fetch(
-          `${API_URL}/api/question-sets/${id}`,
-          {
-            method: "DELETE",
-            credentials: "include",
-          }
-        );
+      const response = await fetch(`${API_URL}/api/question-sets/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Unable to delete question set."
-        );
+        throw new Error(data.message || "Unable to delete question set.");
       }
 
-      setQuestionSets(
-        (previous) =>
-          previous.filter(
-            (item) =>
-              item._id !== id
-          )
-      );
+      setQuestionSets((previous) => previous.filter((item) => item._id !== id));
 
-      setSuccess(
-        "Question set deleted successfully."
-      );
+      setSuccess("Question set deleted successfully.");
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to delete question set."
+        err instanceof Error ? err.message : "Unable to delete question set.",
       );
     } finally {
       setActionId(null);
@@ -960,53 +696,40 @@ const CreateQuestionSet = () => {
      PUBLISH
   ======================================================= */
 
-  const handlePublish = async (
-    id: string
-  ) => {
+  const handlePublish = async (id: string) => {
     try {
       setActionId(id);
       setError("");
 
-      const response =
-        await fetch(
-          `${API_URL}/api/question-sets/${id}/publish`,
-          {
-            method: "PATCH",
-            credentials: "include",
-          }
-        );
+      const response = await fetch(
+        `${API_URL}/api/question-sets/${id}/publish`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        },
+      );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Unable to publish question set."
-        );
+        throw new Error(data.message || "Unable to publish question set.");
       }
 
-      setQuestionSets(
-        (previous) =>
-          previous.map(
-            (item) =>
-              item._id === id
-                ? {
-                    ...item,
-                    isActive: true,
-                  }
-                : item
-          )
+      setQuestionSets((previous) =>
+        previous.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                isActive: true,
+              }
+            : item,
+        ),
       );
 
-      setSuccess(
-        "Question set published successfully."
-      );
+      setSuccess("Question set published successfully.");
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to publish question set."
+        err instanceof Error ? err.message : "Unable to publish question set.",
       );
     } finally {
       setActionId(null);
@@ -1017,53 +740,42 @@ const CreateQuestionSet = () => {
      UNPUBLISH
   ======================================================= */
 
-  const handleUnpublish = async (
-    id: string
-  ) => {
+  const handleUnpublish = async (id: string) => {
     try {
       setActionId(id);
       setError("");
 
-      const response =
-        await fetch(
-          `${API_URL}/api/question-sets/${id}/unpublish`,
-          {
-            method: "PATCH",
-            credentials: "include",
-          }
-        );
+      const response = await fetch(
+        `${API_URL}/api/question-sets/${id}/unpublish`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        },
+      );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message ||
-            "Unable to unpublish question set."
-        );
+        throw new Error(data.message || "Unable to unpublish question set.");
       }
 
-      setQuestionSets(
-        (previous) =>
-          previous.map(
-            (item) =>
-              item._id === id
-                ? {
-                    ...item,
-                    isActive: false,
-                  }
-                : item
-          )
+      setQuestionSets((previous) =>
+        previous.map((item) =>
+          item._id === id
+            ? {
+                ...item,
+                isActive: false,
+              }
+            : item,
+        ),
       );
 
-      setSuccess(
-        "Question set unpublished."
-      );
+      setSuccess("Question set unpublished.");
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to unpublish question set."
+          : "Unable to unpublish question set.",
       );
     } finally {
       setActionId(null);
@@ -1074,15 +786,8 @@ const CreateQuestionSet = () => {
      TOGGLE SET DETAILS
   ======================================================= */
 
-  const toggleSet = (
-    id: string
-  ) => {
-    setExpandedSetId(
-      (previous) =>
-        previous === id
-          ? null
-          : id
-    );
+  const toggleSet = (id: string) => {
+    setExpandedSetId((previous) => (previous === id ? null : id));
   };
 
   /* =======================================================
@@ -1128,9 +833,7 @@ const CreateQuestionSet = () => {
             resetEditor={resetEditor}
           />
         ) : (
-          <CreateQuestionSetCard
-            handleCreateNew={handleCreateNew}
-          />
+          <CreateQuestionSetCard handleCreateNew={handleCreateNew} />
         )}
 
         <QuestionSetLists

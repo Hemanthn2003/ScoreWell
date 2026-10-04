@@ -10,18 +10,14 @@ import {
 import CountdownTimer from "./CountdownTimer";
 import ExamTypeBadge from "./ExamTypeBadge";
 
-import type {
-  PerformanceAttempt,
-} from "./types";
+import type { PerformanceAttempt } from "./types";
 
 interface UpcomingPerformanceDetailModalProps {
   item: PerformanceAttempt;
   onClose: () => void;
 }
 
-const formatDateTime = (
-  value: string | null
-): string => {
+const formatDateTime = (value: string | null): string => {
   if (!value) {
     return "Not submitted";
   }
@@ -41,24 +37,14 @@ const formatDateTime = (
   });
 };
 
-const formatDuration = (
-  seconds: number
-): string => {
-  const safeSeconds = Math.max(
-    0,
-    Number(seconds || 0)
-  );
+const formatDuration = (seconds: number): string => {
+  const safeSeconds = Math.max(0, Number(seconds || 0));
 
-  const hours = Math.floor(
-    safeSeconds / 3600
-  );
+  const hours = Math.floor(safeSeconds / 3600);
 
-  const minutes = Math.floor(
-    (safeSeconds % 3600) / 60
-  );
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
 
-  const remainingSeconds =
-    safeSeconds % 60;
+  const remainingSeconds = safeSeconds % 60;
 
   if (hours > 0) {
     return `${hours}h ${minutes}m ${remainingSeconds}s`;
@@ -72,7 +58,7 @@ const formatDuration = (
 };
 
 const getStatusLabel = (
-  status: PerformanceAttempt["attempt"]["status"]
+  status: PerformanceAttempt["attempt"]["status"],
 ): string => {
   switch (status) {
     case "SUBMITTED":
@@ -90,7 +76,7 @@ const getStatusLabel = (
 };
 
 const getStatusClass = (
-  status: PerformanceAttempt["attempt"]["status"]
+  status: PerformanceAttempt["attempt"]["status"],
 ): string => {
   switch (status) {
     case "SUBMITTED":
@@ -115,8 +101,7 @@ const UpcomingPerformanceDetailModal = ({
   const exam = item.exam;
 
   const submitted =
-    attempt.status === "SUBMITTED" ||
-    attempt.status === "AUTO_SUBMITTED";
+    attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED";
 
   return (
     <div
@@ -145,10 +130,7 @@ const UpcomingPerformanceDetailModal = ({
 
           <div className="relative pr-12">
             <div className="flex flex-wrap items-center gap-3">
-              <ExamTypeBadge
-                type={exam.examType}
-                mode={exam.examMode}
-              />
+              <ExamTypeBadge type={exam.examType} mode={exam.examMode} />
 
               <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
                 Upcoming Result
@@ -159,9 +141,7 @@ const UpcomingPerformanceDetailModal = ({
               {item.examName || exam.title}
             </h2>
 
-            <p className="mt-2 text-sm text-white/80">
-              {exam.department}
-            </p>
+            <p className="mt-2 text-sm text-white/80">{exam.department}</p>
           </div>
         </div>
 
@@ -187,9 +167,7 @@ const UpcomingPerformanceDetailModal = ({
                     </p>
 
                     <p className="mt-1 text-sm font-bold text-gray-900">
-                      {formatDateTime(
-                        attempt.startTime
-                      )}
+                      {formatDateTime(attempt.startTime)}
                     </p>
                   </div>
                 </div>
@@ -208,9 +186,7 @@ const UpcomingPerformanceDetailModal = ({
                     </p>
 
                     <p className="mt-1 text-sm font-bold text-gray-900">
-                      {formatDuration(
-                        attempt.timeTakenSeconds
-                      )}
+                      {formatDuration(attempt.timeTakenSeconds)}
                     </p>
                   </div>
                 </div>
@@ -230,15 +206,11 @@ const UpcomingPerformanceDetailModal = ({
 
                     <p
                       className={`mt-1 text-sm font-bold ${
-                        submitted
-                          ? "text-green-600"
-                          : "text-orange-500"
+                        submitted ? "text-green-600" : "text-orange-500"
                       }`}
                     >
                       {submitted
-                        ? formatDateTime(
-                            attempt.submittedAt
-                          )
+                        ? formatDateTime(attempt.submittedAt)
                         : "Not submitted"}
                     </p>
                   </div>
@@ -253,18 +225,14 @@ const UpcomingPerformanceDetailModal = ({
                   </div>
 
                   <div>
-                    <p className="text-xs font-medium text-gray-500">
-                      Status
-                    </p>
+                    <p className="text-xs font-medium text-gray-500">Status</p>
 
                     <span
                       className={`mt-1 inline-flex rounded-full border px-3 py-1 text-xs font-bold ${getStatusClass(
-                        attempt.status
+                        attempt.status,
                       )}`}
                     >
-                      {getStatusLabel(
-                        attempt.status
-                      )}
+                      {getStatusLabel(attempt.status)}
                     </span>
                   </div>
                 </div>
@@ -286,14 +254,10 @@ const UpcomingPerformanceDetailModal = ({
                 </p>
 
                 <div className="mt-3 flex items-center gap-3">
-                  <ExamTypeBadge
-                    type={exam.examType}
-                    mode={exam.examMode}
-                  />
+                  <ExamTypeBadge type={exam.examType} mode={exam.examMode} />
 
                   <span className="text-base font-bold text-gray-900">
-                    {exam.examType ===
-                    "SPECIAL"
+                    {exam.examType === "SPECIAL"
                       ? "Special Exam"
                       : "Common Exam"}
                   </span>
@@ -309,16 +273,12 @@ const UpcomingPerformanceDetailModal = ({
                 <div className="mt-3">
                   <span
                     className={`inline-flex rounded-full px-4 py-2 text-sm font-bold ${
-                      exam.examMode ===
-                      "STRICT"
+                      exam.examMode === "STRICT"
                         ? "bg-red-100 text-red-700"
                         : "bg-green-100 text-green-700"
                     }`}
                   >
-                    {exam.examMode ===
-                    "STRICT"
-                      ? "Strict Mode"
-                      : "Normal Mode"}
+                    {exam.examMode === "STRICT" ? "Strict Mode" : "Normal Mode"}
                   </span>
                 </div>
               </div>
@@ -340,25 +300,17 @@ const UpcomingPerformanceDetailModal = ({
                     </p>
 
                     <p className="mt-1 text-sm font-medium text-white/90">
-                      Time remaining until result
-                      release
+                      Time remaining until result release
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-5 rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
-                  <CountdownTimer
-                    deadline={
-                      item.resultReleaseDate
-                    }
-                  />
+                  <CountdownTimer deadline={item.resultReleaseDate} />
                 </div>
 
                 <p className="mt-4 text-xs text-white/70">
-                  Release date:{" "}
-                  {formatDateTime(
-                    item.resultReleaseDate
-                  )}
+                  Release date: {formatDateTime(item.resultReleaseDate)}
                 </p>
               </div>
             </section>
@@ -379,13 +331,10 @@ const UpcomingPerformanceDetailModal = ({
                 </div>
 
                 <div className="rounded-2xl bg-gray-50 px-4 py-3 text-right">
-                  <p className="text-xs text-gray-500">
-                    Exam Duration
-                  </p>
+                  <p className="text-xs text-gray-500">Exam Duration</p>
 
                   <p className="mt-1 text-sm font-bold text-gray-900">
-                    {exam.durationMinutes}{" "}
-                    minutes
+                    {exam.durationMinutes} minutes
                   </p>
                 </div>
               </div>
@@ -395,12 +344,9 @@ const UpcomingPerformanceDetailModal = ({
           {/* INFORMATION MESSAGE */}
           <div className="mt-6 rounded-2xl border border-purple-100 bg-purple-50 px-4 py-4">
             <p className="text-sm leading-6 text-purple-700">
-              Your score, percentage, answer
-              analysis, and question review are
-              available in the completed
-              examination result section after
-              the examination becomes expired or
-              closed.
+              Your score, percentage, answer analysis, and question review are
+              available in the completed examination result section after the
+              examination becomes expired or closed.
             </p>
           </div>
         </div>

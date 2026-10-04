@@ -11,13 +11,9 @@ import {
   resetPassword,
 } from "../auth/authController";
 
-import {
-  getDepartments,
-} from "../auth/departmentController";
+import { getDepartments } from "../auth/departmentController";
 
-import {
-  authenticate,
-} from "../middleware/authMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = Router();
 
@@ -25,75 +21,46 @@ const router = Router();
    DEPARTMENTS
 ========================= */
 
-router.get(
-  "/departments",
-  getDepartments
-);
+router.get("/departments", getDepartments);
 
 /* =========================
    REGISTER
 ========================= */
 
-router.post(
-  "/register",
-  register
-);
+router.post("/register", register);
 
 /* =========================
    LOGIN
 ========================= */
 
-router.post(
-  "/login",
-  login
-);
+router.post("/login", login);
 
 /* =========================
    FORGOT PASSWORD
 ========================= */
 
-router.post(
-  "/forgot-password",
-  forgotPassword
-);
+router.post("/forgot-password", forgotPassword);
 
-router.post(
-  "/verify-otp",
-  verifyOtp
-);
+router.post("/verify-otp", verifyOtp);
 
-router.post(
-  "/reset-password",
-  resetPassword
-);
+router.post("/reset-password", resetPassword);
 
 /* =========================
    TOKEN
 ========================= */
 
-router.post(
-  "/refresh",
-  refreshAccessToken
-);
+router.post("/refresh", refreshAccessToken);
 
 /* =========================
    CURRENT USER
 ========================= */
 
-router.get(
-  "/me",
-  authenticate,
-  getCurrentUser
-);
+router.get("/me", authenticate, getCurrentUser);
 
 /* =========================
    LOGOUT
 ========================= */
 
-router.post(
-  "/logout",
-  authenticate,
-  logout
-);
+router.post("/logout", authenticate, logout);
 
 export default router;

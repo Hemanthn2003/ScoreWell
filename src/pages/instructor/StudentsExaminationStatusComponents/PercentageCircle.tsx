@@ -9,17 +9,13 @@ const PercentageCircle = ({
   percentage,
   size = 116,
 }: PercentageCircleProps) => {
-  const safePercentage =
-    getPercentage(percentage);
+  const safePercentage = getPercentage(percentage);
 
   const radius = 45;
 
-  const circumference =
-    2 * Math.PI * radius;
+  const circumference = 2 * Math.PI * radius;
 
-  const progress =
-    (safePercentage / 100) *
-    circumference;
+  const progress = (safePercentage / 100) * circumference;
 
   return (
     <div
@@ -54,9 +50,7 @@ const PercentageCircle = ({
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={circumference}
-          strokeDashoffset={
-            circumference - progress
-          }
+          strokeDashoffset={circumference - progress}
           className="text-purple-600 transition-all duration-700"
         />
       </svg>

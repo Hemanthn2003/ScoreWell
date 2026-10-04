@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UserProfile {
   name: string;
@@ -14,14 +10,11 @@ interface UserProfile {
 }
 
 function InstructorProfile() {
-  const [user, setUser] =
-    useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
   // Prevent the initial profile API request from being
   // repeated by React StrictMode during development.
@@ -44,24 +37,19 @@ function InstructorProfile() {
           {
             method: "GET",
             credentials: "include",
-          }
+          },
         );
 
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(
-            data.message ||
-              "Unable to load profile."
-          );
+          throw new Error(data.message || "Unable to load profile.");
         }
 
         setUser(data.user);
       } catch (err) {
         setError(
-          err instanceof Error
-            ? err.message
-            : "Unable to load profile."
+          err instanceof Error ? err.message : "Unable to load profile.",
         );
       } finally {
         setLoading(false);
@@ -108,9 +96,7 @@ function InstructorProfile() {
                 Unable to load profile
               </p>
 
-              <p className="mt-1 text-sm text-red-600">
-                {error}
-              </p>
+              <p className="mt-1 text-sm text-red-600">{error}</p>
             </div>
           </div>
         )}
@@ -123,9 +109,7 @@ function InstructorProfile() {
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                 {/* Avatar */}
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-white/80 bg-white text-3xl font-bold text-purple-700 shadow-lg">
-                  {user.name
-                    ? user.name.charAt(0).toUpperCase()
-                    : "I"}
+                  {user.name ? user.name.charAt(0).toUpperCase() : "I"}
                 </div>
 
                 <div className="text-white">
@@ -133,13 +117,9 @@ function InstructorProfile() {
                     ScoreWell Instructor
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-bold">
-                    {user.name}
-                  </h2>
+                  <h2 className="mt-1 text-2xl font-bold">{user.name}</h2>
 
-                  <p className="mt-1 text-sm text-white/80">
-                    {user.email}
-                  </p>
+                  <p className="mt-1 text-sm text-white/80">{user.email}</p>
                 </div>
               </div>
             </div>

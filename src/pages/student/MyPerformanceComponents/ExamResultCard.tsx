@@ -1,17 +1,8 @@
-import {
-  ArrowRight,
-  CheckCircle2,
-  Clock3,
-  FileQuestion,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock3, FileQuestion } from "lucide-react";
 
-import type {
-  PerformanceAttempt,
-} from "./types";
+import type { PerformanceAttempt } from "./types";
 
-import {
-  formatDateTime,
-} from "./helpers";
+import { formatDateTime } from "./helpers";
 
 import ExamTypeBadge from "./ExamTypeBadge";
 
@@ -20,14 +11,8 @@ interface ExamResultCardProps {
   onClick: () => void;
 }
 
-const ExamResultCard = ({
-  item,
-  onClick,
-}: ExamResultCardProps) => {
-  const {
-    exam,
-    attempt,
-  } = item;
+const ExamResultCard = ({ item, onClick }: ExamResultCardProps) => {
+  const { exam, attempt } = item;
 
   return (
     <button
@@ -38,32 +23,23 @@ const ExamResultCard = ({
       <div className="h-1.5 bg-gradient-to-r from-purple-700 to-orange-400" />
 
       <div className="p-5 sm:p-6">
-
         <div className="flex flex-col gap-5">
-
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h3 className="text-lg font-black text-slate-900">
                 {exam.title}
               </h3>
 
-              <p className="mt-1 text-xs text-slate-500">
-                {exam.department}
-              </p>
+              <p className="mt-1 text-xs text-slate-500">{exam.department}</p>
 
               <div className="mt-3">
-                <ExamTypeBadge
-                  type={exam.examType}
-                  mode={exam.examMode}
-                />
+                <ExamTypeBadge type={exam.examType} mode={exam.examMode} />
               </div>
             </div>
 
             <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">
               <span className="inline-flex items-center gap-1">
-                <CheckCircle2
-                  size={12}
-                />
+                <CheckCircle2 size={12} />
                 Result
               </span>
             </span>
@@ -71,48 +47,27 @@ const ExamResultCard = ({
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <InfoBox
-              icon={
-                <CheckCircle2
-                  size={15}
-                />
-              }
+              icon={<CheckCircle2 size={15} />}
               label="Score"
               value={`${attempt.score}/${attempt.totalMarks}`}
             />
 
             <InfoBox
-              icon={
-                <FileQuestion
-                  size={15}
-                />
-              }
+              icon={<FileQuestion size={15} />}
               label="Percentage"
-              value={`${attempt.percentage.toFixed(
-                1
-              )}%`}
+              value={`${attempt.percentage.toFixed(1)}%`}
             />
 
             <InfoBox
-              icon={
-                <CheckCircle2
-                  size={15}
-                />
-              }
+              icon={<CheckCircle2 size={15} />}
               label="Correct"
-              value={
-                attempt.correctAnswers
-              }
+              value={attempt.correctAnswers}
             />
 
             <InfoBox
-              icon={
-                <Clock3 size={15} />
-              }
+              icon={<Clock3 size={15} />}
               label="Time"
-              value={`${Math.floor(
-                attempt.timeTakenSeconds /
-                  60
-              )}m`}
+              value={`${Math.floor(attempt.timeTakenSeconds / 60)}m`}
             />
           </div>
 
@@ -123,9 +78,7 @@ const ExamResultCard = ({
               </p>
 
               <p className="mt-1 text-xs font-bold text-slate-600">
-                {formatDateTime(
-                  attempt.submittedAt
-                )}
+                {formatDateTime(attempt.submittedAt)}
               </p>
             </div>
 
@@ -134,7 +87,6 @@ const ExamResultCard = ({
               <ArrowRight size={15} />
             </span>
           </div>
-
         </div>
       </div>
     </button>
@@ -160,9 +112,7 @@ const InfoBox = ({
         </span>
       </div>
 
-      <p className="mt-1.5 text-sm font-black text-slate-800">
-        {value}
-      </p>
+      <p className="mt-1.5 text-sm font-black text-slate-800">{value}</p>
     </div>
   );
 };

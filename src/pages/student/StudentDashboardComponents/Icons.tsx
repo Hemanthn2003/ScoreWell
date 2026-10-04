@@ -7,13 +7,7 @@ export const DashboardIcon = () => (
     strokeWidth="1.8"
     className="h-5 w-5"
   >
-    <rect
-      width="18"
-      height="18"
-      x="3"
-      y="3"
-      rx="2"
-    />
+    <rect width="18" height="18" x="3" y="3" rx="2" />
 
     <path d="M9 3v18" />
 
@@ -74,11 +68,7 @@ export const ProfileIcon = () => (
     strokeWidth="1.8"
     className="h-5 w-5"
   >
-    <circle
-      cx="12"
-      cy="8"
-      r="4"
-    />
+    <circle cx="12" cy="8" r="4" />
 
     <path d="M4 21a8 8 0 0 1 16 0" />
   </svg>
@@ -108,11 +98,7 @@ export const ClockIcon = () => (
     strokeWidth="1.8"
     className="h-4 w-4"
   >
-    <circle
-      cx="12"
-      cy="12"
-      r="9"
-    />
+    <circle cx="12" cy="12" r="9" />
 
     <path d="M12 7v5l3 2" />
   </svg>
@@ -129,11 +115,7 @@ export const CheckIcon = () => (
   >
     <path d="m5 12 4 4L19 6" />
 
-    <circle
-      cx="12"
-      cy="12"
-      r="9"
-    />
+    <circle cx="12" cy="12" r="9" />
   </svg>
 );
 
@@ -146,11 +128,7 @@ export const MissedIcon = () => (
     strokeWidth="1.8"
     className="h-5 w-5"
   >
-    <circle
-      cx="12"
-      cy="12"
-      r="9"
-    />
+    <circle cx="12" cy="12" r="9" />
 
     <path d="m9 9 6 6" />
 

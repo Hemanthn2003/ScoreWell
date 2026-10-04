@@ -12,7 +12,7 @@ import User from "../models/User";
  */
 export const getDepartments = async (
   _req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const departments = await User.distinct("department", {
@@ -26,16 +26,14 @@ export const getDepartments = async (
     const cleanedDepartments = departments
       .filter(
         (department): department is string =>
-          typeof department === "string" &&
-          department.trim().length > 0
+          typeof department === "string" && department.trim().length > 0,
       )
       .map((department) => department.trim())
       .filter(
         (department, index, array) =>
           array.findIndex(
-            (item) =>
-              item.toLowerCase() === department.toLowerCase()
-          ) === index
+            (item) => item.toLowerCase() === department.toLowerCase(),
+          ) === index,
       )
       .sort((a, b) => a.localeCompare(b));
 
@@ -44,10 +42,7 @@ export const getDepartments = async (
       departments: cleanedDepartments,
     });
   } catch (error) {
-    console.error(
-      "Get departments error:",
-      error
-    );
+    console.error("Get departments error:", error);
 
     res.status(500).json({
       success: false,

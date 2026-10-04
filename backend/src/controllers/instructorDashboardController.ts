@@ -1,7 +1,4 @@
-import type {
-  Request,
-  Response,
-} from "express";
+import type { Request, Response } from "express";
 
 import User from "../models/User";
 import Exam from "../models/Exam";
@@ -12,9 +9,7 @@ import Attempt from "../models/Attempt";
    HELPERS
 ===================================================== */
 
-const normalizeDepartment = (
-  department?: string | null
-): string => {
+const normalizeDepartment = (department?: string | null): string => {
   return (department ?? "")
     .normalize("NFKC")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -30,7 +25,7 @@ const normalizeDepartment = (
 
 export const getInstructorDashboard = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     /* =====================================================
@@ -49,8 +44,7 @@ export const getInstructorDashboard = async (
     if (req.user.role !== "INSTRUCTOR") {
       res.status(403).json({
         success: false,
-        message:
-          "Only instructors can access the instructor dashboard.",
+        message: "Only instructors can access the instructor dashboard.",
       });
 
       return;
@@ -60,12 +54,8 @@ export const getInstructorDashboard = async (
        GET INSTRUCTOR
     ===================================================== */
 
-    const instructor = await User.findById(
-      req.user.userId
-    )
-      .select(
-        "_id name email role department isActive"
-      )
+    const instructor = await User.findById(req.user.userId)
+      .select("_id name email role department isActive")
       .lean();
 
     if (!instructor) {
@@ -80,23 +70,19 @@ export const getInstructorDashboard = async (
     if (!instructor.department) {
       res.status(400).json({
         success: false,
-        message:
-          "Instructor department is not configured.",
+        message: "Instructor department is not configured.",
       });
 
       return;
     }
 
-    const instructorId =
-      instructor._id.toString();
+    const instructorId = instructor._id.toString();
 
-    const department =
-      instructor.department;
+    const department = instructor.department;
 
-    const normalizedInstructorDepartment =
-      normalizeDepartment(
-        instructor.department
-      );
+    const normalizedInstructorDepartment = normalizeDepartment(
+      instructor.department,
+    );
 
     /* =====================================================
        EXAMS CREATED BY THIS INSTRUCTOR
@@ -114,14 +100,13 @@ export const getInstructorDashboard = async (
        QUESTION SETS CREATED BY THIS INSTRUCTOR
     ===================================================== */
 
-    const questionSets =
-      await QuestionSet.find({
-        createdBy: instructorId,
+    const questionSets = await QuestionSet.find({
+      createdBy: instructorId,
+    })
+      .sort({
+        _id: -1,
       })
-        .sort({
-          _id: -1,
-        })
-        .lean();
+      .lean();
 
     /* =====================================================
        STUDENTS
@@ -143,27 +128,17 @@ export const getInstructorDashboard = async (
     const allStudents = await User.find({
       role: "STUDENT",
     })
-      .select(
-        "_id name email role department isActive isPermitted"
-      )
+      .select("_id name email role department isActive isPermitted")
       .sort({
         name: 1,
       })
       .lean();
 
-    const students = allStudents.filter(
-      (student) => {
-        const studentDepartment =
-          normalizeDepartment(
-            student.department
-          );
+    const students = allStudents.filter((student) => {
+      const studentDepartment = normalizeDepartment(student.department);
 
-        return (
-          studentDepartment ===
-          normalizedInstructorDepartment
-        );
-      }
-    );
+      return studentDepartment === normalizedInstructorDepartment;
+    });
 
     /* =====================================================
        DEBUG INFORMATION
@@ -172,86 +147,55 @@ export const getInstructorDashboard = async (
        correct students are appearing.
     ===================================================== */
 
-    console.log(
-      "================================================="
-    );
+    console.log("=================================================");
 
-    console.log(
-      "INSTRUCTOR DASHBOARD STUDENT CHECK"
-    );
+    console.log("INSTRUCTOR DASHBOARD STUDENT CHECK");
 
-    console.log(
-      "Instructor:",
-      instructor.name
-    );
+    console.log("Instructor:", instructor.name);
 
     console.log(
       "Instructor department:",
-      JSON.stringify(
-        instructor.department
-      )
+      JSON.stringify(instructor.department),
     );
 
     console.log(
       "Normalized instructor department:",
-      JSON.stringify(
-        normalizedInstructorDepartment
-      )
+      JSON.stringify(normalizedInstructorDepartment),
     );
 
-    console.log(
-      "Total students in database:",
-      allStudents.length
-    );
+    console.log("Total students in database:", allStudents.length);
 
-    console.log(
-      "Students in instructor department:",
-      students.length
-    );
+    console.log("Students in instructor department:", students.length);
 
-    console.log(
-      "Department students:"
-    );
+    console.log("Department students:");
 
     students.forEach((student) => {
       console.log({
         id: student._id.toString(),
         name: student.name,
         email: student.email,
-        department:
-          student.department,
-        normalizedDepartment:
-          normalizeDepartment(
-            student.department
-          ),
-        isPermitted:
-          student.isPermitted,
-        isActive:
-          student.isActive,
+        department: student.department,
+        normalizedDepartment: normalizeDepartment(student.department),
+        isPermitted: student.isPermitted,
+        isActive: student.isActive,
       });
     });
 
-    console.log(
-      "================================================="
-    );
+    console.log("=================================================");
 
     /* =====================================================
        PENDING STUDENT REQUESTS
     ===================================================== */
 
-    const pendingStudents =
-      students.filter(
-        (student) =>
-          student.isPermitted === false
-      );
+    const pendingStudents = students.filter(
+      (student) => student.isPermitted === false,
+    );
 
     /* =====================================================
        ATTEMPTS FOR THIS INSTRUCTOR'S EXAMS
     ===================================================== */
 
-    const examIds = exams.map(
-      (exam) => exam._id
-    );
+    const examIds = exams.map((exam) => exam._id);
 
     const attempts =
       examIds.length > 0
@@ -270,92 +214,59 @@ export const getInstructorDashboard = async (
        EXAM STATISTICS
     ===================================================== */
 
-    const totalExams =
-      exams.length;
+    const totalExams = exams.length;
 
-    const publishedExams =
-      exams.filter(
-        (exam) =>
-          exam.status === "PUBLISHED"
-      ).length;
+    const publishedExams = exams.filter(
+      (exam) => exam.status === "PUBLISHED",
+    ).length;
 
-    const unpublishedExams =
-      exams.filter(
-        (exam) =>
-          exam.status === "UNPUBLISHED"
-      ).length;
+    const unpublishedExams = exams.filter(
+      (exam) => exam.status === "UNPUBLISHED",
+    ).length;
 
-    const closedExams =
-      exams.filter(
-        (exam) =>
-          exam.status === "CLOSED"
-      ).length;
+    const closedExams = exams.filter((exam) => exam.status === "CLOSED").length;
 
-    const commonExams =
-      exams.filter(
-        (exam) =>
-          exam.mode === "COMMON"
-      ).length;
+    const commonExams = exams.filter((exam) => exam.mode === "COMMON").length;
 
-    const specialExams =
-      exams.filter(
-        (exam) =>
-          exam.mode === "SPECIAL"
-      ).length;
+    const specialExams = exams.filter((exam) => exam.mode === "SPECIAL").length;
 
     /* =====================================================
        QUESTION STATISTICS
     ===================================================== */
 
-    const totalQuestionSets =
-      questionSets.length;
+    const totalQuestionSets = questionSets.length;
 
-    const totalQuestions =
-      questionSets.reduce(
-        (total, questionSet) =>
-          total +
-          questionSet.questions.length,
-        0
-      );
+    const totalQuestions = questionSets.reduce(
+      (total, questionSet) => total + questionSet.questions.length,
+      0,
+    );
 
     /* =====================================================
        STUDENT STATISTICS
     ===================================================== */
 
-    const totalStudents =
-      students.length;
+    const totalStudents = students.length;
 
-    const permittedStudents =
-      students.filter(
-        (student) =>
-          student.isPermitted === true
-      ).length;
+    const permittedStudents = students.filter(
+      (student) => student.isPermitted === true,
+    ).length;
 
-    const pendingStudentCount =
-      pendingStudents.length;
+    const pendingStudentCount = pendingStudents.length;
 
     /* =====================================================
        ATTEMPT STATISTICS
     ===================================================== */
 
-    const totalAttempts =
-      attempts.length;
+    const totalAttempts = attempts.length;
 
-    const submittedAttempts =
-      attempts.filter(
-        (attempt) =>
-          attempt.status ===
-            "SUBMITTED" ||
-          attempt.status ===
-            "AUTO_SUBMITTED"
-      );
+    const submittedAttempts = attempts.filter(
+      (attempt) =>
+        attempt.status === "SUBMITTED" || attempt.status === "AUTO_SUBMITTED",
+    );
 
-    const inProgressAttempts =
-      attempts.filter(
-        (attempt) =>
-          attempt.status ===
-          "IN_PROGRESS"
-      );
+    const inProgressAttempts = attempts.filter(
+      (attempt) => attempt.status === "IN_PROGRESS",
+    );
 
     /* =====================================================
        AVERAGE SCORE
@@ -363,30 +274,20 @@ export const getInstructorDashboard = async (
 
     let averageScore = 0;
 
-    if (
-      submittedAttempts.length > 0
-    ) {
+    if (submittedAttempts.length > 0) {
       let percentageTotal = 0;
       let validAttempts = 0;
 
       for (const attempt of submittedAttempts) {
-        if (
-          attempt.totalMarks > 0
-        ) {
-          percentageTotal +=
-            (attempt.score /
-              attempt.totalMarks) *
-            100;
+        if (attempt.totalMarks > 0) {
+          percentageTotal += (attempt.score / attempt.totalMarks) * 100;
 
           validAttempts += 1;
         }
       }
 
       if (validAttempts > 0) {
-        averageScore = Math.round(
-          percentageTotal /
-            validAttempts
-        );
+        averageScore = Math.round(percentageTotal / validAttempts);
       }
     }
 
@@ -394,15 +295,9 @@ export const getInstructorDashboard = async (
        ATTEMPT STUDENT DETAILS
     ===================================================== */
 
-    const studentIds =
-      Array.from(
-        new Set(
-          attempts.map(
-            (attempt) =>
-              attempt.studentId.toString()
-          )
-        )
-      );
+    const studentIds = Array.from(
+      new Set(attempts.map((attempt) => attempt.studentId.toString())),
+    );
 
     const attemptStudents =
       studentIds.length > 0
@@ -411,101 +306,65 @@ export const getInstructorDashboard = async (
               $in: studentIds,
             },
           })
-            .select(
-              "_id name email department"
-            )
+            .select("_id name email department")
             .lean()
         : [];
 
-    const studentMap =
-      new Map(
-        attemptStudents.map(
-          (student) => [
-            student._id.toString(),
-            student,
-          ]
-        )
-      );
+    const studentMap = new Map(
+      attemptStudents.map((student) => [student._id.toString(), student]),
+    );
 
     /* =====================================================
        RECENT ATTEMPTS
     ===================================================== */
 
-    const recentAttempts =
-      attempts.slice(0, 10);
+    const recentAttempts = attempts.slice(0, 10);
 
-    const formattedRecentAttempts =
-      recentAttempts.map(
-        (attempt) => {
-          const student =
-            studentMap.get(
-              attempt.studentId.toString()
-            );
+    const formattedRecentAttempts = recentAttempts.map((attempt) => {
+      const student = studentMap.get(attempt.studentId.toString());
 
-          return {
-            _id:
-              attempt._id.toString(),
+      return {
+        _id: attempt._id.toString(),
 
-            studentId:
-              attempt.studentId.toString(),
+        studentId: attempt.studentId.toString(),
 
-            studentName:
-              student?.name ??
-              "Unknown Student",
+        studentName: student?.name ?? "Unknown Student",
 
-            studentEmail:
-              attempt.studentEmail,
+        studentEmail: attempt.studentEmail,
 
-            studentDepartment:
-              attempt.studentDepartment,
+        studentDepartment: attempt.studentDepartment,
 
-            examId:
-              attempt.examId.toString(),
+        examId: attempt.examId.toString(),
 
-            examName:
-              attempt.examName,
+        examName: attempt.examName,
 
-            examDepartment:
-              attempt.examDepartment,
+        examDepartment: attempt.examDepartment,
 
-            instructorId:
-              attempt.instructorId,
+        instructorId: attempt.instructorId,
 
-            mode:
-              attempt.mode,
+        mode: attempt.mode,
 
-            attemptNo:
-              attempt.attemptNo,
+        attemptNo: attempt.attemptNo,
 
-            startTime:
-              attempt.startTime,
+        startTime: attempt.startTime,
 
-            submittedAt:
-              attempt.submittedAt,
+        submittedAt: attempt.submittedAt,
 
-            status:
-              attempt.status,
+        status: attempt.status,
 
-            score:
-              attempt.score,
+        score: attempt.score,
 
-            totalMarks:
-              attempt.totalMarks,
+        totalMarks: attempt.totalMarks,
 
-            correctAnswers:
-              attempt.correctAnswers,
+        correctAnswers: attempt.correctAnswers,
 
-            wrongAnswers:
-              attempt.wrongAnswers,
+        wrongAnswers: attempt.wrongAnswers,
 
-            unanswered:
-              attempt.unanswered,
+        unanswered: attempt.unanswered,
 
-            timeTakenSeconds:
-              attempt.timeTakenSeconds,
-          };
-        }
-      );
+        timeTakenSeconds: attempt.timeTakenSeconds,
+      };
+    });
 
     /* =====================================================
        RESPONSE
@@ -515,23 +374,17 @@ export const getInstructorDashboard = async (
       success: true,
 
       instructor: {
-        _id:
-          instructor._id.toString(),
+        _id: instructor._id.toString(),
 
-        name:
-          instructor.name,
+        name: instructor.name,
 
-        email:
-          instructor.email,
+        email: instructor.email,
 
-        role:
-          instructor.role,
+        role: instructor.role,
 
-        department:
-          instructor.department,
+        department: instructor.department,
 
-        isActive:
-          instructor.isActive,
+        isActive: instructor.isActive,
       },
 
       statistics: {
@@ -559,11 +412,9 @@ export const getInstructorDashboard = async (
 
         totalAttempts,
 
-        submittedAttempts:
-          submittedAttempts.length,
+        submittedAttempts: submittedAttempts.length,
 
-        inProgressAttempts:
-          inProgressAttempts.length,
+        inProgressAttempts: inProgressAttempts.length,
 
         averageScore,
       },
@@ -576,19 +427,14 @@ export const getInstructorDashboard = async (
 
       pendingStudents,
 
-      recentAttempts:
-        formattedRecentAttempts,
+      recentAttempts: formattedRecentAttempts,
     });
   } catch (error) {
-    console.error(
-      "Instructor dashboard error:",
-      error
-    );
+    console.error("Instructor dashboard error:", error);
 
     res.status(500).json({
       success: false,
-      message:
-        "Unable to load instructor dashboard.",
+      message: "Unable to load instructor dashboard.",
     });
   }
 };

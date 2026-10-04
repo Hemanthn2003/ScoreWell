@@ -1,25 +1,10 @@
-import {
-  AttemptsIcon,
-  ExamIcon,
-} from "./Icons";
+import { AttemptsIcon, ExamIcon } from "./Icons";
 
-import {
-  cardWidthClasses,
-} from "./cardStyles";
+import { cardWidthClasses } from "./cardStyles";
 
-export const EmptyCard = ({
-  type,
-}: {
-  type:
-    | "available"
-    | "attempts";
-}) => {
+export const EmptyCard = ({ type }: { type: "available" | "attempts" }) => {
   return (
-    <div
-      className={
-        cardWidthClasses
-      }
-    >
+    <div className={cardWidthClasses}>
       <div
         className="
           flex
@@ -41,40 +26,21 @@ export const EmptyCard = ({
           md:h-[300px]
         "
       >
-
         <div>
-
           <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 sm:h-12 sm:w-12">
-
-            {type ===
-            "available" ? (
-              <ExamIcon />
-            ) : (
-              <AttemptsIcon />
-            )}
-
+            {type === "available" ? <ExamIcon /> : <AttemptsIcon />}
           </div>
 
           <p className="mt-3 text-[10px] font-bold text-slate-700 sm:text-xs">
-
-            {type ===
-            "available"
-              ? "No available exams"
-              : "No recent attempts"}
-
+            {type === "available" ? "No available exams" : "No recent attempts"}
           </p>
 
           <p className="mt-1 text-[8px] leading-4 text-slate-400 sm:text-[10px]">
-
-            {type ===
-            "available"
+            {type === "available"
               ? "New examinations will appear here."
               : "Your latest examination activity will appear here."}
-
           </p>
-
         </div>
-
       </div>
     </div>
   );

@@ -1,6 +1,4 @@
-import type {
-  ReactNode,
-} from "react";
+import type { ReactNode } from "react";
 
 interface MetricCardProps {
   icon: ReactNode;
@@ -9,12 +7,7 @@ interface MetricCardProps {
   description?: string;
 }
 
-const MetricCard = ({
-  icon,
-  label,
-  value,
-  description,
-}: MetricCardProps) => {
+const MetricCard = ({ icon, label, value, description }: MetricCardProps) => {
   return (
     <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-center justify-between">
@@ -27,14 +20,10 @@ const MetricCard = ({
         </span>
       </div>
 
-      <p className="mt-4 text-2xl font-black text-slate-900">
-        {value}
-      </p>
+      <p className="mt-4 text-2xl font-black text-slate-900">{value}</p>
 
       {description && (
-        <p className="mt-1 text-xs text-slate-500">
-          {description}
-        </p>
+        <p className="mt-1 text-xs text-slate-500">{description}</p>
       )}
     </div>
   );

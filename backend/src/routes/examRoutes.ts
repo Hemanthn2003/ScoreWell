@@ -1,8 +1,6 @@
 import { Router } from "express";
 
-import {
-  authenticate,
-} from "../middleware/authMiddleware";
+import { authenticate } from "../middleware/authMiddleware";
 
 import {
   getMyExams,
@@ -15,51 +13,24 @@ import {
   unpublishExam,
 } from "../controllers/examController";
 
-const router =
-  Router();
+const router = Router();
 
-router.use(
-  authenticate
-);
+router.use(authenticate);
 
-router.get(
-  "/",
-  getMyExams
-);
+router.get("/", getMyExams);
 
-router.get(
-  "/question-sets",
-  getAvailableQuestionSets
-);
+router.get("/question-sets", getAvailableQuestionSets);
 
-router.get(
-  "/students",
-  getDepartmentStudents
-);
+router.get("/students", getDepartmentStudents);
 
-router.post(
-  "/",
-  createExam
-);
+router.post("/", createExam);
 
-router.put(
-  "/:id",
-  updateExam
-);
+router.put("/:id", updateExam);
 
-router.delete(
-  "/:id",
-  deleteExam
-);
+router.delete("/:id", deleteExam);
 
-router.patch(
-  "/:id/publish",
-  publishExam
-);
+router.patch("/:id/publish", publishExam);
 
-router.patch(
-  "/:id/unpublish",
-  unpublishExam
-);
+router.patch("/:id/unpublish", unpublishExam);
 
 export default router;

@@ -15,10 +15,8 @@ const Footer = () => {
       <div className="pointer-events-none absolute -right-16 -top-24 h-52 w-52 rounded-full border border-white/10" />
 
       <div className="relative mx-auto max-w-7xl">
-
         {/* Main Footer Row */}
         <div className="flex flex-col items-center justify-between gap-5 sm:flex-row sm:gap-8">
-
           {/* Logo */}
           <div className="shrink-0">
             <div className="relative overflow-hidden rounded-lg px-2 py-1">
@@ -61,9 +59,7 @@ const Footer = () => {
         <div className="text-center">
           <p className="text-[11px] font-medium tracking-wide text-white/90 sm:text-xs">
             © {new Date().getFullYear()}{" "}
-            <span className="font-bold text-orange-300">
-              Hemanth N.
-            </span>{" "}
+            <span className="font-bold text-orange-300">Hemanth N.</span>{" "}
             <span className="text-purple-100/80">
               All rights reserved. · ScoreWell — Examination & Assessment
               Platform

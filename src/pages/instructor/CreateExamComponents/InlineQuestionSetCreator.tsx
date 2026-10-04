@@ -12,277 +12,139 @@ export const InlineQuestionSetCreator = ({
   onDone,
   onCancel,
 }: InlineQuestionSetCreatorProps) => {
-  const [
-    questionSetName,
-    setQuestionSetName,
-  ] = useState("");
+  const [questionSetName, setQuestionSetName] = useState("");
 
-  const [
-    questions,
-    setQuestions,
-  ] = useState<Question[]>(
-    []
-  );
+  const [questions, setQuestions] = useState<Question[]>([]);
 
-  const [
-    currentQuestion,
-    setCurrentQuestion,
-  ] =
-    useState<Question>(
-      emptyQuestion()
-    );
+  const [currentQuestion, setCurrentQuestion] =
+    useState<Question>(emptyQuestion());
 
-  const [
-    editingIndex,
-    setEditingIndex,
-  ] = useState<
-    number | null
-  >(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const [error, setError] = useState("");
 
   const addOption = () => {
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
+    setCurrentQuestion((previous) => ({
+      ...previous,
 
-        options: [
-          ...previous.options,
-          "",
-        ],
-      })
-    );
+      options: [...previous.options, ""],
+    }));
   };
 
-  const removeOption = (
-    index: number
-  ) => {
-    if (
-      currentQuestion.options
-        .length <= 2
-    ) {
+  const removeOption = (index: number) => {
+    if (currentQuestion.options.length <= 2) {
       return;
     }
 
-    const removed =
-      currentQuestion
-        .options[index];
+    const removed = currentQuestion.options[index];
 
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
+    setCurrentQuestion((previous) => ({
+      ...previous,
 
-        options:
-          previous.options.filter(
-            (_, i) =>
-              i !== index
-          ),
+      options: previous.options.filter((_, i) => i !== index),
 
-        answer:
-          previous.answer.filter(
-            (answer) =>
-              answer !==
-              removed
-          ),
-      })
-    );
+      answer: previous.answer.filter((answer) => answer !== removed),
+    }));
   };
 
-  const updateOption = (
-    index: number,
-    value: string
-  ) => {
-    const oldValue =
-      currentQuestion
-        .options[index];
+  const updateOption = (index: number, value: string) => {
+    const oldValue = currentQuestion.options[index];
 
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
+    setCurrentQuestion((previous) => ({
+      ...previous,
 
-        options:
-          previous.options.map(
-            (
-              option,
-              i
-            ) =>
-              i === index
-                ? value
-                : option
-          ),
+      options: previous.options.map((option, i) =>
+        i === index ? value : option,
+      ),
 
-        answer:
-          previous.answer.map(
-            (answer) =>
-              answer ===
-              oldValue
-                ? value
-                : answer
-          ),
-      })
-    );
+      answer: previous.answer.map((answer) =>
+        answer === oldValue ? value : answer,
+      ),
+    }));
   };
 
-  const toggleAnswer = (
-    option: string
-  ) => {
-    if (
-      currentQuestion
-        .questionType ===
-      "SINGLE"
-    ) {
-      setCurrentQuestion(
-        (previous) => ({
-          ...previous,
-          answer: [option],
-        })
-      );
+  const toggleAnswer = (option: string) => {
+    if (currentQuestion.questionType === "SINGLE") {
+      setCurrentQuestion((previous) => ({
+        ...previous,
+        answer: [option],
+      }));
 
       return;
     }
 
-    setCurrentQuestion(
-      (previous) => ({
-        ...previous,
+    setCurrentQuestion((previous) => ({
+      ...previous,
 
-        answer:
-          previous.answer.includes(
-            option
-          )
-            ? previous.answer.filter(
-                (answer) =>
-                  answer !==
-                  option
-              )
-            : [
-                ...previous.answer,
-                option,
-              ],
-      })
-    );
+      answer: previous.answer.includes(option)
+        ? previous.answer.filter((answer) => answer !== option)
+        : [...previous.answer, option],
+    }));
   };
 
-  const saveCurrentQuestion =
-    () => {
-      const cleanOptions =
-        currentQuestion.options
-          .map(
-            (option) =>
-              option.trim()
-          )
-          .filter(Boolean);
+  const saveCurrentQuestion = () => {
+    const cleanOptions = currentQuestion.options
+      .map((option) => option.trim())
+      .filter(Boolean);
 
-      if (
-        !currentQuestion.question.trim()
-      ) {
-        setError(
-          "Question cannot be empty."
-        );
+    if (!currentQuestion.question.trim()) {
+      setError("Question cannot be empty.");
 
-        return;
-      }
+      return;
+    }
 
-      if (
-        cleanOptions.length <
-        2
-      ) {
-        setError(
-          "Add at least two options."
-        );
+    if (cleanOptions.length < 2) {
+      setError("Add at least two options.");
 
-        return;
-      }
+      return;
+    }
 
-      if (
-        currentQuestion.answer
-          .length === 0
-      ) {
-        setError(
-          "Select the correct answer."
-        );
+    if (currentQuestion.answer.length === 0) {
+      setError("Select the correct answer.");
 
-        return;
-      }
+      return;
+    }
 
-      if (
-        currentQuestion.questionType ===
-          "SINGLE" &&
-        currentQuestion.answer
-          .length !== 1
-      ) {
-        setError(
-          "SINGLE questions can have only one correct answer."
-        );
+    if (
+      currentQuestion.questionType === "SINGLE" &&
+      currentQuestion.answer.length !== 1
+    ) {
+      setError("SINGLE questions can have only one correct answer.");
 
-        return;
-      }
+      return;
+    }
 
-      const cleanQuestion: Question =
-        {
-          ...currentQuestion,
+    const cleanQuestion: Question = {
+      ...currentQuestion,
 
-          question:
-            currentQuestion.question.trim(),
+      question: currentQuestion.question.trim(),
 
-          options:
-            cleanOptions,
-        };
-
-      if (
-        editingIndex !==
-        null
-      ) {
-        setQuestions(
-          (previous) =>
-            previous.map(
-              (
-                question,
-                index
-              ) =>
-                index ===
-                editingIndex
-                  ? cleanQuestion
-                  : question
-            )
-        );
-      } else {
-        setQuestions(
-          (previous) => [
-            ...previous,
-            cleanQuestion,
-          ]
-        );
-      }
-
-      setCurrentQuestion(
-        emptyQuestion()
-      );
-
-      setEditingIndex(
-        null
-      );
-
-      setError("");
+      options: cleanOptions,
     };
 
-  const editQuestion = (
-    index: number
-  ) => {
-    setCurrentQuestion(
-      questions[index]
-    );
+    if (editingIndex !== null) {
+      setQuestions((previous) =>
+        previous.map((question, index) =>
+          index === editingIndex ? cleanQuestion : question,
+        ),
+      );
+    } else {
+      setQuestions((previous) => [...previous, cleanQuestion]);
+    }
 
-    setEditingIndex(
-      index
-    );
+    setCurrentQuestion(emptyQuestion());
+
+    setEditingIndex(null);
+
+    setError("");
+  };
+
+  const editQuestion = (index: number) => {
+    setCurrentQuestion(questions[index]);
+
+    setEditingIndex(index);
 
     setError("");
 
@@ -292,141 +154,90 @@ export const InlineQuestionSetCreator = ({
     });
   };
 
-  const deleteQuestion = (
-    index: number
-  ) => {
-    setQuestions(
-      (previous) =>
-        previous.filter(
-          (_, i) =>
-            i !== index
-        )
-    );
+  const deleteQuestion = (index: number) => {
+    setQuestions((previous) => previous.filter((_, i) => i !== index));
   };
 
-  const markAsDone =
-    async () => {
-      if (
-        !questionSetName.trim()
-      ) {
-        setError(
-          "Question set name is required."
-        );
+  const markAsDone = async () => {
+    if (!questionSetName.trim()) {
+      setError("Question set name is required.");
 
-        return;
+      return;
+    }
+
+    if (questions.length === 0) {
+      setError("Add at least one question.");
+
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:5000/api/question-sets", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        credentials: "include",
+
+        body: JSON.stringify({
+          questionSetName: questionSetName.trim(),
+
+          questions: questions.map((question) => ({
+            ...question,
+            _id: undefined,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create question set.");
       }
 
-      if (
-        questions.length === 0
-      ) {
-        setError(
-          "Add at least one question."
-        );
+      /*
+       * Automatically published
+       * for use immediately in
+       * this exam.
+       */
+      const created = data.questionSet;
 
-        return;
+      const publishResponse = await fetch(
+        `http://localhost:5000/api/question-sets/${created._id}/publish`,
+        {
+          method: "PATCH",
+
+          credentials: "include",
+        },
+      );
+
+      const publishedData = await publishResponse.json();
+
+      if (!publishResponse.ok) {
+        throw new Error(
+          publishedData.message ||
+            "Question set was created but could not be published.",
+        );
       }
 
-      setLoading(true);
-      setError("");
-
-      try {
-        const response =
-          await fetch(
-            "http://localhost:5000/api/question-sets",
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-
-              credentials:
-                "include",
-
-              body: JSON.stringify(
-                {
-                  questionSetName:
-                    questionSetName.trim(),
-
-                  questions:
-                    questions.map(
-                      (
-                        question
-                      ) => ({
-                        ...question,
-                        _id:
-                          undefined,
-                      })
-                    ),
-                }
-              ),
-            }
-          );
-
-        const data =
-          await response.json();
-
-        if (
-          !response.ok
-        ) {
-          throw new Error(
-            data.message ||
-              "Failed to create question set."
-          );
-        }
-
-        /*
-         * Automatically published
-         * for use immediately in
-         * this exam.
-         */
-        const created =
-          data.questionSet;
-
-        const publishResponse =
-          await fetch(
-            `http://localhost:5000/api/question-sets/${created._id}/publish`,
-            {
-              method:
-                "PATCH",
-
-              credentials:
-                "include",
-            }
-          );
-
-        const publishedData =
-          await publishResponse.json();
-
-        if (
-          !publishResponse.ok
-        ) {
-          throw new Error(
-            publishedData.message ||
-              "Question set was created but could not be published."
-          );
-        }
-
-        onDone(
-          publishedData.questionSet
-        );
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Something went wrong."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+      onDone(publishedData.questionSet);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Something went wrong.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="rounded-3xl border border-purple-100 bg-white p-5 shadow-xl shadow-purple-100/50 sm:p-8">
-
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-500">
             Question Set
@@ -448,7 +259,6 @@ export const InlineQuestionSetCreator = ({
         >
           Back to Exam
         </button>
-
       </div>
 
       <div className="mt-6">
@@ -457,52 +267,31 @@ export const InlineQuestionSetCreator = ({
         </label>
 
         <input
-          value={
-            questionSetName
-          }
-          onChange={(event) =>
-            setQuestionSetName(
-              event.target.value
-            )
-          }
+          value={questionSetName}
+          onChange={(event) => setQuestionSetName(event.target.value)}
           placeholder="Example: CSE - JavaScript Fundamentals"
           className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
         />
       </div>
 
       <div className="mt-6 rounded-2xl border border-purple-100 bg-purple-50/40 p-5">
-
         <div className="flex items-center justify-between">
-
-          <h3 className="font-bold text-slate-900">
-            Question
-          </h3>
+          <h3 className="font-bold text-slate-900">Question</h3>
 
           <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-purple-700">
-            {editingIndex !==
-            null
-              ? `Editing #${
-                  editingIndex +
-                  1
-                }`
+            {editingIndex !== null
+              ? `Editing #${editingIndex + 1}`
               : "New Question"}
           </span>
-
         </div>
 
         <textarea
-          value={
-            currentQuestion.question
-          }
+          value={currentQuestion.question}
           onChange={(event) =>
-            setCurrentQuestion(
-              (previous) => ({
-                ...previous,
-                question:
-                  event.target
-                    .value,
-              })
-            )
+            setCurrentQuestion((previous) => ({
+              ...previous,
+              question: event.target.value,
+            }))
           }
           placeholder="Enter your question..."
           rows={3}
@@ -510,74 +299,36 @@ export const InlineQuestionSetCreator = ({
         />
 
         <div className="mt-5 space-y-3">
-
-          {currentQuestion.options.map(
-            (
-              option,
-              index
-            ) => (
-              <div
-                key={index}
-                className="flex items-center gap-3"
+          {currentQuestion.options.map((option, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => toggleAnswer(option)}
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                  currentQuestion.answer.includes(option)
+                    ? "border-purple-600 bg-purple-600 text-white"
+                    : "border-slate-300 bg-white"
+                }`}
               >
+                {currentQuestion.answer.includes(option) ? "✓" : ""}
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    toggleAnswer(
-                      option
-                    )
-                  }
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                    currentQuestion.answer.includes(
-                      option
-                    )
-                      ? "border-purple-600 bg-purple-600 text-white"
-                      : "border-slate-300 bg-white"
-                  }`}
-                >
-                  {currentQuestion.answer.includes(
-                    option
-                  )
-                    ? "✓"
-                    : ""}
-                </button>
+              <input
+                value={option}
+                onChange={(event) => updateOption(index, event.target.value)}
+                placeholder={`Option ${index + 1}`}
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-purple-400"
+              />
 
-                <input
-                  value={option}
-                  onChange={(
-                    event
-                  ) =>
-                    updateOption(
-                      index,
-                      event
-                        .target
-                        .value
-                    )
-                  }
-                  placeholder={`Option ${
-                    index +
-                    1
-                  }`}
-                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-purple-400"
-                />
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    removeOption(
-                      index
-                    )
-                  }
-                  className="rounded-lg px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50"
-                >
-                  ×
-                </button>
-
-              </div>
-            )
-          )}
-
+              <button
+                type="button"
+                onClick={() => removeOption(index)}
+                className="rounded-lg px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50"
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
 
         <button
@@ -589,85 +340,48 @@ export const InlineQuestionSetCreator = ({
         </button>
 
         <div className="mt-5">
-
-          <p className="text-sm font-bold text-slate-700">
-            Question Type
-          </p>
+          <p className="text-sm font-bold text-slate-700">Question Type</p>
 
           <div className="mt-2 flex gap-3">
+            {(["SINGLE", "MULTI"] as QuestionType[]).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() =>
+                  setCurrentQuestion((previous) => ({
+                    ...previous,
+                    questionType: type,
 
-            {(
-              [
-                "SINGLE",
-                "MULTI",
-              ] as QuestionType[]
-            ).map(
-              (type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() =>
-                    setCurrentQuestion(
-                      (
-                        previous
-                      ) => ({
-                        ...previous,
-                        questionType:
-                          type,
-
-                        answer:
-                          type ===
-                          "SINGLE"
-                            ? previous
-                                .answer
-                                .slice(
-                                  0,
-                                  1
-                                )
-                            : previous.answer,
-                      })
-                    )
-                  }
-                  className={`rounded-xl px-5 py-2.5 text-sm font-bold transition ${
-                    currentQuestion.questionType ===
-                    type
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                      : "bg-white text-purple-700 ring-1 ring-purple-200 hover:bg-purple-50"
-                  }`}
-                >
-                  {type ===
-                  "SINGLE"
-                    ? "Single Answer"
-                    : "Multiple Answers"}
-                </button>
-              )
-            )}
-
+                    answer:
+                      type === "SINGLE"
+                        ? previous.answer.slice(0, 1)
+                        : previous.answer,
+                  }))
+                }
+                className={`rounded-xl px-5 py-2.5 text-sm font-bold transition ${
+                  currentQuestion.questionType === type
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                    : "bg-white text-purple-700 ring-1 ring-purple-200 hover:bg-purple-50"
+                }`}
+              >
+                {type === "SINGLE" ? "Single Answer" : "Multiple Answers"}
+              </button>
+            ))}
           </div>
-
         </div>
 
         <button
           type="button"
-          onClick={
-            saveCurrentQuestion
-          }
+          onClick={saveCurrentQuestion}
           className="mt-6 rounded-xl bg-gradient-to-r from-purple-600 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
         >
-          {editingIndex !==
-          null
-            ? "Update Question"
-            : "Add Next Question"}
+          {editingIndex !== null ? "Update Question" : "Add Next Question"}
         </button>
-
       </div>
 
-      {questions.length >
-        0 && (
+      {questions.length > 0 && (
         <div className="mt-7">
-
           <div className="flex items-center justify-between">
-
             <h3 className="text-lg font-bold text-slate-900">
               Added Questions
             </h3>
@@ -675,83 +389,50 @@ export const InlineQuestionSetCreator = ({
             <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
               {questions.length} Questions
             </span>
-
           </div>
 
           <div className="mt-4 space-y-3">
-
-            {questions.map(
-              (
-                question,
-                index
-              ) => (
-                <div
-                  key={
-                    question._id ??
-                    index
-                  }
-                  className="rounded-2xl border border-slate-200 bg-white p-4"
-                >
-
-                  <div className="flex gap-3">
-
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-sm font-bold text-purple-700">
-                      {index +
-                        1}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-
-                      <p className="font-semibold text-slate-800">
-                        {
-                          question.question
-                        }
-                      </p>
-
-                      <p className="mt-1 text-xs font-semibold text-slate-400">
-                        {
-                          question.questionType
-                        }
-                      </p>
-
-                    </div>
-
-                    <div className="flex gap-1">
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          editQuestion(
-                            index
-                          )
-                        }
-                        className="rounded-lg px-3 py-2 text-sm font-bold text-purple-600 hover:bg-purple-50"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteQuestion(
-                            index
-                          )
-                        }
-                        className="rounded-lg px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-
-                    </div>
-
+            {questions.map((question, index) => (
+              <div
+                key={question._id ?? index}
+                className="rounded-2xl border border-slate-200 bg-white p-4"
+              >
+                <div className="flex gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-sm font-bold text-purple-700">
+                    {index + 1}
                   </div>
 
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-slate-800">
+                      {question.question}
+                    </p>
+
+                    <p className="mt-1 text-xs font-semibold text-slate-400">
+                      {question.questionType}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => editQuestion(index)}
+                      className="rounded-lg px-3 py-2 text-sm font-bold text-purple-600 hover:bg-purple-50"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteQuestion(index)}
+                      className="rounded-lg px-3 py-2 text-sm font-bold text-red-500 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              )
-            )}
-
+              </div>
+            ))}
           </div>
-
         </div>
       )}
 
@@ -771,7 +452,6 @@ export const InlineQuestionSetCreator = ({
           ? "Publishing Question Set..."
           : "Mark as Done & Return to Exam"}
       </button>
-
     </div>
   );
 };

@@ -1,9 +1,4 @@
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import Login from "./pages/login/Login";
 import Register from "./pages/login/Register";
@@ -35,111 +30,52 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={<Login />}
-        />
+        <Route path="/" element={<Login />} />
 
-        <Route
-          path="/register"
-          element={<Register />}
-        />
+        <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route
-          path="/student"
-          element={<StudentDashboard />}
-        >
-          <Route
-            index
-            element={<StudentHome />}
-          />
+        <Route path="/student" element={<StudentDashboard />}>
+          <Route index element={<StudentHome />} />
 
-          <Route
-            path="new-exams"
-            element={<NewExams />}
-          />
+          <Route path="new-exams" element={<NewExams />} />
 
-          <Route
-            path="exams/:examId/terms"
-            element={<ExamTerms />}
-          />
+          <Route path="exams/:examId/terms" element={<ExamTerms />} />
 
-          <Route
-            path="exams/:examId/attempt"
-            element={<ExamAttempt />}
-          />
+          <Route path="exams/:examId/attempt" element={<ExamAttempt />} />
 
-          <Route
-            path="my-performance"
-            element={<MyPerformance />}
-          />
+          <Route path="my-performance" element={<MyPerformance />} />
 
-          <Route
-            path="profile"
-            element={<StudentProfile />}
-          />
+          <Route path="profile" element={<StudentProfile />} />
         </Route>
 
-        <Route
-          path="/instructor"
-          element={<InstructorDashboard />}
-        >
-          <Route
-            index
-            element={<InstructorHome />}
-          />
+        <Route path="/instructor" element={<InstructorDashboard />}>
+          <Route index element={<InstructorHome />} />
 
-          <Route
-            path="create-question-set"
-            element={<CreateQuestionSet />}
-          />
+          <Route path="create-question-set" element={<CreateQuestionSet />} />
 
           <Route
             path="students-examination-status"
-            element={
-              <StudentsExaminationStatus />
-            }
+            element={<StudentsExaminationStatus />}
           />
 
-          <Route
-            path="create-exam"
-            element={<CreateExam />}
-          />
+          <Route path="create-exam" element={<CreateExam />} />
 
           <Route
             path="newly-requested-student"
-            element={
-              <NewlyRequestedStudent />
-            }
+            element={<NewlyRequestedStudent />}
           />
 
           <Route
             path="student/:id/performance"
-            element={
-              <StudentPerformance />
-            }
+            element={<StudentPerformance />}
           />
 
-          <Route
-            path="profile"
-            element={<InstructorProfile />}
-          />
+          <Route path="profile" element={<InstructorProfile />} />
         </Route>
 
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to="/"
-              replace
-            />
-          }
-        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
