@@ -2,6 +2,12 @@ import type { Request, Response } from "express";
 import mongoose from "mongoose";
 import Attempt from "../models/Attempt";
 import Exam from "../models/Exam";
+import ExamUpdateNotice from "../models/ExamUpdateNotice";
+import { purgeStaleAttempts } from "../utils/examChange";
+
+const EXAM_UPDATED_MESSAGE =
+  "This examination was updated by your instructor. Please attempt it again.";
+
 const isSameAnswers = (
   selectedAnswers: string[],
   correctAnswers: string[],
@@ -13,9 +19,52 @@ const isSameAnswers = (
   const correct = [...correctAnswers].sort();
   return selected.every((answer, index) => answer === correct[index]);
 };
+
 const getSingleString = (value: string | string[]): string => {
   return Array.isArray(value) ? (value[0] ?? "") : value;
 };
+
+/*
+ * True when the student has an unseen "exam updated" notice.
+ * Used when the attempt no longer exists because it was deleted
+ * after the instructor changed the exam.
+ */
+const hasUnseenUpdateNotice = async (studentId: string): Promise<boolean> => {
+  const notice = await ExamUpdateNotice.findOne({
+    studentId: new mongoose.Types.ObjectId(studentId),
+    seen: false,
+  })
+    .select("_id")
+    .lean();
+
+  return Boolean(notice);
+};
+
+/*
+ * True when the attempt belongs to an older version of the exam.
+ * Stale attempts are deleted (and notices created) on the spot.
+ */
+const isAttemptStale = async (attempt: {
+  examId: mongoose.Types.ObjectId;
+  changeId?: string;
+}): Promise<boolean> => {
+  const exam = await Exam.findById(attempt.examId)
+    .select("_id title changeId")
+    .lean();
+
+  if (!exam) {
+    return false;
+  }
+
+  if ((exam.changeId ?? "") === (attempt.changeId ?? "")) {
+    return false;
+  }
+
+  await purgeStaleAttempts(exam);
+
+  return true;
+};
+
 export const saveStudentExamAnswer = async (
   req: Request,
   res: Response,
@@ -64,12 +113,31 @@ export const saveStudentExamAnswer = async (
       status: "IN_PROGRESS",
     });
     if (!attempt) {
+      if (await hasUnseenUpdateNotice(studentId)) {
+        res.status(409).json({
+          success: false,
+          code: "EXAM_UPDATED",
+          message: EXAM_UPDATED_MESSAGE,
+        });
+        return;
+      }
+
       res.status(404).json({
         success: false,
         message: "Active examination attempt was not found.",
       });
       return;
     }
+
+    if (await isAttemptStale(attempt)) {
+      res.status(409).json({
+        success: false,
+        code: "EXAM_UPDATED",
+        message: EXAM_UPDATED_MESSAGE,
+      });
+      return;
+    }
+
     const question = attempt.questions.find(
       (item) => item.questionId === questionId,
     );
@@ -94,6 +162,7 @@ export const saveStudentExamAnswer = async (
     });
   }
 };
+
 export const finalizeStudentAttempt = async (
   attemptId: string,
   studentId: string,
@@ -206,6 +275,7 @@ export const finalizeStudentAttempt = async (
   }
   return attempt;
 };
+
 export const submitStudentExam = async (
   req: Request,
   res: Response,
@@ -234,12 +304,43 @@ export const submitStudentExam = async (
       });
       return;
     }
+
+    /*
+     * Do not score an attempt that belongs to an older
+     * version of the exam.
+     */
+    const activeAttempt = await Attempt.findOne({
+      _id: new mongoose.Types.ObjectId(attemptId),
+      studentId: new mongoose.Types.ObjectId(studentId),
+      status: "IN_PROGRESS",
+    })
+      .select("examId changeId")
+      .lean();
+
+    if (activeAttempt && (await isAttemptStale(activeAttempt))) {
+      res.status(409).json({
+        success: false,
+        code: "EXAM_UPDATED",
+        message: EXAM_UPDATED_MESSAGE,
+      });
+      return;
+    }
+
     const attempt = await finalizeStudentAttempt(
       attemptId,
       studentId,
       "SUBMITTED",
     );
     if (!attempt) {
+      if (await hasUnseenUpdateNotice(studentId)) {
+        res.status(409).json({
+          success: false,
+          code: "EXAM_UPDATED",
+          message: EXAM_UPDATED_MESSAGE,
+        });
+        return;
+      }
+
       res.status(404).json({
         success: false,
         message: "Active examination attempt was not found.",

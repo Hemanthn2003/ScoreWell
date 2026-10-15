@@ -7,6 +7,12 @@ import QuestionSet from "../models/Question";
 import User from "../models/User";
 import SpecialExamStudent from "../models/SpecialExamStudent";
 import StrictExam from "../models/StrictExam";
+import {
+  ONE_DAY_MS,
+  newChangeId,
+  publishScheduledExams,
+  purgeStaleAttempts,
+} from "../utils/examChange";
 
 interface CreateExamBody {
   title?: string;
@@ -42,20 +48,12 @@ const parseDateTime = (value?: string): Date | null => {
 const syncExamStatuses = async (): Promise<void> => {
   const now = new Date();
 
-  await Exam.updateMany(
-    {
-      status: "UNPUBLISHED",
-      startDate: {
-        $ne: null,
-        $lte: now,
-      },
-    },
-    {
-      $set: {
-        status: "PUBLISHED",
-      },
-    },
-  );
+  /*
+   * Publishes exams whose start date has arrived.
+   * Exams unpublished for more than one day get a new
+   * changeId, and stale attempts are purged.
+   */
+  await publishScheduledExams();
 
   await Exam.updateMany(
     {
@@ -99,6 +97,13 @@ const shuffle = <T>(array: T[]): T[] => {
   }
 
   return result;
+};
+
+const sortedIdString = (ids: unknown[]): string => {
+  return ids
+    .map((id) => String(id))
+    .sort()
+    .join(",");
 };
 
 const getInstructor = async (req: Request) => {
@@ -514,6 +519,15 @@ export const createExam = async (
 
         return;
       }
+
+      if (parsedStartDate && parsedStrictDeadline <= parsedStartDate) {
+        res.status(400).json({
+          success: false,
+          message: "Strict mode deadline must be after the start date.",
+        });
+
+        return;
+      }
     }
 
     if (mode !== "COMMON" && mode !== "SPECIAL") {
@@ -631,6 +645,15 @@ export const createExam = async (
       }
     }
 
+    /*
+     * Strict exams: the strict-mode deadline governs when the
+     * exam expires, so the exam's own deadline is replaced by it.
+     */
+    const effectiveDeadline =
+      strictMode && parsedStrictDeadline
+        ? parsedStrictDeadline
+        : parsedDeadlineDate;
+
     const exam = await Exam.create({
       title: title.trim(),
 
@@ -664,7 +687,11 @@ export const createExam = async (
 
       startDate: parsedStartDate,
 
-      deadlineDate: parsedDeadlineDate,
+      deadlineDate: effectiveDeadline,
+
+      changeId: newChangeId(),
+
+      unpublishedAt: null,
 
       status:
         parsedStartDate && parsedStartDate <= new Date()
@@ -890,6 +917,15 @@ export const updateExam = async (
 
         return;
       }
+
+      if (parsedStartDate && parsedStrictDeadline <= parsedStartDate) {
+        res.status(400).json({
+          success: false,
+          message: "Strict mode deadline must be after the start date.",
+        });
+
+        return;
+      }
     }
 
     if (!title?.trim()) {
@@ -1014,17 +1050,61 @@ export const updateExam = async (
       }
     }
 
-    const selectedQuestions = shuffle(allQuestions).slice(0, questionCount);
+    /* =====================================================
+         DETECT MATERIAL CHANGES
+
+         Only these create a new changeId:
+         - question sets changed
+         - question count changed
+         - exam type changed (normal <-> strict)
+      ===================================================== */
+
+    const hadStrict = Boolean(
+      await StrictExam.exists({
+        examId: existing._id,
+
+        instructorId: req.user!.userId,
+      }),
+    );
+
+    const questionSetsChanged =
+      sortedIdString(existing.questionSetIds) !==
+      sortedIdString(questionSetIds);
+
+    const questionCountChanged = existing.questionCount !== questionCount;
+
+    const examTypeChanged = hadStrict !== Boolean(strictMode);
+
+    const materialChange =
+      questionSetsChanged || questionCountChanged || examTypeChanged;
+
+    const previousStatus = existing.status;
+
+    /*
+     * Only re-pick questions when the pool or count changed,
+     * so small edits (title, dates...) do not alter the exam.
+     */
+    if (
+      questionSetsChanged ||
+      questionCountChanged ||
+      (existing.questionIds?.length ?? 0) !== questionCount
+    ) {
+      const selectedQuestions = shuffle(allQuestions).slice(0, questionCount);
+
+      existing.questionIds = selectedQuestions.map(
+        (question) => question.questionId,
+      );
+    }
+
+    if (materialChange) {
+      existing.changeId = newChangeId();
+    }
 
     existing.title = title.trim();
 
     existing.description = description?.trim() ?? "";
 
     existing.questionSetIds = questionSetIds;
-
-    existing.questionIds = selectedQuestions.map(
-      (question) => question.questionId,
-    );
 
     existing.durationMinutes = durationMinutes!;
 
@@ -1046,11 +1126,20 @@ export const updateExam = async (
 
     existing.startDate = parsedStartDate;
 
-    existing.deadlineDate = parsedDeadlineDate;
+    const effectiveDeadline =
+      strictMode && parsedStrictDeadline
+        ? parsedStrictDeadline
+        : parsedDeadlineDate;
 
-    if (parsedDeadlineDate && parsedDeadlineDate <= new Date()) {
+    existing.deadlineDate = effectiveDeadline;
+
+    if (effectiveDeadline && effectiveDeadline <= new Date()) {
       existing.status = "EXPIRED";
     } else if (parsedStartDate && parsedStartDate > new Date()) {
+      if (previousStatus === "PUBLISHED") {
+        existing.unpublishedAt = new Date();
+      }
+
       existing.status = "UNPUBLISHED";
     }
 
@@ -1112,6 +1201,15 @@ export const updateExam = async (
 
         instructorId: req.user!.userId,
       });
+    }
+
+    /*
+     * A published exam that was materially changed:
+     * delete every stale attempt now and queue the
+     * "exam updated" modal for the affected students.
+     */
+    if (materialChange && existing.status === "PUBLISHED") {
+      await purgeStaleAttempts(existing);
     }
 
     res.status(200).json({
@@ -1191,6 +1289,11 @@ export const deleteExam = async (
 
 /* =========================================================
    PUBLISH
+
+   Publishing makes the exam visible to eligible students
+   immediately. If the start date is still in the future,
+   students see the card with a countdown and a disabled
+   Start button until the start date and time arrives.
 ========================================================= */
 
 export const publishExam = async (
@@ -1225,25 +1328,37 @@ export const publishExam = async (
       return;
     }
 
-    if (exam.startDate && exam.startDate > now) {
-      exam.status = "UNPUBLISHED";
-    } else {
-      if (!exam.startDate) {
-        exam.startDate = now;
-      }
-
-      exam.status = "PUBLISHED";
+    /*
+     * Unpublished for more than one day => treated as a
+     * changed exam: new changeId, old attempts are removed.
+     */
+    if (
+      exam.unpublishedAt &&
+      now.getTime() - new Date(exam.unpublishedAt).getTime() > ONE_DAY_MS
+    ) {
+      exam.changeId = newChangeId();
     }
 
+    exam.unpublishedAt = null;
+
+    if (!exam.startDate) {
+      exam.startDate = now;
+    }
+
+    exam.status = "PUBLISHED";
+
     await exam.save();
+
+    await purgeStaleAttempts(exam);
+
+    const startsInFuture = exam.startDate > now;
 
     res.status(200).json({
       success: true,
 
-      message:
-        exam.status === "PUBLISHED"
-          ? "Exam published successfully."
-          : "Exam scheduled successfully. It will publish automatically at the configured start date and time.",
+      message: startsInFuture
+        ? "Exam published successfully. Students can start it from the configured start date and time."
+        : "Exam published successfully.",
 
       exam,
     });
@@ -1284,6 +1399,8 @@ export const unpublishExam = async (
     exam.status = "UNPUBLISHED";
 
     exam.startDate = null;
+
+    exam.unpublishedAt = new Date();
 
     await exam.save();
 

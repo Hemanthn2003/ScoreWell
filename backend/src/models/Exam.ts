@@ -55,6 +55,17 @@ export interface IExam extends Document {
   deadlineDate?: Date | null;
 
   status: ExamStatus;
+
+  /**
+   * Changes whenever the exam is materially changed
+   * (question count, question sets, normal <-> strict,
+   * or republished after being unpublished for more than 1 day).
+   * Attempts store the value they were started under.
+   */
+  changeId?: string;
+
+  /** When the instructor last unpublished this exam. */
+  unpublishedAt?: Date | null;
 }
 
 const examSchema = new Schema<IExam>(
@@ -145,6 +156,16 @@ const examSchema = new Schema<IExam>(
       enum: ["UNPUBLISHED", "PUBLISHED", "EXPIRED", "CLOSED"],
       required: true,
       default: "UNPUBLISHED",
+    },
+
+    changeId: {
+      type: String,
+      default: "",
+    },
+
+    unpublishedAt: {
+      type: Date,
+      default: null,
     },
   },
   {

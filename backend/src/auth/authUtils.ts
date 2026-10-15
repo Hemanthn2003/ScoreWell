@@ -1,147 +1,64 @@
-import jwt from "jsonwebtoken";
 import type { Response } from "express";
-
-/* =========================================================
-   JWT PAYLOAD
-========================================================= */
+import jwt from "jsonwebtoken";
+import type { UserRole } from "../models/User";
 
 export interface JwtPayload {
   userId: string;
   email?: string;
-  role: "STUDENT" | "INSTRUCTOR";
+  role: UserRole;
 }
 
-/* =========================================================
-   SECRETS
-========================================================= */
+const accessSecret = process.env.ACCESS_TOKEN_SECRET;
+const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
 
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
-
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
-
-if (!ACCESS_TOKEN_SECRET) {
-  throw new Error("ACCESS_TOKEN_SECRET is not defined");
-}
-
-if (!REFRESH_TOKEN_SECRET) {
-  throw new Error("REFRESH_TOKEN_SECRET is not defined");
-}
-
-/* =========================================================
-   ACCESS TOKEN
-   Valid for 1 day
-========================================================= */
-
-export const generateAccessToken = (payload: JwtPayload): string => {
-  return jwt.sign(payload, ACCESS_TOKEN_SECRET, {
-    expiresIn: "1d",
-  });
+const requireSecret = (secret: string | undefined, name: string): string => {
+  if (!secret) throw new Error(`${name} is not configured.`);
+  return secret;
 };
 
-/* =========================================================
-   REFRESH TOKEN
-   Normal = 3 days
-   Remember Me = 30 days
-========================================================= */
+export const generateAccessToken = (payload: JwtPayload): string =>
+  jwt.sign(payload, requireSecret(accessSecret, "ACCESS_TOKEN_SECRET"), { expiresIn: "1d" });
 
-export const generateRefreshToken = (
-  payload: JwtPayload,
-  rememberMe: boolean,
-): string => {
-  return jwt.sign(payload, REFRESH_TOKEN_SECRET, {
+export const generateRefreshToken = (payload: JwtPayload, rememberMe = false): string =>
+  jwt.sign(payload, requireSecret(refreshSecret, "REFRESH_TOKEN_SECRET"), {
     expiresIn: rememberMe ? "30d" : "3d",
   });
+
+export const verifyAccessToken = (token: string): JwtPayload =>
+  jwt.verify(token, requireSecret(accessSecret, "ACCESS_TOKEN_SECRET")) as JwtPayload;
+
+export const verifyRefreshToken = (token: string): JwtPayload =>
+  jwt.verify(token, requireSecret(refreshSecret, "REFRESH_TOKEN_SECRET")) as JwtPayload;
+
+const cookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+  path: "/",
+});
+
+export const setAccessCookie = (res: Response, accessToken: string): void => {
+  res.cookie("scorewell_access_token", accessToken, {
+    ...cookieOptions(),
+    maxAge: 24 * 60 * 60 * 1000,
+  });
 };
-
-/* =========================================================
-   VERIFY ACCESS TOKEN
-========================================================= */
-
-export const verifyAccessToken = (token: string): JwtPayload => {
-  const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as JwtPayload;
-
-  return decoded;
-};
-
-/* =========================================================
-   VERIFY REFRESH TOKEN
-========================================================= */
-
-export const verifyRefreshToken = (token: string): JwtPayload => {
-  const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET) as JwtPayload;
-
-  return decoded;
-};
-
-/* =========================================================
-   SET AUTH COOKIES
-========================================================= */
 
 export const setAuthCookies = (
   res: Response,
   accessToken: string,
   refreshToken: string,
-  rememberMe: boolean,
+  rememberMe = false,
 ): void => {
-  const isProduction = process.env.NODE_ENV === "production";
-
-  /* =========================
-     ACCESS TOKEN
-  ========================== */
-
-  res.cookie("scorewell_access_token", accessToken, {
-    httpOnly: true,
-
-    secure: isProduction,
-
-    sameSite: isProduction ? "none" : "lax",
-
-    maxAge: 1 * 24 * 60 * 60 * 1000,
-
-    path: "/",
-  });
-
-  /* =========================
-     REFRESH TOKEN
-  ========================== */
-
+  setAccessCookie(res, accessToken);
   res.cookie("scorewell_refresh_token", refreshToken, {
-    httpOnly: true,
-
-    secure: isProduction,
-
-    sameSite: isProduction ? "none" : "lax",
-
-    maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 3 * 24 * 60 * 60 * 1000,
-
-    path: "/",
+    ...cookieOptions(),
+    maxAge: (rememberMe ? 30 : 3) * 24 * 60 * 60 * 1000,
   });
 };
 
-/* =========================================================
-   CLEAR AUTH COOKIES
-========================================================= */
-
 export const clearAuthCookies = (res: Response): void => {
-  const isProduction = process.env.NODE_ENV === "production";
-
-  res.clearCookie("scorewell_access_token", {
-    httpOnly: true,
-
-    secure: isProduction,
-
-    sameSite: isProduction ? "none" : "lax",
-
-    path: "/",
-  });
-
-  res.clearCookie("scorewell_refresh_token", {
-    httpOnly: true,
-
-    secure: isProduction,
-
-    sameSite: isProduction ? "none" : "lax",
-
-    path: "/",
-  });
+  const options = cookieOptions();
+  res.clearCookie("scorewell_access_token", options);
+  res.clearCookie("scorewell_refresh_token", options);
 };

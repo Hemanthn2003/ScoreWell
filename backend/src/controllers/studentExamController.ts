@@ -14,13 +14,15 @@ import SpecialExamStudent from "../models/SpecialExamStudent";
 
 import StrictExam from "../models/StrictExam";
 import ExamActivity from "../models/ExamActivity";
+import ExamUpdateNotice from "../models/ExamUpdateNotice";
 import { finalizeStudentAttempt } from "./studentExamSubmissionController";
+import { publishScheduledExams, purgeStaleAttempts } from "../utils/examChange";
 
 /* =========================================================
 
    HELPERS
 
-\========================================================= */
+========================================================= */
 
 const normalizeDepartment = (department?: string | null): string => {
   return (department ?? "")
@@ -124,18 +126,12 @@ const cleanupExpiredExamAttempts = async (
 export const syncExamStatuses = async (): Promise<void> => {
   const now = new Date();
 
-  await Exam.updateMany(
-    {
-      status: "UNPUBLISHED",
-      startDate: {
-        $ne: null,
-        $lte: now,
-      },
-    },
-    {
-      $set: { status: "PUBLISHED" },
-    },
-  );
+  /*
+   * Publishes exams whose start date has arrived.
+   * Exams unpublished for more than one day get a new
+   * changeId and stale attempts are purged.
+   */
+  await publishScheduledExams();
 
   await Exam.updateMany(
     {
@@ -183,7 +179,7 @@ export const syncExamStatuses = async (): Promise<void> => {
 
    GET AVAILABLE STUDENT EXAMS
 
-\========================================================= */
+========================================================= */
 
 export const getAvailableStudentExams = async (
   req: Request,
@@ -280,9 +276,14 @@ export const getAvailableStudentExams = async (
 
     const now = new Date();
 
+    const studentDepartment = normalizeDepartment(student.department);
+
     /* =====================================================
 
          GET EXAMS
+
+         Upcoming exams (start date in the future) are
+         included so the student sees a countdown.
 
       ===================================================== */
 
@@ -295,6 +296,37 @@ export const getAvailableStudentExams = async (
       })
 
       .lean();
+
+    /* =====================================================
+
+         DELETE STALE ATTEMPTS (changeId mismatch)
+
+         Runs BEFORE attempts are loaded so students
+         never see attempts of an older exam version.
+
+      ===================================================== */
+
+    for (const exam of exams) {
+      if (normalizeDepartment(exam.department) === studentDepartment) {
+        await purgeStaleAttempts(exam);
+      }
+    }
+
+    /* =====================================================
+
+         UNSEEN "EXAM UPDATED" NOTICES
+
+      ===================================================== */
+
+    const notices = await ExamUpdateNotice.find({
+      studentId: studentObjectId,
+
+      seen: false,
+    }).lean();
+
+    const noticeExamIds = new Set(
+      notices.map((notice) => notice.examId.toString()),
+    );
 
     /* =====================================================
 
@@ -407,6 +439,8 @@ export const getAvailableStudentExams = async (
 
       deadlineDate: string | null;
 
+      updateNotice: boolean;
+
       inProgressAttempt: {
         attemptId: string;
 
@@ -417,8 +451,6 @@ export const getAvailableStudentExams = async (
         status: string;
       } | null;
     }> = [];
-
-    const studentDepartment = normalizeDepartment(student.department);
 
     for (const exam of exams) {
       const examId = exam._id.toString();
@@ -457,20 +489,11 @@ export const getAvailableStudentExams = async (
 
       /* =================================================
 
-           START DATE
-
-        ================================================= */
-
-      if (
-        exam.startDate &&
-        new Date(exam.startDate).getTime() > now.getTime()
-      ) {
-        continue;
-      }
-
-      /* =================================================
-
            EFFECTIVE DEADLINE
+
+           Strict exams use the strict-mode deadline.
+           The start date always comes from the exam.
+           Exams that already ended are hidden.
 
         ================================================= */
 
@@ -574,6 +597,7 @@ export const getAvailableStudentExams = async (
             deadlineDate: effectiveDeadline
               ? new Date(effectiveDeadline).toISOString()
               : null,
+            updateNotice: noticeExamIds.has(examId),
             inProgressAttempt: {
               attemptId: inProgressAttempt._id.toString(),
               attemptNo: Number(inProgressAttempt.attemptNo),
@@ -646,6 +670,8 @@ export const getAvailableStudentExams = async (
           ? new Date(effectiveDeadline).toISOString()
           : null,
 
+        updateNotice: noticeExamIds.has(examId),
+
         inProgressAttempt: null,
       });
     }
@@ -658,6 +684,8 @@ export const getAvailableStudentExams = async (
 
     res.status(200).json({
       success: true,
+
+      serverTime: new Date().toISOString(),
 
       exams: availableExams,
     });
@@ -678,9 +706,75 @@ export const getAvailableStudentExams = async (
 
 /* =========================================================
 
+   ACKNOWLEDGE "EXAM UPDATED" NOTICE
+
+========================================================= */
+
+export const acknowledgeExamUpdate = async (
+  req: Request,
+
+  res: Response,
+): Promise<void> => {
+  try {
+    if (!req.user || req.user.role !== "STUDENT") {
+      res.status(403).json({
+        success: false,
+
+        message: "Only students can acknowledge examination updates.",
+      });
+
+      return;
+    }
+
+    const examIdParam = Array.isArray(req.params.examId)
+      ? req.params.examId[0]
+      : req.params.examId;
+
+    if (
+      !examIdParam ||
+      !mongoose.Types.ObjectId.isValid(examIdParam) ||
+      !mongoose.Types.ObjectId.isValid(req.user.userId)
+    ) {
+      res.status(400).json({
+        success: false,
+
+        message: "Invalid request.",
+      });
+
+      return;
+    }
+
+    await ExamUpdateNotice.updateOne(
+      {
+        studentId: new mongoose.Types.ObjectId(req.user.userId),
+
+        examId: new mongoose.Types.ObjectId(examIdParam),
+      },
+
+      {
+        $set: { seen: true },
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("Acknowledge exam update error:", error);
+
+    res.status(500).json({
+      success: false,
+
+      message: "Failed to acknowledge the examination update.",
+    });
+  }
+};
+
+/* =========================================================
+
    START EXAM
 
-\========================================================= */
+========================================================= */
 
 export const startStudentExam = async (
   req: Request,
@@ -829,6 +923,35 @@ export const startStudentExam = async (
 
     /* =====================================================
 
+         START DATE (exam start applies to normal + strict)
+
+      ===================================================== */
+
+    if (
+      exam.startDate &&
+      new Date(exam.startDate).getTime() > now.getTime()
+    ) {
+      res.status(403).json({
+        success: false,
+
+        code: "EXAM_NOT_STARTED",
+
+        message: "This examination has not started yet.",
+      });
+
+      return;
+    }
+
+    /* =====================================================
+
+         DELETE STALE ATTEMPTS (changeId mismatch)
+
+      ===================================================== */
+
+    await purgeStaleAttempts(exam);
+
+    /* =====================================================
+
          NORMAL EXAM DEADLINE
 
       ===================================================== */
@@ -837,8 +960,10 @@ export const startStudentExam = async (
       exam.deadlineDate &&
       new Date(exam.deadlineDate).getTime() <= now.getTime()
     ) {
-      res.status(400).json({
+      res.status(403).json({
         success: false,
+
+        code: "EXAM_ENDED",
 
         message: "The examination deadline has passed.",
       });
@@ -886,8 +1011,10 @@ export const startStudentExam = async (
       strictExam?.deadlineDate &&
       new Date(strictExam.deadlineDate).getTime() <= now.getTime()
     ) {
-      res.status(400).json({
+      res.status(403).json({
         success: false,
+
+        code: "EXAM_ENDED",
 
         message: "The strict examination deadline has passed.",
       });
@@ -1289,7 +1416,7 @@ export const startStudentExam = async (
 
     /* =====================================================
 
-         CREATE ATTEMPT
+         CREATE ATTEMPT (registers the exam's changeId)
 
       ===================================================== */
 
@@ -1337,6 +1464,8 @@ export const startStudentExam = async (
       unanswered: questionCount,
 
       timeTakenSeconds: 0,
+
+      changeId: exam.changeId ?? "",
     });
 
     /* =====================================================

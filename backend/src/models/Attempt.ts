@@ -134,6 +134,9 @@ export interface IAttempt extends Document {
   unanswered: number;
 
   timeTakenSeconds: number;
+
+  /** Snapshot of Exam.changeId when this attempt was started. */
+  changeId?: string;
 }
 
 /* =========================================================
@@ -295,6 +298,16 @@ const attemptSchema = new Schema<IAttempt>(
       type: Number,
       required: true,
       default: 0,
+    },
+
+    /*
+     * Snapshot of Exam.changeId when this attempt started.
+     * If it no longer matches the exam, the attempt is stale
+     * and is deleted (the student gets an "exam updated" modal).
+     */
+    changeId: {
+      type: String,
+      default: "",
     },
   },
   {

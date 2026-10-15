@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useNavigate, useParams } from "react-router-dom";
 
+import Modal from "../../../components/Modal";
+
 type QuestionType = "SINGLE" | "MULTI";
 
 interface ExamQuestion {
@@ -79,10 +81,12 @@ interface SubmitExamResponse {
 
   message?: string;
 
+  code?: string;
+
   result?: SubmissionResult;
 }
 
-const API_URL = "http\://localhost:5000";
+const API_URL = "http://localhost:5000";
 
 const ExamAttempt = () => {
   const navigate = useNavigate();
@@ -109,20 +113,16 @@ const ExamAttempt = () => {
 
   const [submitted, setSubmitted] = useState(false);
 
+  /* Set when the instructor changed the exam while it was in progress. */
+  const [examUpdated, setExamUpdated] = useState(false);
+
   const activityHandlingRef = useRef(false);
 
   const examAccessKey = examId ? `scorewell-exam-access-${examId}` : "";
 
   /*
-
-
-
    * Start or resume the examination.
-
-
-
    */
-
   const startExam = useCallback(async () => {
     if (!examId) {
       setError("Invalid examination ID.");
@@ -204,22 +204,15 @@ const ExamAttempt = () => {
   }, [startExam]);
 
   /*
-
-
-
    * Save one answer to MongoDB.
-
-
-
    */
-
   const saveAnswer = useCallback(
     async (
       questionId: string,
 
       selectedAnswers: string[],
     ) => {
-      if (!attempt?.id) {
+      if (!attempt?.id || examUpdated) {
         return;
       }
 
@@ -250,7 +243,15 @@ const ExamAttempt = () => {
           success: boolean;
 
           message?: string;
+
+          code?: string;
         } = await response.json();
+
+        if (response.status === 409 && data.code === "EXAM_UPDATED") {
+          setExamUpdated(true);
+
+          return;
+        }
 
         if (!response.ok || !data.success) {
           throw new Error(data.message || "Failed to save answer.");
@@ -268,21 +269,14 @@ const ExamAttempt = () => {
       }
     },
 
-    [attempt],
+    [attempt, examUpdated],
   );
 
   /*
-
-
-
    * Submit the examination.
-
-
-
    */
-
   const submitExam = useCallback(async () => {
-    if (!attempt?.id || submitting || submitted) {
+    if (!attempt?.id || submitting || submitted || examUpdated) {
       return;
     }
 
@@ -309,6 +303,12 @@ const ExamAttempt = () => {
 
       const data: SubmitExamResponse = await response.json();
 
+      if (response.status === 409 && data.code === "EXAM_UPDATED") {
+        setExamUpdated(true);
+
+        return;
+      }
+
       if (!response.ok || !data.success || !data.result) {
         throw new Error(data.message || "Failed to submit the examination.");
       }
@@ -333,22 +333,16 @@ const ExamAttempt = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [attempt, examAccessKey, submitting, submitted]);
+  }, [attempt, examAccessKey, submitting, submitted, examUpdated]);
 
   /*
-
    * Browser/tab activity.
-
    *
-
    * STRICT attempts are auto-submitted immediately.
-
    * NORMAL attempts are counted and paused until resumed.
-
    */
-
   useEffect(() => {
-    if (!attempt || submitted) {
+    if (!attempt || submitted || examUpdated) {
       return;
     }
 
@@ -411,40 +405,22 @@ const ExamAttempt = () => {
         handlePageHide,
       );
     };
-  }, [attempt, examAccessKey, submitted]);
+  }, [attempt, examAccessKey, submitted, examUpdated]);
 
   /*
-
-
-
    * Countdown timer.
-
-
-
    *
-
-
-
    * The timer is calculated from startTime,
-
-
-
    * so refreshing the page does not reset it.
-
-
-
    */
-
   useEffect(() => {
-    if (!attempt || submitted) {
+    if (!attempt || submitted || examUpdated) {
       return;
     }
 
     const updateTimer = () => {
       // NORMAL exams pause while the browser tab is hidden.
-
       // STRICT exams continue running and are handled by
-
       // the browser/tab activity violation logic above.
 
       if (
@@ -484,18 +460,11 @@ const ExamAttempt = () => {
     return () => {
       window.clearInterval(timer);
     };
-  }, [attempt, submitted, submitExam]);
+  }, [attempt, submitted, examUpdated, submitExam]);
 
   /*
-
-
-
    * Current question.
-
-
-
    */
-
   const currentQuestion = useMemo(() => {
     if (!attempt) {
       return null;
@@ -505,17 +474,10 @@ const ExamAttempt = () => {
   }, [attempt, currentQuestionIndex]);
 
   /*
-
-
-
    * Select an answer.
-
-
-
    */
-
   const handleAnswerChange = (option: string) => {
-    if (!currentQuestion || submitted || submitting) {
+    if (!currentQuestion || submitted || submitting || examUpdated) {
       return;
     }
 
@@ -549,15 +511,8 @@ const ExamAttempt = () => {
   };
 
   /*
-
-
-
    * Move to previous question.
-
-
-
    */
-
   const handlePrevious = () => {
     if (currentQuestionIndex <= 0 || submitting || submitted) {
       return;
@@ -567,15 +522,8 @@ const ExamAttempt = () => {
   };
 
   /*
-
-
-
    * Move to next question.
-
-
-
    */
-
   const handleNext = () => {
     if (!attempt || submitting || submitted) {
       return;
@@ -591,15 +539,8 @@ const ExamAttempt = () => {
   };
 
   /*
-
-
-
    * Format timer.
-
-
-
    */
-
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
 
@@ -623,15 +564,8 @@ const ExamAttempt = () => {
   };
 
   /*
-
-
-
    * Question answer status.
-
-
-
    */
-
   const answeredCount = useMemo(() => {
     if (!attempt) {
       return 0;
@@ -643,15 +577,52 @@ const ExamAttempt = () => {
   }, [attempt, answers]);
 
   /*
-
-
-
-   * Loading screen.
-
-
-
+   * Instructor changed the exam: mark the notice as seen
+   * (so it is not shown again) and go back to the exam list.
    */
+  const handleExamUpdatedClose = async () => {
+    try {
+      if (examId) {
+        await fetch(`${API_URL}/api/student-exams/${examId}/ack-update`, {
+          method: "POST",
 
+          credentials: "include",
+        });
+      }
+    } catch (err) {
+      console.error("Acknowledge exam update error:", err);
+    } finally {
+      if (examAccessKey) {
+        sessionStorage.removeItem(examAccessKey);
+      }
+
+      navigate("/student/new-exams", {
+        replace: true,
+      });
+    }
+  };
+
+  /*
+   * Exam updated screen.
+   */
+  if (examUpdated) {
+    return (
+      <div className="min-h-full bg-gradient-to-br from-purple-50 via-white to-orange-50">
+        <Modal
+          isOpen
+          type="info"
+          title="Examination Updated"
+          message="Your instructor updated this examination. Your previous attempt was removed, so please attempt the examination again."
+          closeButtonText="Back to Examinations"
+          onClose={() => void handleExamUpdatedClose()}
+        />
+      </div>
+    );
+  }
+
+  /*
+   * Loading screen.
+   */
   if (loading) {
     return (
       <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-purple-50 via-white to-orange-50 px-4">
@@ -673,15 +644,8 @@ const ExamAttempt = () => {
   }
 
   /*
-
-
-
    * Error screen.
-
-
-
    */
-
   if (error && !attempt) {
     return (
       <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-purple-50 via-white to-orange-50 px-4">
@@ -696,30 +660,35 @@ const ExamAttempt = () => {
 
           <p className="mt-2 text-sm leading-6 text-slate-500">{error}</p>
 
-          <button
-            type="button"
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => void startExam()}
+              className="rounded-xl bg-purple-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-purple-700"
+            >
+              Try Again
+            </button>
 
-            onClick={() => void startExam()}
-
-            className="mt-6 rounded-xl bg-purple-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-purple-700"
-          >
-            Try Again
-          </button>
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/student/new-exams", {
+                  replace: true,
+                })
+              }
+              className="rounded-xl border border-purple-200 px-6 py-3 text-sm font-bold text-purple-700 transition hover:bg-purple-50"
+            >
+              Back to Examinations
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   /*
-
-
-
    * No attempt.
-
-
-
    */
-
   if (!attempt || !currentQuestion) {
     return (
       <div className="flex min-h-full items-center justify-center bg-slate-50 px-4">
@@ -733,15 +702,8 @@ const ExamAttempt = () => {
   }
 
   /*
-
-
-
    * Submitted screen.
-
-
-
    */
-
   if (submitted) {
     return (
       <div className="flex min-h-full items-center justify-center bg-gradient-to-br from-purple-50 via-white to-orange-50 px-4 py-8">
@@ -768,9 +730,7 @@ const ExamAttempt = () => {
 
           <button
             type="button"
-
             onClick={() => navigate("/student")}
-
             className="mt-7 w-full rounded-xl bg-purple-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-purple-700"
           >
             Return to Dashboard
@@ -881,7 +841,6 @@ const ExamAttempt = () => {
                     return (
                       <label
                         key={`${currentQuestion.questionId}-${optionIndex}`}
-
                         className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-4 transition ${
                           isSelected
                             ? "border-purple-400 bg-purple-50 shadow-sm"
@@ -894,17 +853,11 @@ const ExamAttempt = () => {
                               ? "checkbox"
                               : "radio"
                           }
-
                           name={currentQuestion.questionId}
-
                           value={option}
-
                           checked={isSelected}
-
                           disabled={savingAnswer || submitting}
-
                           onChange={() => handleAnswerChange(option)}
-
                           className="mt-1 h-4 w-4 border-purple-300 text-purple-600 focus:ring-purple-500"
                         />
 
@@ -939,11 +892,8 @@ const ExamAttempt = () => {
             <div className="flex flex-col-reverse gap-3 border-t border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
               <button
                 type="button"
-
                 disabled={currentQuestionIndex === 0 || submitting}
-
                 onClick={handlePrevious}
-
                 className="rounded-xl border border-purple-200 bg-white px-5 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ← Previous
@@ -951,11 +901,8 @@ const ExamAttempt = () => {
 
               <button
                 type="button"
-
                 disabled={submitting}
-
                 onClick={handleNext}
-
                 className="rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:from-purple-700 hover:to-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isLastQuestion ? "Submit Examination" : "Save & Continue →"}
@@ -992,7 +939,6 @@ const ExamAttempt = () => {
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-purple-100">
                 <div
                   className="h-full rounded-full bg-purple-600 transition-all"
-
                   style={{
                     width: `${
                       attempt.questions.length > 0
@@ -1021,13 +967,9 @@ const ExamAttempt = () => {
                   return (
                     <button
                       key={question.questionId}
-
                       type="button"
-
                       disabled={submitting}
-
                       onClick={() => setCurrentQuestionIndex(index)}
-
                       className={`flex h-10 items-center justify-center rounded-xl text-xs font-bold transition ${
                         isCurrent
                           ? "bg-purple-600 text-white ring-2 ring-purple-200"
@@ -1085,9 +1027,7 @@ const ExamAttempt = () => {
 
             <button
               type="button"
-
               onClick={() => setError("")}
-
               className="ml-auto text-slate-400 hover:text-slate-600"
             >
               ×
@@ -1118,11 +1058,8 @@ const ExamAttempt = () => {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-
                 onClick={() => setShowSubmitConfirm(false)}
-
                 disabled={submitting}
-
                 className="flex-1 rounded-xl border border-purple-200 px-5 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:opacity-50"
               >
                 Continue Exam
@@ -1130,11 +1067,8 @@ const ExamAttempt = () => {
 
               <button
                 type="button"
-
                 onClick={() => void submitExam()}
-
                 disabled={submitting}
-
                 className="flex-1 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 px-5 py-3 text-sm font-bold text-white transition hover:from-purple-700 hover:to-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "Submitting..." : "Submit Now"}

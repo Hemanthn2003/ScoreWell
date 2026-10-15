@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 
+import Modal from "../../components/Modal";
+
 type ExamType = "NORMAL" | "STRICT";
 
 type ExamMode = "COMMON" | "SPECIAL";
@@ -51,6 +53,8 @@ interface AvailableExam {
 
   deadlineDate: string | null;
 
+  updateNotice?: boolean;
+
   inProgressAttempt: InProgressAttempt | null;
 }
 
@@ -59,10 +63,12 @@ interface ExamsResponse {
 
   exams: AvailableExam[];
 
+  serverTime?: string;
+
   message?: string;
 }
 
-const API_URL = "http\://localhost:5000";
+const API_URL = "http://localhost:5000";
 
 const NewExams = () => {
   const navigate = useNavigate();
@@ -72,6 +78,15 @@ const NewExams = () => {
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
+
+  /* Difference between server clock and this device's clock. */
+  const [clockOffset, setClockOffset] = useState(0);
+
+  /* Ticks every second so countdowns and buttons update live. */
+  const [now, setNow] = useState(Date.now());
+
+  /* Exam whose "exam updated" modal is being shown. */
+  const [noticeExam, setNoticeExam] = useState<AvailableExam | null>(null);
 
   const loadExams = useCallback(async () => {
     try {
@@ -101,7 +116,15 @@ const NewExams = () => {
         );
       }
 
-      setExams(data.exams ?? []);
+      const loadedExams = data.exams ?? [];
+
+      setExams(loadedExams);
+
+      if (data.serverTime) {
+        setClockOffset(new Date(data.serverTime).getTime() - Date.now());
+      }
+
+      setNoticeExam(loadedExams.find((exam) => exam.updateNotice) ?? null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -117,16 +140,74 @@ const NewExams = () => {
     void loadExams();
   }, [loadExams]);
 
-  const formatDeadline = (deadline: string | null) => {
-    if (!deadline) {
-      return "No deadline";
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const serverNow = now + clockOffset;
+
+  const acknowledgeUpdate = async () => {
+    if (!noticeExam) {
+      return;
     }
 
-    return new Date(deadline).toLocaleString("en-IN", {
+    const examId = noticeExam._id;
+
+    try {
+      await fetch(`${API_URL}/api/student-exams/${examId}/ack-update`, {
+        method: "POST",
+
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Acknowledge exam update error:", err);
+    } finally {
+      setNoticeExam(null);
+
+      void loadExams();
+    }
+  };
+
+  const formatDateTime = (value: string | null, fallback: string) => {
+    if (!value) {
+      return fallback;
+    }
+
+    return new Date(value).toLocaleString("en-IN", {
       dateStyle: "medium",
 
       timeStyle: "short",
     });
+  };
+
+  const formatCountdown = (target: string) => {
+    const total = Math.max(
+      0,
+
+      Math.floor((new Date(target).getTime() - serverNow) / 1000),
+    );
+
+    const days = Math.floor(total / 86400);
+
+    const hours = Math.floor((total % 86400) / 3600);
+
+    const minutes = Math.floor((total % 3600) / 60);
+
+    const seconds = total % 60;
+
+    return `${days > 0 ? `${days}d ` : ""}${String(hours).padStart(
+      2,
+      "0",
+    )}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+      2,
+      "0",
+    )}`;
   };
 
   const getTimeRemaining = (deadline: string | null) => {
@@ -134,7 +215,7 @@ const NewExams = () => {
       return "No deadline";
     }
 
-    const difference = new Date(deadline).getTime() - Date.now();
+    const difference = new Date(deadline).getTime() - serverNow;
 
     if (difference <= 0) {
       return "Deadline passed";
@@ -190,7 +271,6 @@ const NewExams = () => {
 
             <Link
               to="/student"
-
               className="inline-flex w-fit items-center justify-center rounded-xl border border-purple-200 bg-white px-4 py-2.5 text-sm font-semibold text-purple-700 transition hover:border-purple-300 hover:bg-purple-50"
             >
               Back to Dashboard
@@ -205,7 +285,6 @@ const NewExams = () => {
             {[1, 2].map((item) => (
               <div
                 key={item}
-
                 className="animate-pulse rounded-3xl border border-purple-100 bg-white p-6 shadow-lg shadow-purple-100/30"
               >
                 <div className="h-5 w-32 rounded bg-purple-100" />
@@ -244,9 +323,7 @@ const NewExams = () => {
 
             <button
               type="button"
-
               onClick={() => void loadExams()}
-
               className="mt-5 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-700"
             >
               Try Again
@@ -280,10 +357,13 @@ const NewExams = () => {
             {exams.map((exam) => {
               const isResume = exam.inProgressAttempt !== null;
 
+              const notStarted =
+                exam.startDate !== null &&
+                new Date(exam.startDate).getTime() > serverNow;
+
               return (
                 <div
                   key={exam._id}
-
                   className="group overflow-hidden rounded-3xl border border-purple-100 bg-white shadow-lg shadow-purple-100/30 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-200/40"
                 >
                   {/* Card Top */}
@@ -306,6 +386,12 @@ const NewExams = () => {
                         {isResume && (
                           <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-purple-700">
                             In Progress
+                          </span>
+                        )}
+
+                        {notStarted && (
+                          <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-orange-600">
+                            Upcoming
                           </span>
                         )}
                       </div>
@@ -368,25 +454,31 @@ const NewExams = () => {
                       </div>
                     </div>
 
-                    {/* Deadline */}
+                    {/* Start + Deadline */}
 
-                    <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                            Examination Deadline
-                          </p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          Examination Starts
+                        </p>
 
-                          <p className="mt-1 text-sm font-semibold text-slate-700">
-                            {formatDeadline(exam.deadlineDate)}
-                          </p>
-                        </div>
+                        <p className="mt-1 text-sm font-semibold text-slate-700">
+                          {formatDateTime(exam.startDate, "Available now")}
+                        </p>
+                      </div>
 
-                        <div className="rounded-xl bg-white px-3 py-2 shadow-sm">
-                          <p className="text-xs font-bold text-orange-500">
-                            {getTimeRemaining(exam.deadlineDate)}
-                          </p>
-                        </div>
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          Examination Deadline
+                        </p>
+
+                        <p className="mt-1 text-sm font-semibold text-slate-700">
+                          {formatDateTime(exam.deadlineDate, "No deadline")}
+                        </p>
+
+                        <p className="mt-1 text-xs font-bold text-orange-500">
+                          {getTimeRemaining(exam.deadlineDate)}
+                        </p>
                       </div>
                     </div>
 
@@ -416,18 +508,35 @@ const NewExams = () => {
                       )}
                     </div>
 
+                    {/* Countdown until the exam starts */}
+
+                    {notStarted && exam.startDate && (
+                      <div className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 p-4 text-center">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-orange-500">
+                          Examination starts in
+                        </p>
+
+                        <p className="mt-1 font-mono text-2xl font-bold text-orange-600">
+                          {formatCountdown(exam.startDate)}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Action */}
 
                     <button
                       type="button"
-
+                      disabled={notStarted}
                       onClick={() => handleExamAction(exam)}
-
-                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:from-purple-700 hover:to-purple-800 active:scale-[0.99]"
+                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-purple-700 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:from-purple-700 hover:to-purple-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:from-purple-600 disabled:hover:to-purple-700"
                     >
-                      {isResume ? "Resume Examination" : "Start Examination"}
+                      {notStarted
+                        ? "Not Started Yet"
+                        : isResume
+                          ? "Resume Examination"
+                          : "Start Examination"}
 
-                      <span className="text-base">→</span>
+                      {!notStarted && <span className="text-base">→</span>}
                     </button>
                   </div>
                 </div>
@@ -436,6 +545,17 @@ const NewExams = () => {
           </div>
         )}
       </div>
+
+      {/* Exam updated notice */}
+
+      <Modal
+        isOpen={noticeExam !== null}
+        type="info"
+        title="Examination Updated"
+        message={`"${noticeExam?.title ?? ""}" was updated by your instructor. Your previous attempts for this examination were removed, so please attempt it again.`}
+        closeButtonText="Okay, Got It"
+        onClose={() => void acknowledgeUpdate()}
+      />
     </div>
   );
 };

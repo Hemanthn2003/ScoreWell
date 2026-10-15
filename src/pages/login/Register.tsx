@@ -304,8 +304,10 @@ const Register = () => {
       resetForm();
 
       showModal(
-        "Registration Successful",
-        "Your ScoreWell account has been created successfully. You can now login.",
+        role === "INSTRUCTOR" ? "Request Submitted" : "Registration Successful",
+        role === "INSTRUCTOR"
+          ? "Your instructor request has been submitted. You can login after the Admin approves your account."
+          : "Your student account has been created. You can login after an Instructor permits your account.",
         "success",
       );
     } catch (error) {

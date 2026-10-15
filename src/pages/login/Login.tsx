@@ -10,7 +10,7 @@ interface LoggedInUser {
   id: string;
   name: string;
   email: string;
-  role: "STUDENT" | "INSTRUCTOR";
+  role: "STUDENT" | "INSTRUCTOR" | "ADMIN";
   department?: string | null;
   isActive: boolean;
   isPermitted: boolean;
@@ -152,13 +152,18 @@ const Login = () => {
 
       if (data.user.role === "INSTRUCTOR") {
         setTimeout(() => {
-          navigate("/instructor", {
-            replace: true,
-          });
+          navigate("/instructor", { replace: true });
         }, 700);
-
         return;
       }
+
+      if (data.user.role === "ADMIN") {
+        setTimeout(() => {
+          navigate("/admin", { replace: true });
+        }, 700);
+        return;
+      }
+
       setError("Invalid user role.");
     } catch (requestError) {
       console.error("Login request error:", requestError);

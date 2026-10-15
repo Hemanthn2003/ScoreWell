@@ -21,7 +21,7 @@ import scoreWellLogo from "../assets/scoreWellLogo.png";
 // TYPES
 // =========================================================
 
-type UserRole = "STUDENT" | "INSTRUCTOR";
+type UserRole = "STUDENT" | "INSTRUCTOR" | "ADMIN";
 
 interface LoggedInUser {
   _id: string;
@@ -75,6 +75,14 @@ const instructorMenu: MenuItem[] = [
     icon: <UserPlus size={19} />,
     route: "/instructor/newly-requested-student",
   },
+];
+
+// =========================================================
+// ADMIN MENU
+// =========================================================
+
+const adminMenu: MenuItem[] = [
+  { label: "Home", icon: <Home size={19} />, route: "/admin" },
 ];
 
 // =========================================================
@@ -147,9 +155,9 @@ const Header = () => {
   // ROLE BASED MENU
   // =======================================================
 
-  const menuItems = user?.role === "INSTRUCTOR" ? instructorMenu : studentMenu;
+  const menuItems = user?.role === "ADMIN" ? adminMenu : user?.role === "INSTRUCTOR" ? instructorMenu : studentMenu;
 
-  const roleLabel = user?.role === "INSTRUCTOR" ? "Instructor" : "Student";
+  const roleLabel = user?.role === "ADMIN" ? "Admin" : user?.role === "INSTRUCTOR" ? "Instructor" : "Student";
 
   // =======================================================
   // NORMAL NAVIGATION
@@ -175,6 +183,10 @@ const Header = () => {
     if (user?.role === "INSTRUCTOR") {
       navigate("/instructor/profile");
       return;
+    }
+
+    if (user?.role === "ADMIN") {
+      navigate("/admin/profile");
     }
   };
 
