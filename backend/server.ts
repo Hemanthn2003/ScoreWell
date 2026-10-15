@@ -1,8 +1,10 @@
 import "dotenv/config";
+import http from "http";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db";
+import { initSocket } from "./src/socket/socketServer";
 import authRoutes from "./src/routes/authRoutes";
 import adminRoutes from "./src/routes/adminRoutes";
 import questionSetRoutes from "./src/routes/questionSetRoutes";
@@ -34,10 +36,14 @@ app.use("/api/student-dashboard", studentDashboardRoutes);
 app.use("/api/student-exams", studentExamRoutes);
 app.use("/api/student-exam-submissions", studentExamSubmissionRoutes);
 
+/* Socket.IO shares the same HTTP server as Express. */
+const httpServer = http.createServer(app);
+initSocket(httpServer);
+
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => console.log(`ScoreWell backend running on http://localhost:${PORT}`));
+    httpServer.listen(PORT, () => console.log(`ScoreWell backend running on http://localhost:${PORT}`));
   } catch (error) {
     console.error("Failed to start ScoreWell backend:", error);
     process.exit(1);

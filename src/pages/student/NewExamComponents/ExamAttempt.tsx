@@ -4,6 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import Modal from "../../../components/Modal";
 
+import { getSocket } from "../../../lib/socket";
+
 type QuestionType = "SINGLE" | "MULTI";
 
 interface ExamQuestion {
@@ -86,6 +88,12 @@ interface SubmitExamResponse {
   result?: SubmissionResult;
 }
 
+interface ExamUpdatedPayload {
+  examId: string;
+
+  examName: string;
+}
+
 const API_URL = "http://localhost:5000";
 
 const ExamAttempt = () => {
@@ -113,12 +121,38 @@ const ExamAttempt = () => {
 
   const [submitted, setSubmitted] = useState(false);
 
-  /* Set when the instructor changed the exam while it was in progress. */
+  /* Set when the instructor changed the exam (live via socket, or via 409). */
   const [examUpdated, setExamUpdated] = useState(false);
 
   const activityHandlingRef = useRef(false);
 
   const examAccessKey = examId ? `scorewell-exam-access-${examId}` : "";
+
+  /*
+   * LIVE UPDATE (Socket.IO)
+   *
+   * The instructor changed this exam: show the notice immediately,
+   * even on the "Thank You for Submitting" screen.
+   */
+  useEffect(() => {
+    if (!examId) {
+      return;
+    }
+
+    const socket = getSocket();
+
+    const handleExamUpdated = (payload: ExamUpdatedPayload) => {
+      if (payload.examId === examId) {
+        setExamUpdated(true);
+      }
+    };
+
+    socket.on("exam:updated", handleExamUpdated);
+
+    return () => {
+      socket.off("exam:updated", handleExamUpdated);
+    };
+  }, [examId]);
 
   /*
    * Start or resume the examination.
@@ -604,6 +638,8 @@ const ExamAttempt = () => {
 
   /*
    * Exam updated screen.
+   * Takes priority over every other screen, including
+   * "Thank You for Submitting".
    */
   if (examUpdated) {
     return (

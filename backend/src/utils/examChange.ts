@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Attempt from "../models/Attempt";
 import Exam from "../models/Exam";
 import ExamUpdateNotice from "../models/ExamUpdateNotice";
+import { emitToUser } from "../socket/socketServer";
 
 export const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -11,6 +12,7 @@ export const newChangeId = (): string =>
 
 /* =========================================================
    DELETE STALE ATTEMPTS + CREATE STUDENT NOTICES
+   + PUSH A LIVE NOTICE OVER SOCKET.IO
 
    An attempt is stale when its changeId does not match the
    exam's current changeId (missing counts as not matching).
@@ -69,6 +71,17 @@ export const purgeStaleAttempts = async (exam: {
   await Attempt.deleteMany({
     _id: { $in: stale.map((attempt) => attempt._id) },
   });
+
+  /*
+   * Notices and deletions are saved first, then each affected
+   * student is notified immediately (no page refresh needed).
+   */
+  for (const studentId of studentIds) {
+    emitToUser(studentId, "exam:updated", {
+      examId: exam._id.toString(),
+      examName: exam.title,
+    });
+  }
 
   return stale.length;
 };

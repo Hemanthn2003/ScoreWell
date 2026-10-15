@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 import Modal from "../../components/Modal";
 
+import { getSocket } from "../../lib/socket";
+
 type ExamType = "NORMAL" | "STRICT";
 
 type ExamMode = "COMMON" | "SPECIAL";
@@ -68,6 +70,12 @@ interface ExamsResponse {
   message?: string;
 }
 
+interface ExamUpdatedPayload {
+  examId: string;
+
+  examName: string;
+}
+
 const API_URL = "http://localhost:5000";
 
 const NewExams = () => {
@@ -86,11 +94,17 @@ const NewExams = () => {
   const [now, setNow] = useState(Date.now());
 
   /* Exam whose "exam updated" modal is being shown. */
-  const [noticeExam, setNoticeExam] = useState<AvailableExam | null>(null);
+  const [noticeExam, setNoticeExam] = useState<{
+    _id: string;
 
-  const loadExams = useCallback(async () => {
+    title: string;
+  } | null>(null);
+
+  const loadExams = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
 
       setError("");
 
@@ -124,7 +138,19 @@ const NewExams = () => {
         setClockOffset(new Date(data.serverTime).getTime() - Date.now());
       }
 
-      setNoticeExam(loadedExams.find((exam) => exam.updateNotice) ?? null);
+      /*
+       * Show a pending notice found on the server.
+       * (Never clears a notice that arrived over the socket.)
+       */
+      const pending = loadedExams.find((exam) => exam.updateNotice);
+
+      if (pending) {
+        setNoticeExam({
+          _id: pending._id,
+
+          title: pending.title,
+        });
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -132,12 +158,50 @@ const NewExams = () => {
           : "Failed to load available examinations.",
       );
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void loadExams();
+  }, [loadExams]);
+
+  /*
+   * LIVE UPDATES (Socket.IO)
+   *
+   * - "exam:updated": the instructor changed an exam this student
+   *   had attempted. Show the modal immediately.
+   * - "connect": (re)connected. Reload the list so a notice sent
+   *   while the student was offline is not missed.
+   */
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleExamUpdated = (payload: ExamUpdatedPayload) => {
+      setNoticeExam({
+        _id: payload.examId,
+
+        title: payload.examName,
+      });
+
+      void loadExams(true);
+    };
+
+    const handleConnect = () => {
+      void loadExams(true);
+    };
+
+    socket.on("exam:updated", handleExamUpdated);
+
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("exam:updated", handleExamUpdated);
+
+      socket.off("connect", handleConnect);
+    };
   }, [loadExams]);
 
   useEffect(() => {
@@ -170,7 +234,7 @@ const NewExams = () => {
     } finally {
       setNoticeExam(null);
 
-      void loadExams();
+      void loadExams(true);
     }
   };
 
